@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useZxing } from 'react-zxing';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Camera, X, Flashlight, FlashlightOff, Check, Loader2, AlertTriangle } from 'lucide-react';
+import { Camera, X, Flashlight, FlashlightOff, Check, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface BarcodeScannerProps {
   open: boolean;
@@ -19,11 +19,12 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
   const [scannedItems, setScannedItems] = useState<string[]>([]);
   const [cooldown, setCooldown] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [cameraReady, setCameraReady] = useState(false);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const handleScan = useCallback((code: string) => {
     if (cooldown) return;
     
-    // Set cooldown to prevent rapid duplicate scans
     setCooldown(true);
     setTimeout(() => setCooldown(false), 1000);
 
@@ -31,7 +32,7 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
     onScan(code);
     
     if (continuous) {
-      setScannedItems(prev => [code, ...prev].slice(0, 5)); // Keep last 5 scans
+      setScannedItems(prev => [code, ...prev].slice(0, 5));
     } else {
       onClose();
     }
@@ -51,35 +52,31 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
     },
     onError(error) {
       console.log('Scanner error:', error);
-      // NotAllowedError means permission denied
       if (error && (error as Error).name === 'NotAllowedError') {
         setHasPermission(false);
-        setErrorMessage('Izin kamera ditolak. Klik ikon kamera di address bar untuk mengizinkan.');
+        setErrorMessage('Izin kamera ditolak. Buka pengaturan browser dan izinkan akses kamera.');
         setIsLoading(false);
       }
     },
-    paused: !open,
+    paused: !open || !cameraReady,
     timeBetweenDecodingAttempts: 200,
     constraints: {
       video: {
         facingMode: 'environment',
-        width: { min: 640, ideal: 1280, max: 1920 },
-        height: { min: 480, ideal: 720, max: 1080 },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
       },
     },
   });
 
-  // Handle video element ready state
-  useEffect(() => {
-    if (!open) return;
-    
-    setLastScanned('');
-    setScannedItems([]);
+  // Request camera permission explicitly
+  const requestCameraPermission = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage('');
     setHasPermission(null);
+    setCameraReady(false);
 
-    // Check if we're on HTTPS or localhost
+    // Check HTTPS
     const isSecure = window.location.protocol === 'https:' || 
                      window.location.hostname === 'localhost' ||
                      window.location.hostname === '127.0.0.1';
@@ -91,51 +88,71 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
       return;
     }
 
-    // Poll for video stream - more reliable than event listeners
-    const checkVideoStream = () => {
-      const videoElement = ref.current;
-      if (videoElement) {
-        // Check if video is playing
-        if (videoElement.readyState >= 2 || (videoElement.srcObject && !videoElement.paused)) {
-          setIsLoading(false);
-          setHasPermission(true);
-          return true;
-        }
+    try {
+      // Explicitly request camera permission
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
+      
+      // Store stream reference
+      streamRef.current = stream;
+      
+      // Permission granted - let useZxing take over
+      setHasPermission(true);
+      setCameraReady(true);
+      setIsLoading(false);
+      
+      // Stop this test stream - useZxing will create its own
+      stream.getTracks().forEach(track => track.stop());
+      
+    } catch (err) {
+      console.error('Camera permission error:', err);
+      setHasPermission(false);
+      setIsLoading(false);
+      
+      const error = err as Error;
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        setErrorMessage('Izin kamera ditolak. Klik ikon gembok/kamera di address bar untuk mengizinkan, lalu refresh halaman.');
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        setErrorMessage('Kamera tidak ditemukan. Pastikan perangkat memiliki kamera.');
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        setErrorMessage('Kamera sedang digunakan aplikasi lain. Tutup aplikasi lain yang menggunakan kamera.');
+      } else if (error.name === 'OverconstrainedError') {
+        setErrorMessage('Kamera tidak mendukung konfigurasi yang diminta.');
+      } else {
+        setErrorMessage(`Tidak dapat mengakses kamera: ${error.message || 'Error tidak diketahui'}`);
       }
-      return false;
-    };
+    }
+  }, []);
 
-    // Check immediately
-    if (checkVideoStream()) return;
-
-    // Poll every 300ms for up to 10 seconds
-    let attempts = 0;
-    const maxAttempts = 33;
-    const interval = setInterval(() => {
-      attempts++;
-      if (checkVideoStream() || attempts >= maxAttempts) {
-        clearInterval(interval);
-        if (attempts >= maxAttempts && isLoading) {
-          // Still loading after timeout - likely permission issue
-          setHasPermission(false);
-          setErrorMessage('Gagal memuat kamera. Pastikan izin kamera diaktifkan dan coba refresh halaman.');
-          setIsLoading(false);
-        }
+  // Initialize camera when dialog opens
+  useEffect(() => {
+    if (open) {
+      setLastScanned('');
+      setScannedItems([]);
+      requestCameraPermission();
+    } else {
+      // Cleanup when dialog closes
+      setCameraReady(false);
+      setIsLoading(true);
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       }
-    }, 300);
+    }
+  }, [open, requestCameraPermission]);
 
-    return () => {
-      clearInterval(interval);
-    };
-  }, [open]);
-
-  // Reset lastScanned after cooldown to allow same barcode scan again
+  // Reset lastScanned after cooldown
   useEffect(() => {
     if (!cooldown && continuous) {
       const timer = setTimeout(() => setLastScanned(''), 500);
       return () => clearTimeout(timer);
     }
   }, [cooldown, continuous]);
+
+  const handleRetry = () => {
+    requestCameraPermission();
+  };
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
@@ -153,33 +170,44 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
         </DialogHeader>
 
         <div className="relative aspect-square bg-black overflow-hidden">
-          {/* Video always rendered so useZxing can access the ref */}
-          <video ref={ref} className="w-full h-full object-cover" autoPlay playsInline muted />
+          {/* Video element - only render when camera is ready */}
+          {cameraReady && (
+            <video ref={ref} className="w-full h-full object-cover" autoPlay playsInline muted />
+          )}
           
           {/* Loading overlay */}
           {isLoading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-white p-4 text-center z-10">
               <Loader2 className="w-12 h-12 mb-4 animate-spin text-primary" />
-              <p className="font-medium">Memuat Kamera...</p>
+              <p className="font-medium">Meminta Izin Kamera...</p>
               <p className="text-sm opacity-75 mt-2">
-                Mohon tunggu dan izinkan akses kamera jika diminta
+                Jika muncul popup, pilih "Izinkan" untuk mengakses kamera
               </p>
             </div>
           )}
 
           {/* Permission error overlay */}
-          {hasPermission === false && (
+          {hasPermission === false && !isLoading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-white p-4 text-center z-10">
               <AlertTriangle className="w-12 h-12 mb-4 text-destructive" />
               <p className="font-medium">Tidak Dapat Mengakses Kamera</p>
-              <p className="text-sm opacity-75 mt-2">
+              <p className="text-sm opacity-75 mt-2 mb-4">
                 {errorMessage}
               </p>
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={handleRetry}
+                className="gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Coba Lagi
+              </Button>
             </div>
           )}
 
           {/* Scan overlay - only show when camera is active */}
-          {!isLoading && hasPermission !== false && (
+          {cameraReady && !isLoading && hasPermission === true && (
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute inset-0 bg-black/50" />
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64">
@@ -205,7 +233,7 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
           )}
 
           {/* Torch toggle */}
-          {isAvailable && !isLoading && (
+          {isAvailable && cameraReady && !isLoading && (
             <Button
               variant="secondary"
               size="icon"
