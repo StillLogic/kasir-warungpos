@@ -1,0 +1,208 @@
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Product, ProductFormData } from '@/types/pos';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+const productSchema = z.object({
+  name: z.string().min(1, 'Nama produk wajib diisi'),
+  sku: z.string().min(1, 'SKU wajib diisi'),
+  category: z.string().min(1, 'Kategori wajib diisi'),
+  retailPrice: z.number().min(0, 'Harga tidak boleh negatif'),
+  wholesalePrice: z.number().min(0, 'Harga tidak boleh negatif'),
+  wholesaleMinQty: z.number().min(1, 'Minimal 1'),
+  stock: z.number().min(0, 'Stok tidak boleh negatif'),
+  unit: z.string().min(1, 'Satuan wajib diisi'),
+});
+
+interface ProductFormProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (data: ProductFormData) => void;
+  product?: Product | null;
+}
+
+const categories = ['Makanan', 'Minuman', 'Snack', 'Rokok', 'Kebersihan', 'Lainnya'];
+const units = ['pcs', 'pack', 'dus', 'kg', 'liter', 'botol', 'sachet'];
+
+export function ProductForm({ open, onClose, onSubmit, product }: ProductFormProps) {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<ProductFormData>({
+    resolver: zodResolver(productSchema),
+    defaultValues: product || {
+      name: '',
+      sku: '',
+      category: 'Lainnya',
+      retailPrice: 0,
+      wholesalePrice: 0,
+      wholesaleMinQty: 10,
+      stock: 0,
+      unit: 'pcs',
+    },
+  });
+
+  const handleFormSubmit = (data: ProductFormData) => {
+    onSubmit(data);
+    reset();
+    onClose();
+  };
+
+  const handleClose = () => {
+    reset();
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            {product ? 'Edit Produk' : 'Tambah Produk Baru'}
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nama Produk</Label>
+            <Input
+              id="name"
+              {...register('name')}
+              placeholder="Masukkan nama produk"
+            />
+            {errors.name && (
+              <p className="text-sm text-destructive">{errors.name.message}</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="sku">SKU / Kode</Label>
+              <Input
+                id="sku"
+                {...register('sku')}
+                placeholder="SKU001"
+              />
+              {errors.sku && (
+                <p className="text-sm text-destructive">{errors.sku.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>Kategori</Label>
+              <Select
+                value={watch('category')}
+                onValueChange={(value) => setValue('category', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="retailPrice">Harga Satuan</Label>
+              <Input
+                id="retailPrice"
+                type="number"
+                {...register('retailPrice', { valueAsNumber: true })}
+                placeholder="0"
+              />
+              {errors.retailPrice && (
+                <p className="text-sm text-destructive">{errors.retailPrice.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="wholesalePrice">Harga Grosir</Label>
+              <Input
+                id="wholesalePrice"
+                type="number"
+                {...register('wholesalePrice', { valueAsNumber: true })}
+                placeholder="0"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="wholesaleMinQty">Min. Qty Grosir</Label>
+              <Input
+                id="wholesaleMinQty"
+                type="number"
+                {...register('wholesaleMinQty', { valueAsNumber: true })}
+                placeholder="10"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Satuan</Label>
+              <Select
+                value={watch('unit')}
+                onValueChange={(value) => setValue('unit', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih satuan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {units.map((unit) => (
+                    <SelectItem key={unit} value={unit}>
+                      {unit}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="stock">Stok Awal</Label>
+            <Input
+              id="stock"
+              type="number"
+              {...register('stock', { valueAsNumber: true })}
+              placeholder="0"
+            />
+            {errors.stock && (
+              <p className="text-sm text-destructive">{errors.stock.message}</p>
+            )}
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button type="button" variant="outline" className="flex-1" onClick={handleClose}>
+              Batal
+            </Button>
+            <Button type="submit" className="flex-1">
+              {product ? 'Simpan Perubahan' : 'Tambah Produk'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
