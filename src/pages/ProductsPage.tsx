@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Product, ProductFormData } from '@/types/pos';
-import { getProducts, addProduct, updateProduct, deleteProduct, updateStock } from '@/database';
+import { getProducts, addProduct, updateProduct, deleteProduct, updateStock, waitForProducts } from '@/database';
 import { formatCurrency } from '@/lib/format';
 import { ProductForm } from '@/components/ProductForm';
 import { Button } from '@/components/ui/button';
@@ -30,11 +30,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, MoreVertical, Pencil, Trash2, PackagePlus, PackageMinus, AlertCircle } from 'lucide-react';
+import { Plus, Search, MoreVertical, Pencil, Trash2, PackagePlus, PackageMinus, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -43,7 +44,13 @@ export function ProductsPage() {
   const [stockAmount, setStockAmount] = useState('');
 
   useEffect(() => {
-    setProducts(getProducts());
+    const loadProducts = async () => {
+      setLoading(true);
+      const data = await waitForProducts();
+      setProducts(data);
+      setLoading(false);
+    };
+    loadProducts();
   }, []);
 
   const filteredProducts = products.filter(p =>
@@ -146,7 +153,16 @@ export function ProductsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredProducts.length === 0 ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-32 text-center">
+                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Memuat data produk...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredProducts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                   {products.length === 0 
