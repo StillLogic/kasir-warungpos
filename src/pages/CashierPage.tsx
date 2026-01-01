@@ -8,7 +8,7 @@ import { Receipt } from '@/components/Receipt';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Camera } from 'lucide-react';
+import { Search, Filter, Camera, ShoppingCart } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import {
   Select,
@@ -17,6 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export function CashierPage() {
   const [products, setProducts] = useState<Product[]>(() => getProducts());
@@ -27,6 +36,12 @@ export function CashierPage() {
   const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const isMobile = useIsMobile();
+
+  const cartItemsCount = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.quantity, 0);
+  }, [cart]);
 
   const categories = useMemo(() => {
     const cats = new Set(products.map(p => p.category));
@@ -155,12 +170,25 @@ export function CashierPage() {
     setScannerOpen(false);
   };
 
+  const CartContent = () => (
+    <Cart
+      items={cart}
+      onUpdateQuantity={updateQuantity}
+      onRemoveItem={removeFromCart}
+      onCheckout={() => {
+        handleCheckout();
+        if (isMobile) setCartOpen(false);
+      }}
+      total={cartTotal}
+    />
+  );
+
   return (
-    <div className="h-[calc(100vh-6rem)] flex gap-6">
+    <div className="h-[calc(100vh-6rem)] flex gap-4 lg:gap-6">
       {/* Product Grid */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Search and Filter */}
-        <div className="flex gap-3 mb-4">
+        <div className="flex gap-2 sm:gap-3 mb-4">
           <Button
             variant="outline"
             size="icon"
@@ -172,15 +200,15 @@ export function CashierPage() {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Cari produk, SKU, atau barcode..."
+              placeholder="Cari produk..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
             />
           </div>
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-40">
-              <Filter className="w-4 h-4 mr-2" />
+            <SelectTrigger className="w-28 sm:w-40">
+              <Filter className="w-4 h-4 mr-1 sm:mr-2" />
               <SelectValue placeholder="Kategori" />
             </SelectTrigger>
             <SelectContent>
@@ -191,6 +219,33 @@ export function CashierPage() {
               ))}
             </SelectContent>
           </Select>
+          
+          {/* Mobile Cart Button */}
+          {isMobile && (
+            <Sheet open={cartOpen} onOpenChange={setCartOpen}>
+              <SheetTrigger asChild>
+                <Button variant="default" size="icon" className="shrink-0 relative">
+                  <ShoppingCart className="w-5 h-5" />
+                  {cartItemsCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    >
+                      {cartItemsCount}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full sm:w-96 p-0 flex flex-col">
+                <SheetHeader className="p-4 border-b border-border">
+                  <SheetTitle>Keranjang Belanja</SheetTitle>
+                </SheetHeader>
+                <div className="flex-1 overflow-hidden">
+                  <CartContent />
+                </div>
+              </SheetContent>
+            </Sheet>
+          )}
         </div>
 
         {/* Products */}
@@ -201,7 +256,7 @@ export function CashierPage() {
               <p className="text-sm">Tambahkan produk di menu Produk</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -214,19 +269,15 @@ export function CashierPage() {
         </div>
       </div>
 
-      {/* Cart Sidebar */}
-      <div className="w-80 lg:w-96 bg-card border border-border rounded-lg flex flex-col overflow-hidden shrink-0">
-        <div className="p-4 border-b border-border">
-          <h2 className="font-semibold text-lg">Keranjang Belanja</h2>
+      {/* Cart Sidebar - Desktop Only */}
+      {!isMobile && (
+        <div className="w-80 lg:w-96 bg-card border border-border rounded-lg flex flex-col overflow-hidden shrink-0">
+          <div className="p-4 border-b border-border">
+            <h2 className="font-semibold text-lg">Keranjang Belanja</h2>
+          </div>
+          <CartContent />
         </div>
-        <Cart
-          items={cart}
-          onUpdateQuantity={updateQuantity}
-          onRemoveItem={removeFromCart}
-          onCheckout={handleCheckout}
-          total={cartTotal}
-        />
-      </div>
+      )}
 
       {/* Barcode Scanner */}
       <BarcodeScanner
