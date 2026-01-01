@@ -1,9 +1,8 @@
 import { Transaction, CartItem } from '@/types/pos';
 import { TransactionRecord, CartItemRecord } from './types';
 import { generateId, toUnix, fromUnix } from './utils';
-import { updateStock, getProducts } from './products';
-
-const TRANSACTIONS_KEY = 'db_transactions';
+import { getDB } from './db';
+import { updateStockAsync, getProductsAsync } from './products';
 
 // Konversi CartItem ke format ringan
 function itemToRecord(item: CartItem): CartItemRecord {
@@ -17,12 +16,11 @@ function itemToRecord(item: CartItem): CartItemRecord {
   };
 }
 
-// Konversi format ringan ke CartItem (partial - untuk display)
-function itemFromRecord(r: CartItemRecord): CartItem {
-  // Cari produk untuk data lengkap, atau gunakan data minimal
-  const products = getProducts();
+// Konversi format ringan ke CartItem
+async function itemFromRecord(r: CartItemRecord): Promise<CartItem> {
+  const products = await getProductsAsync();
   const product = products.find(p => p.id === r.pi);
-  
+
   return {
     product: product || {
       id: r.pi,
@@ -43,24 +41,12 @@ function itemFromRecord(r: CartItemRecord): CartItem {
   };
 }
 
-// Konversi Transaction ke format ringan
-function toRecord(t: Transaction): TransactionRecord {
-  return {
-    i: t.id,
-    it: t.items.map(itemToRecord),
-    t: t.total,
-    p: t.payment,
-    ch: t.change,
-    ca: toUnix(t.createdAt),
-    cn: t.customerName || undefined,
-  };
-}
-
 // Konversi format ringan ke Transaction
-function fromRecord(r: TransactionRecord): Transaction {
+async function fromRecord(r: TransactionRecord): Promise<Transaction> {
+  const items = await Promise.all(r.it.map(itemFromRecord));
   return {
     id: r.i,
-    items: r.it.map(itemFromRecord),
+    items,
     total: r.t,
     payment: r.p,
     change: r.ch,
@@ -69,24 +55,19 @@ function fromRecord(r: TransactionRecord): Transaction {
   };
 }
 
-function getRecords(): TransactionRecord[] {
-  const data = localStorage.getItem(TRANSACTIONS_KEY);
-  return data ? JSON.parse(data) : [];
+// Public API - Async functions
+export async function getTransactionsAsync(): Promise<Transaction[]> {
+  const db = await getDB();
+  const records = await db.getAll('transactions');
+  // Sort by date descending
+  records.sort((a, b) => b.ca - a.ca);
+  return Promise.all(records.map(fromRecord));
 }
 
-function saveRecords(records: TransactionRecord[]): void {
-  localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(records));
-}
-
-// Public API
-export function getTransactions(): Transaction[] {
-  return getRecords().map(fromRecord);
-}
-
-export function saveTransaction(transaction: Omit<Transaction, 'id' | 'createdAt'>): Transaction {
-  const records = getRecords();
+export async function saveTransactionAsync(transaction: Omit<Transaction, 'id' | 'createdAt'>): Promise<Transaction> {
+  const db = await getDB();
   const now = toUnix(new Date());
-  
+
   const newRecord: TransactionRecord = {
     i: generateId(),
     it: transaction.items.map(itemToRecord),
@@ -96,24 +77,70 @@ export function saveTransaction(transaction: Omit<Transaction, 'id' | 'createdAt
     ca: now,
     cn: transaction.customerName || undefined,
   };
-  
-  records.unshift(newRecord);
-  saveRecords(records);
-  
+
+  await db.put('transactions', newRecord);
+
   // Update stock for each item
-  transaction.items.forEach(item => {
-    updateStock(item.product.id, -item.quantity);
-  });
-  
+  for (const item of transaction.items) {
+    await updateStockAsync(item.product.id, -item.quantity);
+  }
+
   return fromRecord(newRecord);
 }
 
-export function getTodayTransactions(): Transaction[] {
-  const transactions = getTransactions();
+export async function getTodayTransactionsAsync(): Promise<Transaction[]> {
+  const transactions = await getTransactionsAsync();
   const today = new Date().toDateString();
   return transactions.filter(t => new Date(t.createdAt).toDateString() === today);
+}
+
+export async function getTodayRevenueAsync(): Promise<number> {
+  const todayTx = await getTodayTransactionsAsync();
+  return todayTx.reduce((sum, t) => sum + t.total, 0);
+}
+
+// Synchronous wrappers for backward compatibility
+let cachedTransactions: Transaction[] = [];
+let txCacheInitialized = false;
+
+async function ensureTxCache() {
+  if (!txCacheInitialized) {
+    cachedTransactions = await getTransactionsAsync();
+    txCacheInitialized = true;
+  }
+}
+
+export function getTransactions(): Transaction[] {
+  ensureTxCache();
+  return cachedTransactions;
+}
+
+export function saveTransaction(transaction: Omit<Transaction, 'id' | 'createdAt'>): Transaction {
+  const now = new Date().toISOString();
+  const newTransaction: Transaction = {
+    ...transaction,
+    id: generateId(),
+    createdAt: now,
+  };
+  cachedTransactions.unshift(newTransaction);
+  
+  // Async save
+  saveTransactionAsync(transaction).then(t => {
+    const idx = cachedTransactions.findIndex(ct => ct.id === newTransaction.id);
+    if (idx !== -1) cachedTransactions[idx] = t;
+  });
+
+  return newTransaction;
+}
+
+export function getTodayTransactions(): Transaction[] {
+  const today = new Date().toDateString();
+  return cachedTransactions.filter(t => new Date(t.createdAt).toDateString() === today);
 }
 
 export function getTodayRevenue(): number {
   return getTodayTransactions().reduce((sum, t) => sum + t.total, 0);
 }
+
+// Initialize cache
+ensureTxCache();

@@ -1,8 +1,7 @@
 import { Product } from '@/types/pos';
 import { ProductRecord } from './types';
 import { generateId, toUnix, fromUnix } from './utils';
-
-const PRODUCTS_KEY = 'db_products';
+import { getDB } from './db';
 
 // Konversi Product ke format ringan
 function toRecord(p: Product): ProductRecord {
@@ -17,8 +16,8 @@ function toRecord(p: Product): ProductRecord {
     wq: p.wholesaleMinQty,
     st: p.stock,
     u: p.unit,
-    ca: toUnix(p.createdAt),
-    ua: toUnix(p.updatedAt),
+    ca: typeof p.createdAt === 'string' ? toUnix(p.createdAt) : p.createdAt as unknown as number,
+    ua: typeof p.updatedAt === 'string' ? toUnix(p.updatedAt) : p.updatedAt as unknown as number,
   };
 }
 
@@ -40,26 +39,15 @@ function fromRecord(r: ProductRecord): Product {
   };
 }
 
-function getRecords(): ProductRecord[] {
-  const data = localStorage.getItem(PRODUCTS_KEY);
-  return data ? JSON.parse(data) : [];
+// Public API - Async functions for IndexedDB
+export async function getProductsAsync(): Promise<Product[]> {
+  const db = await getDB();
+  const records = await db.getAll('products');
+  return records.map(fromRecord);
 }
 
-function saveRecords(records: ProductRecord[]): void {
-  localStorage.setItem(PRODUCTS_KEY, JSON.stringify(records));
-}
-
-// Public API
-export function getProducts(): Product[] {
-  return getRecords().map(fromRecord);
-}
-
-export function saveProducts(products: Product[]): void {
-  saveRecords(products.map(toRecord));
-}
-
-export function addProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Product {
-  const records = getRecords();
+export async function addProductAsync(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
+  const db = await getDB();
   const now = toUnix(new Date());
   const newRecord: ProductRecord = {
     i: generateId(),
@@ -75,18 +63,17 @@ export function addProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedA
     ca: now,
     ua: now,
   };
-  records.push(newRecord);
-  saveRecords(records);
+  await db.put('products', newRecord);
   return fromRecord(newRecord);
 }
 
-export function updateProduct(id: string, data: Partial<Product>): Product | null {
-  const records = getRecords();
-  const index = records.findIndex(r => r.i === id);
-  if (index === -1) return null;
-  
+export async function updateProductAsync(id: string, data: Partial<Product>): Promise<Product | null> {
+  const db = await getDB();
+  const record = await db.get('products', id);
+  if (!record) return null;
+
   const updated: ProductRecord = {
-    ...records[index],
+    ...record,
     ...(data.name !== undefined && { n: data.name }),
     ...(data.sku !== undefined && { s: data.sku }),
     ...(data.barcode !== undefined && { b: data.barcode || undefined }),
@@ -98,39 +85,131 @@ export function updateProduct(id: string, data: Partial<Product>): Product | nul
     ...(data.unit !== undefined && { u: data.unit }),
     ua: toUnix(new Date()),
   };
-  
-  records[index] = updated;
-  saveRecords(records);
+
+  await db.put('products', updated);
   return fromRecord(updated);
 }
 
+export async function deleteProductAsync(id: string): Promise<boolean> {
+  const db = await getDB();
+  const record = await db.get('products', id);
+  if (!record) return false;
+  await db.delete('products', id);
+  return true;
+}
+
+export async function updateStockAsync(id: string, quantity: number): Promise<boolean> {
+  const db = await getDB();
+  const record = await db.get('products', id);
+  if (!record) return false;
+
+  record.st += quantity;
+  record.ua = toUnix(new Date());
+  await db.put('products', record);
+  return true;
+}
+
+export async function getProductByBarcodeAsync(barcode: string): Promise<Product | null> {
+  const db = await getDB();
+  const record = await db.getFromIndex('products', 'by-barcode', barcode);
+  return record ? fromRecord(record) : null;
+}
+
+export async function getProductBySkuAsync(sku: string): Promise<Product | null> {
+  const db = await getDB();
+  const record = await db.getFromIndex('products', 'by-sku', sku);
+  return record ? fromRecord(record) : null;
+}
+
+// Synchronous wrappers for backward compatibility (using cached data)
+let cachedProducts: Product[] = [];
+let cacheInitialized = false;
+
+async function ensureCache() {
+  if (!cacheInitialized) {
+    cachedProducts = await getProductsAsync();
+    cacheInitialized = true;
+  }
+}
+
+export function getProducts(): Product[] {
+  // Start async load
+  ensureCache();
+  return cachedProducts;
+}
+
+export function saveProducts(products: Product[]): void {
+  cachedProducts = products;
+  // Async save
+  (async () => {
+    const db = await getDB();
+    const tx = db.transaction('products', 'readwrite');
+    await tx.store.clear();
+    for (const product of products) {
+      await tx.store.put(toRecord(product));
+    }
+    await tx.done;
+  })();
+}
+
+export function addProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Product {
+  const now = new Date().toISOString();
+  const newProduct: Product = {
+    ...product,
+    id: generateId(),
+    createdAt: now,
+    updatedAt: now,
+  };
+  cachedProducts.push(newProduct);
+  // Async save
+  addProductAsync(product).then(p => {
+    const idx = cachedProducts.findIndex(cp => cp.name === product.name && cp.sku === product.sku);
+    if (idx !== -1) cachedProducts[idx] = p;
+  });
+  return newProduct;
+}
+
+export function updateProduct(id: string, data: Partial<Product>): Product | null {
+  const index = cachedProducts.findIndex(p => p.id === id);
+  if (index === -1) return null;
+  
+  cachedProducts[index] = {
+    ...cachedProducts[index],
+    ...data,
+    updatedAt: new Date().toISOString(),
+  };
+  // Async save
+  updateProductAsync(id, data);
+  return cachedProducts[index];
+}
+
 export function deleteProduct(id: string): boolean {
-  const records = getRecords();
-  const filtered = records.filter(r => r.i !== id);
-  if (filtered.length === records.length) return false;
-  saveRecords(filtered);
+  const filtered = cachedProducts.filter(p => p.id !== id);
+  if (filtered.length === cachedProducts.length) return false;
+  cachedProducts = filtered;
+  // Async delete
+  deleteProductAsync(id);
   return true;
 }
 
 export function updateStock(id: string, quantity: number): boolean {
-  const records = getRecords();
-  const index = records.findIndex(r => r.i === id);
+  const index = cachedProducts.findIndex(p => p.id === id);
   if (index === -1) return false;
   
-  records[index].st += quantity;
-  records[index].ua = toUnix(new Date());
-  saveRecords(records);
+  cachedProducts[index].stock += quantity;
+  cachedProducts[index].updatedAt = new Date().toISOString();
+  // Async save
+  updateStockAsync(id, quantity);
   return true;
 }
 
 export function getProductByBarcode(barcode: string): Product | null {
-  const records = getRecords();
-  const record = records.find(r => r.b === barcode);
-  return record ? fromRecord(record) : null;
+  return cachedProducts.find(p => p.barcode === barcode) || null;
 }
 
 export function getProductBySku(sku: string): Product | null {
-  const records = getRecords();
-  const record = records.find(r => r.s === sku);
-  return record ? fromRecord(record) : null;
+  return cachedProducts.find(p => p.sku === sku) || null;
 }
+
+// Initialize cache on module load
+ensureCache();
