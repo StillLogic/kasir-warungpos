@@ -124,18 +124,33 @@ export async function getProductBySkuAsync(sku: string): Promise<Product | null>
 // Synchronous wrappers for backward compatibility (using cached data)
 let cachedProducts: Product[] = [];
 let cacheInitialized = false;
+let cachePromise: Promise<void> | null = null;
 
-async function ensureCache() {
-  if (!cacheInitialized) {
+async function ensureCache(): Promise<void> {
+  if (cacheInitialized) return;
+  if (cachePromise) return cachePromise;
+  
+  cachePromise = (async () => {
     cachedProducts = await getProductsAsync();
     cacheInitialized = true;
-  }
+  })();
+  
+  return cachePromise;
+}
+
+// Wait for cache to be ready
+export async function waitForProducts(): Promise<Product[]> {
+  await ensureCache();
+  return cachedProducts;
 }
 
 export function getProducts(): Product[] {
-  // Start async load
-  ensureCache();
+  // If not initialized, return empty and let caller handle async loading
   return cachedProducts;
+}
+
+export function isProductsCacheReady(): boolean {
+  return cacheInitialized;
 }
 
 export function saveProducts(products: Product[]): void {
@@ -154,18 +169,23 @@ export function saveProducts(products: Product[]): void {
 
 export function addProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Product {
   const now = new Date().toISOString();
+  const id = generateId();
   const newProduct: Product = {
     ...product,
-    id: generateId(),
+    id,
     createdAt: now,
     updatedAt: now,
   };
-  cachedProducts.push(newProduct);
-  // Async save
-  addProductAsync(product).then(p => {
-    const idx = cachedProducts.findIndex(cp => cp.name === product.name && cp.sku === product.sku);
-    if (idx !== -1) cachedProducts[idx] = p;
-  });
+  
+  // Add to cache
+  cachedProducts = [...cachedProducts, newProduct];
+  
+  // Async save to IndexedDB
+  (async () => {
+    const db = await getDB();
+    await db.put('products', toRecord(newProduct));
+  })();
+  
   return newProduct;
 }
 
@@ -173,20 +193,25 @@ export function updateProduct(id: string, data: Partial<Product>): Product | nul
   const index = cachedProducts.findIndex(p => p.id === id);
   if (index === -1) return null;
   
-  cachedProducts[index] = {
+  const updated = {
     ...cachedProducts[index],
     ...data,
     updatedAt: new Date().toISOString(),
   };
+  
+  cachedProducts = cachedProducts.map(p => p.id === id ? updated : p);
+  
   // Async save
   updateProductAsync(id, data);
-  return cachedProducts[index];
+  return updated;
 }
 
 export function deleteProduct(id: string): boolean {
-  const filtered = cachedProducts.filter(p => p.id !== id);
-  if (filtered.length === cachedProducts.length) return false;
-  cachedProducts = filtered;
+  const exists = cachedProducts.some(p => p.id === id);
+  if (!exists) return false;
+  
+  cachedProducts = cachedProducts.filter(p => p.id !== id);
+  
   // Async delete
   deleteProductAsync(id);
   return true;
@@ -196,8 +221,12 @@ export function updateStock(id: string, quantity: number): boolean {
   const index = cachedProducts.findIndex(p => p.id === id);
   if (index === -1) return false;
   
-  cachedProducts[index].stock += quantity;
-  cachedProducts[index].updatedAt = new Date().toISOString();
+  cachedProducts = cachedProducts.map(p => 
+    p.id === id 
+      ? { ...p, stock: p.stock + quantity, updatedAt: new Date().toISOString() }
+      : p
+  );
+  
   // Async save
   updateStockAsync(id, quantity);
   return true;

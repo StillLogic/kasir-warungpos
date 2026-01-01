@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Product, CartItem, Transaction } from '@/types/pos';
-import { getProducts, saveTransaction, getProductByBarcode } from '@/database';
+import { getProducts, saveTransaction, getProductByBarcode, waitForProducts } from '@/database';
 import { ProductCard } from '@/components/ProductCard';
 import { Cart } from '@/components/Cart';
 import { CheckoutDialog } from '@/components/CheckoutDialog';
@@ -8,7 +8,7 @@ import { Receipt } from '@/components/Receipt';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Camera, ShoppingCart } from 'lucide-react';
+import { Search, Filter, Camera, ShoppingCart, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import {
   Select,
@@ -28,7 +28,8 @@ import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export function CashierPage() {
-  const [products, setProducts] = useState<Product[]>(() => getProducts());
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string>('all');
@@ -38,6 +39,16 @@ export function CashierPage() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      setLoading(true);
+      const data = await waitForProducts();
+      setProducts(data);
+      setLoading(false);
+    };
+    loadProducts();
+  }, []);
 
   const cartItemsCount = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -153,7 +164,7 @@ export function CashierPage() {
     });
 
     // Refresh products to update stock
-    setProducts(getProducts());
+    waitForProducts().then(setProducts);
   };
 
   const handleBarcodeScan = (barcode: string) => {
@@ -250,7 +261,12 @@ export function CashierPage() {
 
         {/* Products */}
         <div className="flex-1 overflow-auto scrollbar-thin">
-          {filteredProducts.length === 0 ? (
+          {loading ? (
+            <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+              <Loader2 className="w-8 h-8 animate-spin mb-4" />
+              <p className="text-lg font-medium">Memuat produk...</p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
               <p className="text-lg font-medium">Tidak ada produk</p>
               <p className="text-sm">Tambahkan produk di menu Produk</p>
