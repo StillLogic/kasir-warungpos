@@ -5,7 +5,7 @@ interface WarungPOSDB extends DBSchema {
   products: {
     key: string;
     value: ProductRecord;
-    indexes: { 'by-sku': string; 'by-barcode': string };
+    indexes: { 'by-sku': string };
   };
   transactions: {
     key: string;
@@ -28,7 +28,6 @@ export async function getDB(): Promise<IDBPDatabase<WarungPOSDB>> {
       if (!db.objectStoreNames.contains('products')) {
         const productStore = db.createObjectStore('products', { keyPath: 'i' });
         productStore.createIndex('by-sku', 's');
-        productStore.createIndex('by-barcode', 'b');
       }
 
       // Transactions store

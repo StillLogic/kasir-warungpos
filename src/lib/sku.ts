@@ -1,4 +1,4 @@
-import { getProducts } from './storage';
+import { getProducts } from '@/database';
 
 const categoryPrefixes: Record<string, string> = {
   'Makanan': 'MKN',
