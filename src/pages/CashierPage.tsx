@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Product, CartItem, Transaction } from '@/types/pos';
-import { getProducts, saveTransaction, getProductByBarcode } from '@/lib/storage';
+import { getProducts, saveTransaction, getProductByBarcode } from '@/database';
 import { ProductCard } from '@/components/ProductCard';
 import { Cart } from '@/components/Cart';
 import { CheckoutDialog } from '@/components/CheckoutDialog';
