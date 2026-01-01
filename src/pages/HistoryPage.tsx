@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Transaction } from '@/types/pos';
-import { getTransactions, getTodayRevenue, getTodayTransactions } from '@/lib/storage';
+import { getTransactions, getTodayRevenue, getTodayTransactions } from '@/database';
 import { formatCurrency, formatDate, formatDateShort } from '@/lib/format';
 import { Receipt } from '@/components/Receipt';
 import { Input } from '@/components/ui/input';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Product, ProductFormData } from '@/types/pos';
-import { getProducts, addProduct, updateProduct, deleteProduct, updateStock } from '@/lib/storage';
+import { getProducts, addProduct, updateProduct, deleteProduct, updateStock } from '@/database';
 import { formatCurrency } from '@/lib/format';
 import { ProductForm } from '@/components/ProductForm';
 import { Button } from '@/components/ui/button';
