@@ -21,7 +21,7 @@ export function Layout({ children }: LayoutProps) {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="container flex items-center justify-between h-14 px-4">
+        <div className="w-full flex items-center justify-between h-14 px-4 lg:px-6">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <LayoutDashboard className="w-5 h-5 text-primary-foreground" />
@@ -56,7 +56,7 @@ export function Layout({ children }: LayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container px-4 py-6">
+      <main className="flex-1 w-full px-4 lg:px-6 py-6">
         {children}
       </main>
     </div>
