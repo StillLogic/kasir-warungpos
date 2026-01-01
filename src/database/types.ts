@@ -5,7 +5,6 @@ export interface ProductRecord {
   i: string;      // id (8 karakter)
   n: string;      // name
   s: string;      // sku
-  b?: string;     // barcode (optional)
   c: string;      // category
   rp: number;     // retailPrice
   wp: number;     // wholesalePrice

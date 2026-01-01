@@ -9,7 +9,6 @@ function toRecord(p: Product): ProductRecord {
     i: p.id,
     n: p.name,
     s: p.sku,
-    b: p.barcode || undefined,
     c: p.category,
     rp: p.retailPrice,
     wp: p.wholesalePrice,
@@ -27,7 +26,6 @@ function fromRecord(r: ProductRecord): Product {
     id: r.i,
     name: r.n,
     sku: r.s,
-    barcode: r.b,
     category: r.c,
     retailPrice: r.rp,
     wholesalePrice: r.wp,
@@ -53,7 +51,6 @@ export async function addProductAsync(product: Omit<Product, 'id' | 'createdAt' 
     i: generateId(),
     n: product.name,
     s: product.sku,
-    b: product.barcode || undefined,
     c: product.category,
     rp: product.retailPrice,
     wp: product.wholesalePrice,
@@ -76,7 +73,6 @@ export async function updateProductAsync(id: string, data: Partial<Product>): Pr
     ...record,
     ...(data.name !== undefined && { n: data.name }),
     ...(data.sku !== undefined && { s: data.sku }),
-    ...(data.barcode !== undefined && { b: data.barcode || undefined }),
     ...(data.category !== undefined && { c: data.category }),
     ...(data.retailPrice !== undefined && { rp: data.retailPrice }),
     ...(data.wholesalePrice !== undefined && { wp: data.wholesalePrice }),
@@ -107,12 +103,6 @@ export async function updateStockAsync(id: string, quantity: number): Promise<bo
   record.ua = toUnix(new Date());
   await db.put('products', record);
   return true;
-}
-
-export async function getProductByBarcodeAsync(barcode: string): Promise<Product | null> {
-  const db = await getDB();
-  const record = await db.getFromIndex('products', 'by-barcode', barcode);
-  return record ? fromRecord(record) : null;
 }
 
 export async function getProductBySkuAsync(sku: string): Promise<Product | null> {
@@ -230,10 +220,6 @@ export function updateStock(id: string, quantity: number): boolean {
   // Async save
   updateStockAsync(id, quantity);
   return true;
-}
-
-export function getProductByBarcode(barcode: string): Product | null {
-  return cachedProducts.find(p => p.barcode === barcode) || null;
 }
 
 export function getProductBySku(sku: string): Product | null {
