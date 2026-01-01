@@ -1,14 +1,12 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Product, ProductFormData } from '@/types/pos';
 import { generateSKU } from '@/lib/sku';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { BarcodeScanner } from '@/components/BarcodeScanner';
-import { Camera } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -48,7 +46,6 @@ const units = ['pcs', 'pack', 'dus', 'kg', 'liter', 'botol', 'sachet'];
 
 export function ProductForm({ open, onClose, onSubmit, product, initialBarcode }: ProductFormProps) {
   const isEditing = !!product;
-  const [scannerOpen, setScannerOpen] = useState(false);
   
   const {
     register,
@@ -108,10 +105,6 @@ export function ProductForm({ open, onClose, onSubmit, product, initialBarcode }
     onClose();
   };
 
-  const handleBarcodeScan = (barcode: string) => {
-    setValue('barcode', barcode);
-    setScannerOpen(false);
-  };
 
   return (
     <>
@@ -138,23 +131,12 @@ export function ProductForm({ open, onClose, onSubmit, product, initialBarcode }
             {/* Barcode Field */}
             <div className="space-y-2">
               <Label htmlFor="barcode">Barcode</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="barcode"
-                  {...register('barcode')}
-                  placeholder="Scan atau ketik barcode"
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setScannerOpen(true)}
-                >
-                  <Camera className="w-4 h-4" />
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">Opsional - untuk scan di kasir</p>
+              <Input
+                id="barcode"
+                {...register('barcode')}
+                placeholder="Ketik barcode"
+              />
+              <p className="text-xs text-muted-foreground">Opsional - untuk pencarian di kasir</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -273,12 +255,6 @@ export function ProductForm({ open, onClose, onSubmit, product, initialBarcode }
         </DialogContent>
       </Dialog>
 
-      <BarcodeScanner
-        open={scannerOpen}
-        onClose={() => setScannerOpen(false)}
-        onScan={handleBarcodeScan}
-        title="Scan Barcode Produk"
-      />
     </>
   );
 }

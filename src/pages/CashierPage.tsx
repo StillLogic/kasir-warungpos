@@ -1,14 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Product, CartItem, Transaction } from '@/types/pos';
-import { getProducts, saveTransaction, getProductByBarcode, waitForProducts } from '@/database';
+import { saveTransaction, waitForProducts } from '@/database';
 import { ProductCard } from '@/components/ProductCard';
 import { Cart } from '@/components/Cart';
 import { CheckoutDialog } from '@/components/CheckoutDialog';
 import { Receipt } from '@/components/Receipt';
-import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Camera, ShoppingCart, Loader2 } from 'lucide-react';
+import { Search, Filter, ShoppingCart, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import {
   Select,
@@ -36,7 +35,6 @@ export function CashierPage() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
-  const [scannerOpen, setScannerOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -167,19 +165,6 @@ export function CashierPage() {
     waitForProducts().then(setProducts);
   };
 
-  const handleBarcodeScan = (barcode: string) => {
-    const product = getProductByBarcode(barcode);
-    if (product) {
-      addToCart(product);
-    } else {
-      toast({
-        title: 'Produk Tidak Ditemukan',
-        description: `Tidak ada produk dengan barcode: ${barcode}`,
-        variant: 'destructive',
-      });
-    }
-    setScannerOpen(false);
-  };
 
   const CartContent = () => (
     <Cart
@@ -200,14 +185,6 @@ export function CashierPage() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Search and Filter */}
         <div className="flex gap-2 sm:gap-3 mb-4">
-          <Button
-            variant="outline"
-            size="icon"
-            className="shrink-0"
-            onClick={() => setScannerOpen(true)}
-          >
-            <Camera className="w-5 h-5" />
-          </Button>
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -295,14 +272,6 @@ export function CashierPage() {
         </div>
       )}
 
-      {/* Barcode Scanner */}
-      <BarcodeScanner
-        open={scannerOpen}
-        onClose={() => setScannerOpen(false)}
-        onScan={handleBarcodeScan}
-        title="Scan Produk"
-        continuous={true}
-      />
 
       {/* Checkout Dialog */}
       <CheckoutDialog
