@@ -164,7 +164,6 @@ export function CashierPage() {
     waitForProducts().then(setProducts);
   };
 
-
   const CartContent = () => (
     <Cart
       items={cart}
@@ -270,7 +269,6 @@ export function CashierPage() {
           <CartContent />
         </div>
       )}
-
 
       {/* Checkout Dialog */}
       <CheckoutDialog

@@ -68,7 +68,6 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
 
   const category = watch('category');
 
-
   // Auto-generate SKU when category changes (only for new products)
   useEffect(() => {
     if (!isEditing && open) {
@@ -96,10 +95,8 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
     onClose();
   };
 
-
   return (
-    <>
-      <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
@@ -118,7 +115,6 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
                 <p className="text-sm text-destructive">{errors.name.message}</p>
               )}
             </div>
-
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -234,8 +230,6 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
             </div>
           </form>
         </DialogContent>
-      </Dialog>
-
-    </>
+    </Dialog>
   );
 }
