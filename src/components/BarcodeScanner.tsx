@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useZxing } from 'react-zxing';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Camera, X, Flashlight, FlashlightOff, Check } from 'lucide-react';
+import { Camera, X, Flashlight, FlashlightOff, Check, Loader2, AlertTriangle } from 'lucide-react';
 
 interface BarcodeScannerProps {
   open: boolean;
@@ -14,9 +14,11 @@ interface BarcodeScannerProps {
 
 export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', continuous = false }: BarcodeScannerProps) {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [lastScanned, setLastScanned] = useState<string>('');
   const [scannedItems, setScannedItems] = useState<string[]>([]);
   const [cooldown, setCooldown] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   const handleScan = useCallback((code: string) => {
     if (cooldown) return;
@@ -42,21 +44,66 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
     onResult(result) {
       const code = result.getText();
       if (code && code !== lastScanned) {
+        setIsLoading(false);
         handleScan(code);
       }
     },
+    onError(error) {
+      console.log('Scanner error:', error);
+    },
     paused: !open,
+    constraints: {
+      video: {
+        facingMode: 'environment', // Use back camera on mobile
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+    },
   });
 
   useEffect(() => {
     if (open) {
       setLastScanned('');
       setScannedItems([]);
+      setIsLoading(true);
+      setErrorMessage('');
+      setHasPermission(null);
+      
+      // Check if we're on HTTPS or localhost
+      const isSecure = window.location.protocol === 'https:' || 
+                       window.location.hostname === 'localhost' ||
+                       window.location.hostname === '127.0.0.1';
+      
+      if (!isSecure) {
+        setHasPermission(false);
+        setErrorMessage('Kamera membutuhkan koneksi HTTPS. Publish aplikasi terlebih dahulu.');
+        setIsLoading(false);
+        return;
+      }
+
       // Check camera permission
       navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then(() => setHasPermission(true))
-        .catch(() => setHasPermission(false));
+        .getUserMedia({ video: { facingMode: 'environment' } })
+        .then((stream) => {
+          setHasPermission(true);
+          setIsLoading(false);
+          // Stop the test stream
+          stream.getTracks().forEach(track => track.stop());
+        })
+        .catch((err) => {
+          console.error('Camera error:', err);
+          setHasPermission(false);
+          setIsLoading(false);
+          if (err.name === 'NotAllowedError') {
+            setErrorMessage('Izin kamera ditolak. Klik ikon kamera di address bar untuk mengizinkan.');
+          } else if (err.name === 'NotFoundError') {
+            setErrorMessage('Kamera tidak ditemukan. Pastikan perangkat memiliki kamera.');
+          } else if (err.name === 'NotReadableError') {
+            setErrorMessage('Kamera sedang digunakan aplikasi lain.');
+          } else {
+            setErrorMessage('Tidak dapat mengakses kamera. Coba refresh halaman.');
+          }
+        });
     }
   }, [open]);
 
@@ -84,12 +131,20 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
         </DialogHeader>
 
         <div className="relative aspect-square bg-black">
-          {hasPermission === false ? (
+          {isLoading ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 text-center">
-              <Camera className="w-12 h-12 mb-4 opacity-50" />
-              <p className="font-medium">Akses Kamera Ditolak</p>
+              <Loader2 className="w-12 h-12 mb-4 animate-spin text-primary" />
+              <p className="font-medium">Memuat Kamera...</p>
               <p className="text-sm opacity-75 mt-2">
-                Izinkan akses kamera di pengaturan browser untuk menggunakan fitur scan
+                Mohon tunggu dan izinkan akses kamera jika diminta
+              </p>
+            </div>
+          ) : hasPermission === false ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 text-center">
+              <AlertTriangle className="w-12 h-12 mb-4 text-destructive" />
+              <p className="font-medium">Tidak Dapat Mengakses Kamera</p>
+              <p className="text-sm opacity-75 mt-2">
+                {errorMessage}
               </p>
             </div>
           ) : (
