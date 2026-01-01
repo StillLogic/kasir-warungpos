@@ -234,6 +234,7 @@ export function CashierPage() {
         onClose={() => setScannerOpen(false)}
         onScan={handleBarcodeScan}
         title="Scan Produk"
+        continuous={true}
       />
 
       {/* Checkout Dialog */}
