@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useZxing } from 'react-zxing';
+import { DecodeHintType, BarcodeFormat } from '@zxing/library';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Camera, X, Flashlight, FlashlightOff, Check, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
@@ -38,6 +39,20 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
     }
   }, [continuous, cooldown, onClose, onScan]);
 
+  const hints = new Map();
+  hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+    BarcodeFormat.EAN_13,
+    BarcodeFormat.EAN_8,
+    BarcodeFormat.UPC_A,
+    BarcodeFormat.UPC_E,
+    BarcodeFormat.CODE_128,
+    BarcodeFormat.CODE_39,
+    BarcodeFormat.CODE_93,
+    BarcodeFormat.ITF,
+    BarcodeFormat.QR_CODE,
+  ]);
+  hints.set(DecodeHintType.TRY_HARDER, true);
+
   const {
     ref,
     torch: { on, off, isOn, isAvailable },
@@ -59,12 +74,13 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
       }
     },
     paused: !open || !cameraReady,
-    timeBetweenDecodingAttempts: 200,
+    timeBetweenDecodingAttempts: 100,
+    hints,
     constraints: {
       video: {
         facingMode: 'environment',
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
       },
     },
   });
