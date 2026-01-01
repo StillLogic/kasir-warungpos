@@ -139,7 +139,12 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
               {/* Scanned items list (continuous mode) */}
               {continuous && scannedItems.length > 0 && (
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-8">
-                  <p className="text-xs text-white/70 mb-2">Terakhir discan:</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs text-white/70">Terakhir discan:</p>
+                    <span className="text-sm font-semibold bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                      Total: {scannedItems.length} item
+                    </span>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {scannedItems.map((item, index) => (
                       <span
