@@ -1,0 +1,60 @@
+import { ReactNode } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { ShoppingCart, Package, History, LayoutDashboard } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface LayoutProps {
+  children: ReactNode;
+}
+
+const navItems = [
+  { path: '/', label: 'Kasir', icon: ShoppingCart },
+  { path: '/products', label: 'Produk', icon: Package },
+  { path: '/history', label: 'Riwayat', icon: History },
+];
+
+export function Layout({ children }: LayoutProps) {
+  const location = useLocation();
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <header className="bg-card border-b border-border sticky top-0 z-50">
+        <div className="container flex items-center justify-between h-14 px-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <LayoutDashboard className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <span className="font-semibold text-lg">WarungPOS</span>
+          </div>
+          <nav className="flex items-center gap-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="hidden sm:inline">{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 container px-4 py-6">
+        {children}
+      </main>
+    </div>
+  );
+}
