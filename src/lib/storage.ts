@@ -59,11 +59,6 @@ export function updateStock(id: string, quantity: number): boolean {
   return true;
 }
 
-export function getProductByBarcode(barcode: string): Product | null {
-  const products = getProducts();
-  return products.find(p => p.barcode === barcode) || null;
-}
-
 export function getProductBySku(sku: string): Product | null {
   const products = getProducts();
   return products.find(p => p.sku === sku) || null;

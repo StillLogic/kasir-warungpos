@@ -60,8 +60,7 @@ export function CashierPage() {
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-                           p.sku.toLowerCase().includes(search.toLowerCase()) ||
-                           (p.barcode && p.barcode.toLowerCase().includes(search.toLowerCase()));
+                           p.sku.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = category === 'all' || p.category === category;
       return matchesSearch && matchesCategory;
     });

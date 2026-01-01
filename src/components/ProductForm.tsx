@@ -24,7 +24,6 @@ import {
 const productSchema = z.object({
   name: z.string().min(1, 'Nama produk wajib diisi'),
   sku: z.string().min(1, 'SKU wajib diisi'),
-  barcode: z.string().optional(),
   category: z.string().min(1, 'Kategori wajib diisi'),
   retailPrice: z.number().min(0, 'Harga tidak boleh negatif'),
   wholesalePrice: z.number().min(0, 'Harga tidak boleh negatif'),
@@ -38,13 +37,12 @@ interface ProductFormProps {
   onClose: () => void;
   onSubmit: (data: ProductFormData) => void;
   product?: Product | null;
-  initialBarcode?: string;
 }
 
 const categories = ['Makanan', 'Minuman', 'Snack', 'Rokok', 'Kebersihan', 'Lainnya'];
 const units = ['pcs', 'pack', 'dus', 'kg', 'liter', 'botol', 'sachet'];
 
-export function ProductForm({ open, onClose, onSubmit, product, initialBarcode }: ProductFormProps) {
+export function ProductForm({ open, onClose, onSubmit, product }: ProductFormProps) {
   const isEditing = !!product;
   
   const {
@@ -59,7 +57,6 @@ export function ProductForm({ open, onClose, onSubmit, product, initialBarcode }
     defaultValues: product || {
       name: '',
       sku: '',
-      barcode: '',
       category: 'Lainnya',
       retailPrice: 0,
       wholesalePrice: 0,
@@ -71,12 +68,6 @@ export function ProductForm({ open, onClose, onSubmit, product, initialBarcode }
 
   const category = watch('category');
 
-  // Set initial barcode when provided (from scan)
-  useEffect(() => {
-    if (open && initialBarcode) {
-      setValue('barcode', initialBarcode);
-    }
-  }, [open, initialBarcode, setValue]);
 
   // Auto-generate SKU when category changes (only for new products)
   useEffect(() => {
@@ -128,16 +119,6 @@ export function ProductForm({ open, onClose, onSubmit, product, initialBarcode }
               )}
             </div>
 
-            {/* Barcode Field */}
-            <div className="space-y-2">
-              <Label htmlFor="barcode">Barcode</Label>
-              <Input
-                id="barcode"
-                {...register('barcode')}
-                placeholder="Ketik barcode"
-              />
-              <p className="text-xs text-muted-foreground">Opsional - untuk pencarian di kasir</p>
-            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
