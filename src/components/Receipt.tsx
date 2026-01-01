@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Printer, X } from 'lucide-react';
+import { Printer } from 'lucide-react';
 
 interface ReceiptProps {
   transaction: Transaction | null;
@@ -76,12 +76,7 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-sm print:hidden">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>Nota Transaksi</span>
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X className="w-4 h-4" />
-              </Button>
-            </DialogTitle>
+            <DialogTitle>Nota Transaksi</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
