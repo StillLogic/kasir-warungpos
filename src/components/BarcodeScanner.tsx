@@ -45,67 +45,86 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
       const code = result.getText();
       if (code && code !== lastScanned) {
         setIsLoading(false);
+        setHasPermission(true);
         handleScan(code);
       }
     },
     onError(error) {
       console.log('Scanner error:', error);
+      // NotAllowedError means permission denied
+      if (error && (error as Error).name === 'NotAllowedError') {
+        setHasPermission(false);
+        setErrorMessage('Izin kamera ditolak. Klik ikon kamera di address bar untuk mengizinkan.');
+        setIsLoading(false);
+      }
     },
     paused: !open,
+    timeBetweenDecodingAttempts: 200,
     constraints: {
       video: {
-        facingMode: 'environment', // Use back camera on mobile
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
+        facingMode: 'environment',
+        width: { min: 640, ideal: 1280, max: 1920 },
+        height: { min: 480, ideal: 720, max: 1080 },
       },
     },
   });
 
+  // Handle video element ready state
   useEffect(() => {
-    if (open) {
-      setLastScanned('');
-      setScannedItems([]);
-      setIsLoading(true);
-      setErrorMessage('');
-      setHasPermission(null);
-      
-      // Check if we're on HTTPS or localhost
-      const isSecure = window.location.protocol === 'https:' || 
-                       window.location.hostname === 'localhost' ||
-                       window.location.hostname === '127.0.0.1';
-      
-      if (!isSecure) {
-        setHasPermission(false);
-        setErrorMessage('Kamera membutuhkan koneksi HTTPS. Publish aplikasi terlebih dahulu.');
-        setIsLoading(false);
-        return;
-      }
+    if (!open) return;
+    
+    setLastScanned('');
+    setScannedItems([]);
+    setIsLoading(true);
+    setErrorMessage('');
+    setHasPermission(null);
 
-      // Check camera permission
-      navigator.mediaDevices
-        .getUserMedia({ video: { facingMode: 'environment' } })
-        .then((stream) => {
-          setHasPermission(true);
-          setIsLoading(false);
-          // Stop the test stream
-          stream.getTracks().forEach(track => track.stop());
-        })
-        .catch((err) => {
-          console.error('Camera error:', err);
-          setHasPermission(false);
-          setIsLoading(false);
-          if (err.name === 'NotAllowedError') {
-            setErrorMessage('Izin kamera ditolak. Klik ikon kamera di address bar untuk mengizinkan.');
-          } else if (err.name === 'NotFoundError') {
-            setErrorMessage('Kamera tidak ditemukan. Pastikan perangkat memiliki kamera.');
-          } else if (err.name === 'NotReadableError') {
-            setErrorMessage('Kamera sedang digunakan aplikasi lain.');
-          } else {
-            setErrorMessage('Tidak dapat mengakses kamera. Coba refresh halaman.');
-          }
-        });
+    // Check if we're on HTTPS or localhost
+    const isSecure = window.location.protocol === 'https:' || 
+                     window.location.hostname === 'localhost' ||
+                     window.location.hostname === '127.0.0.1';
+    
+    if (!isSecure) {
+      setHasPermission(false);
+      setErrorMessage('Kamera membutuhkan koneksi HTTPS. Publish aplikasi terlebih dahulu.');
+      setIsLoading(false);
+      return;
     }
-  }, [open]);
+
+    // Listen to video element for stream start
+    const videoElement = ref.current;
+    if (videoElement) {
+      const handleLoadedMetadata = () => {
+        setIsLoading(false);
+        setHasPermission(true);
+      };
+
+      const handlePlaying = () => {
+        setIsLoading(false);
+        setHasPermission(true);
+      };
+
+      videoElement.addEventListener('loadedmetadata', handleLoadedMetadata);
+      videoElement.addEventListener('playing', handlePlaying);
+
+      // Timeout fallback - if stream doesn't start within 5 seconds
+      const timeout = setTimeout(() => {
+        if (isLoading && hasPermission === null) {
+          // Check if video has stream
+          if (videoElement.srcObject) {
+            setIsLoading(false);
+            setHasPermission(true);
+          }
+        }
+      }, 3000);
+
+      return () => {
+        videoElement.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        videoElement.removeEventListener('playing', handlePlaying);
+        clearTimeout(timeout);
+      };
+    }
+  }, [open, ref]);
 
   // Reset lastScanned after cooldown to allow same barcode scan again
   useEffect(() => {
@@ -130,7 +149,7 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
           </DialogTitle>
         </DialogHeader>
 
-        <div className="relative aspect-square bg-black">
+        <div className="relative aspect-square bg-black overflow-hidden">
           {isLoading ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 text-center">
               <Loader2 className="w-12 h-12 mb-4 animate-spin text-primary" />
@@ -149,7 +168,7 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
             </div>
           ) : (
             <>
-              <video ref={ref} className="w-full h-full object-cover" />
+              <video ref={ref} className="w-full h-full object-cover" autoPlay playsInline muted />
               
               {/* Scan overlay */}
               <div className="absolute inset-0 pointer-events-none">
