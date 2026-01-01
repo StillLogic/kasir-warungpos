@@ -1,12 +1,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Product, ProductFormData } from '@/types/pos';
 import { generateSKU } from '@/lib/sku';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { BarcodeScanner } from '@/components/BarcodeScanner';
+import { Camera } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +26,7 @@ import {
 const productSchema = z.object({
   name: z.string().min(1, 'Nama produk wajib diisi'),
   sku: z.string().min(1, 'SKU wajib diisi'),
+  barcode: z.string().optional(),
   category: z.string().min(1, 'Kategori wajib diisi'),
   retailPrice: z.number().min(0, 'Harga tidak boleh negatif'),
   wholesalePrice: z.number().min(0, 'Harga tidak boleh negatif'),
@@ -37,13 +40,15 @@ interface ProductFormProps {
   onClose: () => void;
   onSubmit: (data: ProductFormData) => void;
   product?: Product | null;
+  initialBarcode?: string;
 }
 
 const categories = ['Makanan', 'Minuman', 'Snack', 'Rokok', 'Kebersihan', 'Lainnya'];
 const units = ['pcs', 'pack', 'dus', 'kg', 'liter', 'botol', 'sachet'];
 
-export function ProductForm({ open, onClose, onSubmit, product }: ProductFormProps) {
+export function ProductForm({ open, onClose, onSubmit, product, initialBarcode }: ProductFormProps) {
   const isEditing = !!product;
+  const [scannerOpen, setScannerOpen] = useState(false);
   
   const {
     register,
@@ -57,6 +62,7 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
     defaultValues: product || {
       name: '',
       sku: '',
+      barcode: '',
       category: 'Lainnya',
       retailPrice: 0,
       wholesalePrice: 0,
@@ -67,7 +73,13 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
   });
 
   const category = watch('category');
-  const currentSku = watch('sku');
+
+  // Set initial barcode when provided (from scan)
+  useEffect(() => {
+    if (open && initialBarcode) {
+      setValue('barcode', initialBarcode);
+    }
+  }, [open, initialBarcode, setValue]);
 
   // Auto-generate SKU when category changes (only for new products)
   useEffect(() => {
@@ -96,141 +108,177 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
     onClose();
   };
 
+  const handleBarcodeScan = (barcode: string) => {
+    setValue('barcode', barcode);
+    setScannerOpen(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>
-            {product ? 'Edit Produk' : 'Tambah Produk Baru'}
-          </DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nama Produk</Label>
-            <Input
-              id="name"
-              {...register('name')}
-              placeholder="Masukkan nama produk"
-            />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+    <>
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {product ? 'Edit Produk' : 'Tambah Produk Baru'}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label>Kategori</Label>
-              <Select
-                value={watch('category')}
-                onValueChange={(value) => setValue('category', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih kategori" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sku">SKU / Kode</Label>
+              <Label htmlFor="name">Nama Produk</Label>
               <Input
-                id="sku"
-                {...register('sku')}
-                placeholder="Auto-generate"
-                readOnly={!isEditing}
-                className={!isEditing ? 'bg-muted cursor-not-allowed' : ''}
+                id="name"
+                {...register('name')}
+                placeholder="Masukkan nama produk"
               />
-              {!isEditing && (
-                <p className="text-xs text-muted-foreground">Otomatis berdasarkan kategori</p>
-              )}
-              {errors.sku && (
-                <p className="text-sm text-destructive">{errors.sku.message}</p>
+              {errors.name && (
+                <p className="text-sm text-destructive">{errors.name.message}</p>
               )}
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
+            {/* Barcode Field */}
             <div className="space-y-2">
-              <Label htmlFor="retailPrice">Harga Satuan</Label>
+              <Label htmlFor="barcode">Barcode</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="barcode"
+                  {...register('barcode')}
+                  placeholder="Scan atau ketik barcode"
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setScannerOpen(true)}
+                >
+                  <Camera className="w-4 h-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Opsional - untuk scan di kasir</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Kategori</Label>
+                <Select
+                  value={watch('category')}
+                  onValueChange={(value) => setValue('category', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih kategori" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sku">SKU / Kode</Label>
+                <Input
+                  id="sku"
+                  {...register('sku')}
+                  placeholder="Auto-generate"
+                  readOnly={!isEditing}
+                  className={!isEditing ? 'bg-muted cursor-not-allowed' : ''}
+                />
+                {!isEditing && (
+                  <p className="text-xs text-muted-foreground">Otomatis berdasarkan kategori</p>
+                )}
+                {errors.sku && (
+                  <p className="text-sm text-destructive">{errors.sku.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="retailPrice">Harga Satuan</Label>
+                <Input
+                  id="retailPrice"
+                  type="number"
+                  {...register('retailPrice', { valueAsNumber: true })}
+                  placeholder="0"
+                />
+                {errors.retailPrice && (
+                  <p className="text-sm text-destructive">{errors.retailPrice.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="wholesalePrice">Harga Grosir</Label>
+                <Input
+                  id="wholesalePrice"
+                  type="number"
+                  {...register('wholesalePrice', { valueAsNumber: true })}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="wholesaleMinQty">Min. Qty Grosir</Label>
+                <Input
+                  id="wholesaleMinQty"
+                  type="number"
+                  {...register('wholesaleMinQty', { valueAsNumber: true })}
+                  placeholder="10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Satuan</Label>
+                <Select
+                  value={watch('unit')}
+                  onValueChange={(value) => setValue('unit', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih satuan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {units.map((unit) => (
+                      <SelectItem key={unit} value={unit}>
+                        {unit}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="stock">Stok Awal</Label>
               <Input
-                id="retailPrice"
+                id="stock"
                 type="number"
-                {...register('retailPrice', { valueAsNumber: true })}
+                {...register('stock', { valueAsNumber: true })}
                 placeholder="0"
               />
-              {errors.retailPrice && (
-                <p className="text-sm text-destructive">{errors.retailPrice.message}</p>
+              {errors.stock && (
+                <p className="text-sm text-destructive">{errors.stock.message}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="wholesalePrice">Harga Grosir</Label>
-              <Input
-                id="wholesalePrice"
-                type="number"
-                {...register('wholesalePrice', { valueAsNumber: true })}
-                placeholder="0"
-              />
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="wholesaleMinQty">Min. Qty Grosir</Label>
-              <Input
-                id="wholesaleMinQty"
-                type="number"
-                {...register('wholesaleMinQty', { valueAsNumber: true })}
-                placeholder="10"
-              />
+            <div className="flex gap-3 pt-4">
+              <Button type="button" variant="outline" className="flex-1" onClick={handleClose}>
+                Batal
+              </Button>
+              <Button type="submit" className="flex-1">
+                {product ? 'Simpan Perubahan' : 'Tambah Produk'}
+              </Button>
             </div>
-            <div className="space-y-2">
-              <Label>Satuan</Label>
-              <Select
-                value={watch('unit')}
-                onValueChange={(value) => setValue('unit', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih satuan" />
-                </SelectTrigger>
-                <SelectContent>
-                  {units.map((unit) => (
-                    <SelectItem key={unit} value={unit}>
-                      {unit}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-          <div className="space-y-2">
-            <Label htmlFor="stock">Stok Awal</Label>
-            <Input
-              id="stock"
-              type="number"
-              {...register('stock', { valueAsNumber: true })}
-              placeholder="0"
-            />
-            {errors.stock && (
-              <p className="text-sm text-destructive">{errors.stock.message}</p>
-            )}
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" className="flex-1" onClick={handleClose}>
-              Batal
-            </Button>
-            <Button type="submit" className="flex-1">
-              {product ? 'Simpan Perubahan' : 'Tambah Produk'}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={handleBarcodeScan}
+        title="Scan Barcode Produk"
+      />
+    </>
   );
 }
