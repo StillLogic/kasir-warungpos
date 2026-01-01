@@ -91,40 +91,43 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
       return;
     }
 
-    // Listen to video element for stream start
-    const videoElement = ref.current;
-    if (videoElement) {
-      const handleLoadedMetadata = () => {
-        setIsLoading(false);
-        setHasPermission(true);
-      };
-
-      const handlePlaying = () => {
-        setIsLoading(false);
-        setHasPermission(true);
-      };
-
-      videoElement.addEventListener('loadedmetadata', handleLoadedMetadata);
-      videoElement.addEventListener('playing', handlePlaying);
-
-      // Timeout fallback - if stream doesn't start within 5 seconds
-      const timeout = setTimeout(() => {
-        if (isLoading && hasPermission === null) {
-          // Check if video has stream
-          if (videoElement.srcObject) {
-            setIsLoading(false);
-            setHasPermission(true);
-          }
+    // Poll for video stream - more reliable than event listeners
+    const checkVideoStream = () => {
+      const videoElement = ref.current;
+      if (videoElement) {
+        // Check if video is playing
+        if (videoElement.readyState >= 2 || (videoElement.srcObject && !videoElement.paused)) {
+          setIsLoading(false);
+          setHasPermission(true);
+          return true;
         }
-      }, 3000);
+      }
+      return false;
+    };
 
-      return () => {
-        videoElement.removeEventListener('loadedmetadata', handleLoadedMetadata);
-        videoElement.removeEventListener('playing', handlePlaying);
-        clearTimeout(timeout);
-      };
-    }
-  }, [open, ref]);
+    // Check immediately
+    if (checkVideoStream()) return;
+
+    // Poll every 300ms for up to 10 seconds
+    let attempts = 0;
+    const maxAttempts = 33;
+    const interval = setInterval(() => {
+      attempts++;
+      if (checkVideoStream() || attempts >= maxAttempts) {
+        clearInterval(interval);
+        if (attempts >= maxAttempts && isLoading) {
+          // Still loading after timeout - likely permission issue
+          setHasPermission(false);
+          setErrorMessage('Gagal memuat kamera. Pastikan izin kamera diaktifkan dan coba refresh halaman.');
+          setIsLoading(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [open]);
 
   // Reset lastScanned after cooldown to allow same barcode scan again
   useEffect(() => {
@@ -150,92 +153,97 @@ export function BarcodeScanner({ open, onClose, onScan, title = 'Scan Barcode', 
         </DialogHeader>
 
         <div className="relative aspect-square bg-black overflow-hidden">
-          {isLoading ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 text-center">
+          {/* Video always rendered so useZxing can access the ref */}
+          <video ref={ref} className="w-full h-full object-cover" autoPlay playsInline muted />
+          
+          {/* Loading overlay */}
+          {isLoading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-white p-4 text-center z-10">
               <Loader2 className="w-12 h-12 mb-4 animate-spin text-primary" />
               <p className="font-medium">Memuat Kamera...</p>
               <p className="text-sm opacity-75 mt-2">
                 Mohon tunggu dan izinkan akses kamera jika diminta
               </p>
             </div>
-          ) : hasPermission === false ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 text-center">
+          )}
+
+          {/* Permission error overlay */}
+          {hasPermission === false && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-white p-4 text-center z-10">
               <AlertTriangle className="w-12 h-12 mb-4 text-destructive" />
               <p className="font-medium">Tidak Dapat Mengakses Kamera</p>
               <p className="text-sm opacity-75 mt-2">
                 {errorMessage}
               </p>
             </div>
-          ) : (
-            <>
-              <video ref={ref} className="w-full h-full object-cover" autoPlay playsInline muted />
-              
-              {/* Scan overlay */}
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute inset-0 bg-black/50" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64">
-                  <div className="absolute inset-0 bg-transparent" style={{ boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' }} />
-                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-lg" />
-                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-lg" />
-                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-lg" />
-                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-lg" />
-                  
-                  {/* Scan line animation */}
-                  <div className="absolute top-0 left-4 right-4 h-0.5 bg-primary animate-pulse" />
-                </div>
+          )}
+
+          {/* Scan overlay - only show when camera is active */}
+          {!isLoading && hasPermission !== false && (
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute inset-0 bg-black/50" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64">
+                <div className="absolute inset-0 bg-transparent" style={{ boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' }} />
+                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-lg" />
+                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-lg" />
+                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-lg" />
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-lg" />
+                
+                {/* Scan line animation */}
+                <div className="absolute top-0 left-4 right-4 h-0.5 bg-primary animate-pulse" />
               </div>
+            </div>
+          )}
 
-              {/* Success flash indicator */}
-              {cooldown && (
-                <div className="absolute inset-0 bg-primary/20 animate-pulse flex items-center justify-center">
-                  <div className="bg-primary text-primary-foreground rounded-full p-4">
-                    <Check className="w-8 h-8" />
-                  </div>
-                </div>
-              )}
+          {/* Success flash indicator */}
+          {cooldown && (
+            <div className="absolute inset-0 bg-primary/20 animate-pulse flex items-center justify-center z-20">
+              <div className="bg-primary text-primary-foreground rounded-full p-4">
+                <Check className="w-8 h-8" />
+              </div>
+            </div>
+          )}
 
-              {/* Torch toggle */}
-              {isAvailable && (
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="absolute top-4 right-4"
-                  onClick={() => (isOn ? off() : on())}
-                >
-                  {isOn ? (
-                    <FlashlightOff className="w-5 h-5" />
-                  ) : (
-                    <Flashlight className="w-5 h-5" />
-                  )}
-                </Button>
+          {/* Torch toggle */}
+          {isAvailable && !isLoading && (
+            <Button
+              variant="secondary"
+              size="icon"
+              className="absolute top-4 right-4 z-20"
+              onClick={() => (isOn ? off() : on())}
+            >
+              {isOn ? (
+                <FlashlightOff className="w-5 h-5" />
+              ) : (
+                <Flashlight className="w-5 h-5" />
               )}
+            </Button>
+          )}
 
-              {/* Scanned items list (continuous mode) */}
-              {continuous && scannedItems.length > 0 && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-8">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-white/70">Terakhir discan:</p>
-                    <span className="text-sm font-semibold bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                      Total: {scannedItems.length} item
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {scannedItems.map((item, index) => (
-                      <span
-                        key={`${item}-${index}`}
-                        className={`text-xs px-2 py-1 rounded ${
-                          index === 0 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'bg-white/20 text-white'
-                        }`}
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
+          {/* Scanned items list (continuous mode) */}
+          {continuous && scannedItems.length > 0 && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-8 z-20">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-white/70">Terakhir discan:</p>
+                <span className="text-sm font-semibold bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                  Total: {scannedItems.length} item
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {scannedItems.map((item, index) => (
+                  <span
+                    key={`${item}-${index}`}
+                    className={`text-xs px-2 py-1 rounded ${
+                      index === 0 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-white/20 text-white'
+                    }`}
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
