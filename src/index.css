@@ -127,3 +127,39 @@
     background: hsl(var(--muted-foreground) / 0.5);
   }
 }
+
+/* Print styles for receipt */
+@media print {
+  /* Hide everything except the receipt */
+  body * {
+    visibility: hidden;
+  }
+  
+  #receipt-print-area,
+  #receipt-print-area * {
+    visibility: visible;
+  }
+  
+  #receipt-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    padding: 10mm;
+    background: white !important;
+    color: black !important;
+  }
+  
+  /* Reset colors for print */
+  #receipt-print-area * {
+    color: black !important;
+    background: white !important;
+    border-color: #ccc !important;
+  }
+  
+  /* Ensure single page */
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+}
