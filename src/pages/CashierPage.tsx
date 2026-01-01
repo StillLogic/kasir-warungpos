@@ -1,13 +1,14 @@
 import { useState, useMemo } from 'react';
 import { Product, CartItem, Transaction } from '@/types/pos';
-import { getProducts, saveTransaction } from '@/lib/storage';
+import { getProducts, saveTransaction, getProductByBarcode } from '@/lib/storage';
 import { ProductCard } from '@/components/ProductCard';
 import { Cart } from '@/components/Cart';
 import { CheckoutDialog } from '@/components/CheckoutDialog';
 import { Receipt } from '@/components/Receipt';
+import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Camera } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import {
   Select,
@@ -18,13 +19,14 @@ import {
 } from '@/components/ui/select';
 
 export function CashierPage() {
-  const [products] = useState<Product[]>(() => getProducts());
+  const [products, setProducts] = useState<Product[]>(() => getProducts());
   const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string>('all');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const categories = useMemo(() => {
     const cats = new Set(products.map(p => p.category));
@@ -34,7 +36,8 @@ export function CashierPage() {
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-                           p.sku.toLowerCase().includes(search.toLowerCase());
+                           p.sku.toLowerCase().includes(search.toLowerCase()) ||
+                           (p.barcode && p.barcode.toLowerCase().includes(search.toLowerCase()));
       const matchesCategory = category === 'all' || p.category === category;
       return matchesSearch && matchesCategory;
     });
@@ -78,6 +81,11 @@ export function CashierPage() {
         priceType: 'retail' as const,
         subtotal: product.retailPrice,
       }];
+    });
+
+    toast({
+      title: 'Ditambahkan',
+      description: `${product.name} ditambahkan ke keranjang`,
     });
   };
 
@@ -130,7 +138,21 @@ export function CashierPage() {
     });
 
     // Refresh products to update stock
-    window.location.reload();
+    setProducts(getProducts());
+  };
+
+  const handleBarcodeScan = (barcode: string) => {
+    const product = getProductByBarcode(barcode);
+    if (product) {
+      addToCart(product);
+    } else {
+      toast({
+        title: 'Produk Tidak Ditemukan',
+        description: `Tidak ada produk dengan barcode: ${barcode}`,
+        variant: 'destructive',
+      });
+    }
+    setScannerOpen(false);
   };
 
   return (
@@ -139,10 +161,18 @@ export function CashierPage() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Search and Filter */}
         <div className="flex gap-3 mb-4">
+          <Button
+            variant="outline"
+            size="icon"
+            className="shrink-0"
+            onClick={() => setScannerOpen(true)}
+          >
+            <Camera className="w-5 h-5" />
+          </Button>
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Cari produk atau SKU..."
+              placeholder="Cari produk, SKU, atau barcode..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
@@ -197,6 +227,14 @@ export function CashierPage() {
           total={cartTotal}
         />
       </div>
+
+      {/* Barcode Scanner */}
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={handleBarcodeScan}
+        title="Scan Produk"
+      />
 
       {/* Checkout Dialog */}
       <CheckoutDialog
