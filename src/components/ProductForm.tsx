@@ -1,7 +1,9 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useEffect } from 'react';
 import { Product, ProductFormData } from '@/types/pos';
+import { generateSKU } from '@/lib/sku';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,6 +43,8 @@ const categories = ['Makanan', 'Minuman', 'Snack', 'Rokok', 'Kebersihan', 'Lainn
 const units = ['pcs', 'pack', 'dus', 'kg', 'liter', 'botol', 'sachet'];
 
 export function ProductForm({ open, onClose, onSubmit, product }: ProductFormProps) {
+  const isEditing = !!product;
+  
   const {
     register,
     handleSubmit,
@@ -61,6 +65,25 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
       unit: 'pcs',
     },
   });
+
+  const category = watch('category');
+  const currentSku = watch('sku');
+
+  // Auto-generate SKU when category changes (only for new products)
+  useEffect(() => {
+    if (!isEditing && open) {
+      const newSku = generateSKU(category);
+      setValue('sku', newSku);
+    }
+  }, [category, isEditing, open, setValue]);
+
+  // Generate initial SKU when dialog opens for new product
+  useEffect(() => {
+    if (open && !isEditing) {
+      const initialSku = generateSKU('Lainnya');
+      setValue('sku', initialSku);
+    }
+  }, [open, isEditing, setValue]);
 
   const handleFormSubmit = (data: ProductFormData) => {
     onSubmit(data);
@@ -96,17 +119,6 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="sku">SKU / Kode</Label>
-              <Input
-                id="sku"
-                {...register('sku')}
-                placeholder="SKU001"
-              />
-              {errors.sku && (
-                <p className="text-sm text-destructive">{errors.sku.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
               <Label>Kategori</Label>
               <Select
                 value={watch('category')}
@@ -123,6 +135,22 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sku">SKU / Kode</Label>
+              <Input
+                id="sku"
+                {...register('sku')}
+                placeholder="Auto-generate"
+                readOnly={!isEditing}
+                className={!isEditing ? 'bg-muted cursor-not-allowed' : ''}
+              />
+              {!isEditing && (
+                <p className="text-xs text-muted-foreground">Otomatis berdasarkan kategori</p>
+              )}
+              {errors.sku && (
+                <p className="text-sm text-destructive">{errors.sku.message}</p>
+              )}
             </div>
           </div>
 
