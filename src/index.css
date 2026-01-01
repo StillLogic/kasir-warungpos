@@ -130,34 +130,41 @@
 
 /* Print styles for receipt */
 @media print {
-  /* Hide everything except the receipt */
+  /* Hide everything */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 80mm !important;
+  }
+  
   body * {
-    visibility: hidden;
+    visibility: hidden !important;
   }
   
-  #receipt-print-area,
-  #receipt-print-area * {
-    visibility: visible;
-  }
-  
+  /* Show only print area */
   #receipt-print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 80mm;
-    padding: 10mm;
+    visibility: visible !important;
+    display: block !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    padding: 5mm !important;
+    margin: 0 !important;
     background: white !important;
-    color: black !important;
   }
   
-  /* Reset colors for print */
   #receipt-print-area * {
+    visibility: visible !important;
     color: black !important;
-    background: white !important;
-    border-color: #ccc !important;
+    background: transparent !important;
   }
   
-  /* Ensure single page */
+  #receipt-print-area .border-dashed {
+    border-color: #666 !important;
+  }
+  
+  /* Page settings */
   @page {
     size: 80mm auto;
     margin: 0;
