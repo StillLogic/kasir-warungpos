@@ -1,4 +1,9 @@
+import { useRef } from 'react';
+import html2canvas from 'html2canvas';
 import { formatCurrency } from '@/lib/format';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 interface StoreSettings {
   storeName: string;
@@ -16,6 +21,7 @@ interface ReceiptPreviewProps {
 }
 
 export function ReceiptPreview({ settings }: ReceiptPreviewProps) {
+  const receiptRef = useRef<HTMLDivElement>(null);
   const is80mm = settings.paperWidth === '80';
   
   // Sample data for preview
@@ -39,12 +45,41 @@ export function ReceiptPreview({ settings }: ReceiptPreviewProps) {
     minute: '2-digit',
   });
 
+  const handleSaveAsPng = async () => {
+    if (!receiptRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(receiptRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+      });
+      
+      const link = document.createElement('a');
+      link.download = `struk-preview-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      toast({
+        title: 'Struk Disimpan',
+        description: 'Preview struk berhasil disimpan sebagai gambar PNG',
+      });
+    } catch (error) {
+      toast({
+        title: 'Gagal Menyimpan',
+        description: 'Terjadi kesalahan saat menyimpan struk',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
-    <div className="bg-muted/50 rounded-lg p-4 flex justify-center">
-      <div 
-        className={`bg-white text-black shadow-lg ${is80mm ? 'w-[280px]' : 'w-[200px]'}`}
-        style={{ fontFamily: "'Courier New', monospace" }}
-      >
+    <div className="space-y-3">
+      <div className="bg-muted/50 rounded-lg p-4 flex justify-center">
+        <div 
+          ref={receiptRef}
+          className={`bg-white text-black shadow-lg ${is80mm ? 'w-[280px]' : 'w-[200px]'}`}
+          style={{ fontFamily: "'Courier New', monospace" }}
+        >
         <div className={`p-3 ${is80mm ? 'text-sm' : 'text-xs'}`}>
           {/* Header */}
           <div className="text-center border-b border-dashed border-gray-400 pb-2 mb-2">
@@ -117,7 +152,13 @@ export function ReceiptPreview({ settings }: ReceiptPreviewProps) {
             </p>
           </div>
         </div>
+        </div>
       </div>
+      
+      <Button variant="outline" size="sm" className="w-full" onClick={handleSaveAsPng}>
+        <Download className="w-4 h-4 mr-2" />
+        Simpan sebagai PNG
+      </Button>
     </div>
   );
 }

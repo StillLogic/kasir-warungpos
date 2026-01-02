@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+import html2canvas from 'html2canvas';
 import { Transaction } from '@/types/pos';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { Button } from '@/components/ui/button';
@@ -7,7 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Printer } from 'lucide-react';
+import { Printer, Download } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 interface ReceiptProps {
   transaction: Transaction | null;
@@ -50,6 +53,8 @@ function getSettings(): StoreSettings {
 }
 
 export function Receipt({ transaction, open, onClose }: ReceiptProps) {
+  const receiptRef = useRef<HTMLDivElement>(null);
+  
   if (!transaction) return null;
 
   const settings = getSettings();
@@ -141,6 +146,33 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
     }
   };
 
+  const handleSaveAsPng = async () => {
+    if (!receiptRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(receiptRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+      });
+      
+      const link = document.createElement('a');
+      link.download = `struk-${transaction.id.slice(0, 8).toUpperCase()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      toast({
+        title: 'Struk Disimpan',
+        description: 'Struk berhasil disimpan sebagai gambar PNG',
+      });
+    } catch (error) {
+      toast({
+        title: 'Gagal Menyimpan',
+        description: 'Terjadi kesalahan saat menyimpan struk',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-sm">
@@ -148,20 +180,20 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
           <DialogTitle>Nota Transaksi</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div ref={receiptRef} className="bg-white p-4 space-y-4">
           {/* Store Header */}
-          <div className="text-center border-b border-dashed border-border pb-4">
-            <h2 className="text-xl font-bold">{settings.storeName}</h2>
+          <div className="text-center border-b border-dashed border-gray-300 pb-4">
+            <h2 className="text-xl font-bold text-black">{settings.storeName}</h2>
             {settings.storeAddress && (
-              <p className="text-xs text-muted-foreground mt-1">{settings.storeAddress}</p>
+              <p className="text-xs text-gray-600 mt-1">{settings.storeAddress}</p>
             )}
             {settings.storePhone && (
-              <p className="text-xs text-muted-foreground">Telp: {settings.storePhone}</p>
+              <p className="text-xs text-gray-600">Telp: {settings.storePhone}</p>
             )}
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-gray-600 mt-2">
               {formatDate(transaction.createdAt)}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-600">
               No: {transaction.id.slice(0, 8).toUpperCase()}
             </p>
           </div>
@@ -169,10 +201,10 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
           {/* Items */}
           <div className="space-y-2">
             {transaction.items.map((item, index) => (
-              <div key={index} className="flex justify-between text-sm">
+              <div key={index} className="flex justify-between text-sm text-black">
                 <div className="flex-1">
                   <p className="font-medium">{item.product.name}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-gray-600">
                     {item.quantity} x {formatCurrency(
                       item.priceType === 'wholesale' 
                         ? item.product.wholesalePrice 
@@ -186,33 +218,39 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
           </div>
 
           {/* Totals */}
-          <div className="border-t border-dashed border-border pt-4 space-y-2">
-            <div className="flex justify-between font-bold text-lg">
+          <div className="border-t border-dashed border-gray-300 pt-4 space-y-2">
+            <div className="flex justify-between font-bold text-lg text-black">
               <span>Total</span>
               <span>{formatCurrency(transaction.total)}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Bayar</span>
+            <div className="flex justify-between text-sm text-black">
+              <span className="text-gray-600">Bayar</span>
               <span>{formatCurrency(transaction.payment)}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Kembali</span>
-              <span className="text-primary font-medium">
+            <div className="flex justify-between text-sm text-black">
+              <span className="text-gray-600">Kembali</span>
+              <span className="text-green-600 font-medium">
                 {formatCurrency(transaction.change)}
               </span>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="text-center border-t border-dashed border-border pt-4">
-            <p className="text-sm text-muted-foreground">{settings.receiptFooter}</p>
+          <div className="text-center border-t border-dashed border-gray-300 pt-4">
+            <p className="text-sm text-gray-600">{settings.receiptFooter}</p>
           </div>
         </div>
 
-        <Button className="w-full" onClick={handlePrint}>
-          <Printer className="w-4 h-4 mr-2" />
-          Cetak Struk
-        </Button>
+        <div className="flex gap-2">
+          <Button className="flex-1" onClick={handlePrint}>
+            <Printer className="w-4 h-4 mr-2" />
+            Cetak
+          </Button>
+          <Button variant="outline" className="flex-1" onClick={handleSaveAsPng}>
+            <Download className="w-4 h-4 mr-2" />
+            Simpan PNG
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
