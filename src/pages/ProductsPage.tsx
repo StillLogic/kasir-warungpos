@@ -3,6 +3,8 @@ import { Product, ProductFormData } from '@/types/pos';
 import { getProducts, addProduct, updateProduct, deleteProduct, updateStock, waitForProducts } from '@/database';
 import { formatCurrency } from '@/lib/format';
 import { ProductForm } from '@/components/ProductForm';
+import { ImportProductDialog } from '@/components/ImportProductDialog';
+import { CSVProduct } from '@/lib/csv';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -30,7 +32,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, MoreVertical, Pencil, Trash2, PackagePlus, PackageMinus, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, Search, MoreVertical, Pencil, Trash2, PackagePlus, PackageMinus, AlertCircle, Loader2, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -45,6 +47,7 @@ export function ProductsPage() {
   const [stockAmount, setStockAmount] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -94,6 +97,15 @@ export function ProductsPage() {
     toast({
       title: 'Produk Ditambahkan',
       description: `${data.name} berhasil ditambahkan`,
+    });
+  };
+
+  const handleImportProducts = (csvProducts: CSVProduct[]) => {
+    const newProducts = csvProducts.map(p => addProduct(p));
+    setProducts(prev => [...prev, ...newProducts]);
+    toast({
+      title: 'Import Berhasil',
+      description: `${newProducts.length} produk berhasil ditambahkan`,
     });
   };
 
@@ -168,10 +180,16 @@ export function ProductsPage() {
           <h1 className="text-2xl font-bold">Manajemen Produk</h1>
           <p className="text-muted-foreground">Kelola produk dan stok warung Anda</p>
         </div>
-        <Button onClick={() => setFormOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Tambah Produk
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload className="w-4 h-4 mr-2" />
+            Import CSV
+          </Button>
+          <Button onClick={() => setFormOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Tambah Produk
+          </Button>
+        </div>
       </div>
 
       {/* Search and Bulk Actions */}
@@ -337,6 +355,13 @@ export function ProductsPage() {
         }}
         onSubmit={editingProduct ? handleEditProduct : handleAddProduct}
         product={editingProduct}
+      />
+
+      {/* Import Dialog */}
+      <ImportProductDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImport={handleImportProducts}
       />
 
       {/* Delete Confirmation */}
