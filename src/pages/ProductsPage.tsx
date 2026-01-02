@@ -32,6 +32,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { Plus, Search, MoreVertical, Pencil, Trash2, PackagePlus, PackageMinus, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -42,6 +43,8 @@ export function ProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [stockAdjust, setStockAdjust] = useState<{ product: Product; type: 'add' | 'subtract' } | null>(null);
   const [stockAmount, setStockAmount] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -53,11 +56,37 @@ export function ProductsPage() {
     loadProducts();
   }, []);
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.sku.toLowerCase().includes(search.toLowerCase()) ||
-    p.category.toLowerCase().includes(search.toLowerCase())
-  );
+  // Sort by stock (lowest first) then filter
+  const filteredProducts = products
+    .filter(p =>
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.sku.toLowerCase().includes(search.toLowerCase()) ||
+      p.category.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => a.stock - b.stock);
+
+  const allSelected = filteredProducts.length > 0 && filteredProducts.every(p => selectedIds.has(p.id));
+  const someSelected = filteredProducts.some(p => selectedIds.has(p.id));
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredProducts.map(p => p.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
 
   const handleAddProduct = (data: ProductFormData) => {
     const newProduct = addProduct(data);
@@ -85,11 +114,28 @@ export function ProductsPage() {
     if (!deleteTarget) return;
     deleteProduct(deleteTarget.id);
     setProducts(prev => prev.filter(p => p.id !== deleteTarget.id));
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(deleteTarget.id);
+      return newSet;
+    });
     toast({
       title: 'Produk Dihapus',
       description: `${deleteTarget.name} berhasil dihapus`,
     });
     setDeleteTarget(null);
+  };
+
+  const handleBulkDelete = () => {
+    const count = selectedIds.size;
+    selectedIds.forEach(id => deleteProduct(id));
+    setProducts(prev => prev.filter(p => !selectedIds.has(p.id)));
+    setSelectedIds(new Set());
+    setBulkDeleteOpen(false);
+    toast({
+      title: 'Produk Dihapus',
+      description: `${count} produk berhasil dihapus`,
+    });
   };
 
   const handleStockAdjust = () => {
@@ -128,15 +174,26 @@ export function ProductsPage() {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Cari produk, SKU, atau kategori..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search and Bulk Actions */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between">
+        <div className="relative max-w-md flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Cari produk, SKU, atau kategori..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        {selectedIds.size > 0 && (
+          <Button 
+            variant="destructive" 
+            onClick={() => setBulkDeleteOpen(true)}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Hapus {selectedIds.size} Produk
+          </Button>
+        )}
       </div>
 
       {/* Products Table */}
@@ -144,6 +201,13 @@ export function ProductsPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <Checkbox 
+                  checked={allSelected}
+                  onCheckedChange={toggleSelectAll}
+                  aria-label="Pilih semua"
+                />
+              </TableHead>
               <TableHead>Produk</TableHead>
               <TableHead>Kategori</TableHead>
               <TableHead className="text-right">Harga Satuan</TableHead>
@@ -164,7 +228,7 @@ export function ProductsPage() {
               </TableRow>
             ) : filteredProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                   {products.length === 0 
                     ? 'Belum ada produk. Klik "Tambah Produk" untuk memulai.'
                     : 'Tidak ditemukan produk yang sesuai.'}
@@ -174,8 +238,16 @@ export function ProductsPage() {
               filteredProducts.map((product) => {
                 const lowStock = product.stock <= 5;
                 const outOfStock = product.stock === 0;
+                const isSelected = selectedIds.has(product.id);
                 return (
-                  <TableRow key={product.id}>
+                  <TableRow key={product.id} className={cn(isSelected && 'bg-accent/50')}>
+                    <TableCell>
+                      <Checkbox 
+                        checked={isSelected}
+                        onCheckedChange={() => toggleSelect(product.id)}
+                        aria-label={`Pilih ${product.name}`}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div>
                         <p className="font-medium">{product.name}</p>
@@ -309,6 +381,23 @@ export function ProductsPage() {
             <AlertDialogCancel onClick={() => setStockAmount('')}>Batal</AlertDialogCancel>
             <AlertDialogAction onClick={handleStockAdjust} disabled={!stockAmount || parseInt(stockAmount) <= 0}>
               Simpan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus {selectedIds.size} Produk?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Anda yakin ingin menghapus {selectedIds.size} produk yang dipilih? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Hapus Semua
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
