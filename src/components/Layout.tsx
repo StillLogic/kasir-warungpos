@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Package, History, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, Settings, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -10,8 +10,7 @@ interface LayoutProps {
 
 const navItems = [
   { path: '/', label: 'Kasir', icon: ShoppingCart },
-  { path: '/products', label: 'Produk', icon: Package },
-  { path: '/history', label: 'Riwayat', icon: History },
+  { path: '/admin', label: 'Admin', icon: Settings },
 ];
 
 export function Layout({ children }: LayoutProps) {
@@ -24,7 +23,7 @@ export function Layout({ children }: LayoutProps) {
         <div className="w-full flex items-center justify-between h-14 px-4 lg:px-6">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <LayoutDashboard className="w-5 h-5 text-primary-foreground" />
+              <Store className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="font-semibold text-lg">WarungPOS</span>
           </div>

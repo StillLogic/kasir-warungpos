@@ -8,7 +8,9 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 import { ProductsPage } from "./pages/ProductsPage";
 import { HistoryPage } from "./pages/HistoryPage";
+import { DashboardPage, ReportsPage, SettingsPage } from "./pages/admin";
 import { Layout } from "./components/Layout";
+import { AdminLayout } from "./components/admin";
 import { InstallPWA } from "./components/InstallPWA";
 import NotFound from "./pages/NotFound";
 import { migrateFromLocalStorage } from "./database";
@@ -29,9 +31,16 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Main Cashier */}
               <Route path="/" element={<Index />} />
-              <Route path="/products" element={<Layout><ProductsPage /></Layout>} />
-              <Route path="/history" element={<Layout><HistoryPage /></Layout>} />
+
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminLayout><DashboardPage /></AdminLayout>} />
+              <Route path="/admin/products" element={<AdminLayout><ProductsPage /></AdminLayout>} />
+              <Route path="/admin/history" element={<AdminLayout><HistoryPage /></AdminLayout>} />
+              <Route path="/admin/reports" element={<AdminLayout><ReportsPage /></AdminLayout>} />
+              <Route path="/admin/settings" element={<AdminLayout><SettingsPage /></AdminLayout>} />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
