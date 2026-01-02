@@ -7,7 +7,8 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/hooks/use-toast';
-import { Store, Receipt, Settings2, Save, Printer } from 'lucide-react';
+import { Store, Receipt, Settings2, Save, Printer, Eye } from 'lucide-react';
+import { ReceiptPreview } from '@/components/admin/ReceiptPreview';
 
 interface StoreSettings {
   storeName: string;
@@ -152,8 +153,9 @@ export function SettingsPage() {
     }
   };
 
-  return (
-    <div className="space-y-6 max-w-2xl">
+return (
+    <div className="grid gap-6 lg:grid-cols-[1fr,auto]">
+      <div className="space-y-6 max-w-2xl">
       {/* Store Info */}
       <Card>
         <CardHeader>
@@ -304,11 +306,30 @@ export function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Save Button */}
-      <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
-        <Save className="w-4 h-4 mr-2" />
-        {saving ? 'Menyimpan...' : 'Simpan Pengaturan'}
-      </Button>
+        {/* Save Button */}
+        <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
+          <Save className="w-4 h-4 mr-2" />
+          {saving ? 'Menyimpan...' : 'Simpan Pengaturan'}
+        </Button>
+      </div>
+
+      {/* Receipt Preview */}
+      <div className="lg:sticky lg:top-4 lg:self-start">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Eye className="w-5 h-5" />
+              Preview Struk
+            </CardTitle>
+            <CardDescription>
+              Tampilan struk sesuai pengaturan
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ReceiptPreview settings={settings} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
