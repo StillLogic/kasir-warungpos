@@ -15,66 +15,118 @@ interface ReceiptProps {
   onClose: () => void;
 }
 
+interface StoreSettings {
+  storeName: string;
+  storeAddress: string;
+  storePhone: string;
+  receiptFooter: string;
+  showLogo: boolean;
+  taxEnabled: boolean;
+  taxRate: number;
+  paperWidth: '58' | '80';
+}
+
+const defaultSettings: StoreSettings = {
+  storeName: 'WarungPOS',
+  storeAddress: '',
+  storePhone: '',
+  receiptFooter: 'Terima kasih atas kunjungan Anda!',
+  showLogo: true,
+  taxEnabled: false,
+  taxRate: 11,
+  paperWidth: '58',
+};
+
+function getSettings(): StoreSettings {
+  try {
+    const saved = localStorage.getItem('store-settings');
+    if (saved) {
+      return { ...defaultSettings, ...JSON.parse(saved) };
+    }
+  } catch {
+    // ignore
+  }
+  return defaultSettings;
+}
+
 export function Receipt({ transaction, open, onClose }: ReceiptProps) {
   if (!transaction) return null;
 
+  const settings = getSettings();
+  const paperWidth = settings.paperWidth === '80' ? '80mm' : '58mm';
+  const fontSize = settings.paperWidth === '80' ? { base: 12, small: 10, title: 16 } : { base: 10, small: 8, title: 14 };
+
   const handlePrint = () => {
-    // Create print content
     const printContent = `
-      <div style="font-family: 'Courier New', monospace; max-width: 80mm; margin: 0 auto; padding: 10px;">
-        <div style="text-align: center; border-bottom: 1px dashed #333; padding-bottom: 10px; margin-bottom: 10px;">
-          <h2 style="margin: 0; font-size: 18px;">WarungPOS</h2>
-          <p style="margin: 5px 0 0; font-size: 12px;">Struk Pembayaran</p>
-          <p style="margin: 5px 0 0; font-size: 10px;">${formatDate(transaction.createdAt)}</p>
-          <p style="margin: 2px 0 0; font-size: 10px;">No: ${transaction.id.slice(0, 8).toUpperCase()}</p>
+      <div style="font-family: 'Courier New', monospace; width: ${paperWidth}; margin: 0; padding: 3mm;">
+        <div style="text-align: center; border-bottom: 1px dashed #333; padding-bottom: 8px; margin-bottom: 8px;">
+          <h2 style="margin: 0; font-size: ${fontSize.title}px; font-weight: bold;">${settings.storeName}</h2>
+          ${settings.storeAddress ? `<p style="margin: 3px 0 0; font-size: ${fontSize.small}px;">${settings.storeAddress}</p>` : ''}
+          ${settings.storePhone ? `<p style="margin: 2px 0 0; font-size: ${fontSize.small}px;">Telp: ${settings.storePhone}</p>` : ''}
+          <p style="margin: 5px 0 0; font-size: ${fontSize.small}px;">${formatDate(transaction.createdAt)}</p>
+          <p style="margin: 2px 0 0; font-size: ${fontSize.small}px;">No: ${transaction.id.slice(0, 8).toUpperCase()}</p>
         </div>
         
-        <div style="margin-bottom: 10px;">
+        <div style="margin-bottom: 8px;">
           ${transaction.items.map(item => `
-            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;">
-              <div>
-                <p style="margin: 0; font-weight: bold;">${item.product.name}</p>
-                <p style="margin: 2px 0 0; font-size: 10px;">
-                  ${item.quantity} x ${formatCurrency(item.priceType === 'wholesale' ? item.product.wholesalePrice : item.product.retailPrice)}
-                </p>
+            <div style="margin-bottom: 5px;">
+              <p style="margin: 0; font-size: ${fontSize.base}px; font-weight: bold;">${item.product.name}</p>
+              <div style="display: flex; justify-content: space-between; font-size: ${fontSize.small}px;">
+                <span>${item.quantity} x ${formatCurrency(item.priceType === 'wholesale' ? item.product.wholesalePrice : item.product.retailPrice)}</span>
+                <span style="font-weight: bold;">${formatCurrency(item.subtotal)}</span>
               </div>
-              <p style="margin: 0; font-weight: bold;">${formatCurrency(item.subtotal)}</p>
             </div>
           `).join('')}
         </div>
         
-        <div style="border-top: 1px dashed #333; padding-top: 10px; margin-bottom: 10px;">
-          <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; margin-bottom: 5px;">
-            <span>Total</span>
+        <div style="border-top: 1px dashed #333; padding-top: 8px; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; font-size: ${fontSize.base + 2}px; font-weight: bold; margin-bottom: 4px;">
+            <span>TOTAL</span>
             <span>${formatCurrency(transaction.total)}</span>
           </div>
-          <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px;">
+          <div style="display: flex; justify-content: space-between; font-size: ${fontSize.base}px; margin-bottom: 2px;">
             <span>Bayar</span>
             <span>${formatCurrency(transaction.payment)}</span>
           </div>
-          <div style="display: flex; justify-content: space-between; font-size: 12px;">
+          <div style="display: flex; justify-content: space-between; font-size: ${fontSize.base}px;">
             <span>Kembali</span>
             <span style="font-weight: bold;">${formatCurrency(transaction.change)}</span>
           </div>
         </div>
         
-        <div style="text-align: center; border-top: 1px dashed #333; padding-top: 10px;">
-          <p style="margin: 0; font-size: 12px;">Terima kasih!</p>
-          <p style="margin: 5px 0 0; font-size: 10px;">Simpan struk ini sebagai bukti pembayaran</p>
+        <div style="text-align: center; border-top: 1px dashed #333; padding-top: 8px;">
+          <p style="margin: 0; font-size: ${fontSize.small}px;">${settings.receiptFooter}</p>
         </div>
       </div>
     `;
 
-    // Open new window for printing
     const printWindow = window.open('', '_blank', 'width=400,height=600');
     if (printWindow) {
       printWindow.document.write(`
+        <!DOCTYPE html>
         <html>
           <head>
             <title>Struk - ${transaction.id.slice(0, 8).toUpperCase()}</title>
             <style>
-              @page { size: auto; margin: 5mm; }
-              body { margin: 0; padding: 0; }
+              @page {
+                size: ${paperWidth} auto;
+                margin: 0;
+              }
+              @media print {
+                html, body {
+                  width: ${paperWidth};
+                  margin: 0;
+                  padding: 0;
+                }
+              }
+              body {
+                margin: 0;
+                padding: 0;
+                width: ${paperWidth};
+              }
+              * {
+                box-sizing: border-box;
+              }
             </style>
           </head>
           <body>${printContent}</body>
@@ -82,8 +134,10 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
       `);
       printWindow.document.close();
       printWindow.focus();
-      printWindow.print();
-      printWindow.close();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
     }
   };
 
@@ -97,9 +151,14 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
         <div className="space-y-4">
           {/* Store Header */}
           <div className="text-center border-b border-dashed border-border pb-4">
-            <h2 className="text-xl font-bold">WarungPOS</h2>
-            <p className="text-sm text-muted-foreground">Struk Pembayaran</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <h2 className="text-xl font-bold">{settings.storeName}</h2>
+            {settings.storeAddress && (
+              <p className="text-xs text-muted-foreground mt-1">{settings.storeAddress}</p>
+            )}
+            {settings.storePhone && (
+              <p className="text-xs text-muted-foreground">Telp: {settings.storePhone}</p>
+            )}
+            <p className="text-xs text-muted-foreground mt-2">
               {formatDate(transaction.createdAt)}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -146,8 +205,7 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
 
           {/* Footer */}
           <div className="text-center border-t border-dashed border-border pt-4">
-            <p className="text-sm text-muted-foreground">Terima kasih!</p>
-            <p className="text-xs text-muted-foreground">Simpan struk ini sebagai bukti pembayaran</p>
+            <p className="text-sm text-muted-foreground">{settings.receiptFooter}</p>
           </div>
         </div>
 
