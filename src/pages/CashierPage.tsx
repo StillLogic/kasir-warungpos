@@ -178,7 +178,7 @@ export function CashierPage() {
   );
 
   return (
-    <div className="h-[calc(100vh-6rem)] flex gap-4 lg:gap-6">
+    <div className="h-full flex gap-4 lg:gap-6">
       {/* Product Grid */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Search and Filter */}

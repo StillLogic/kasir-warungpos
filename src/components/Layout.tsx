@@ -18,9 +18,9 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-dvh bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-50">
+      <header className="bg-card border-b border-border shrink-0 z-50">
         <div className="w-full flex items-center justify-between h-14 px-4 lg:px-6">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -56,7 +56,7 @@ export function Layout({ children }: LayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full px-4 lg:px-6 py-6">
+      <main className="flex-1 w-full px-4 lg:px-6 py-4 overflow-hidden">
         {children}
       </main>
     </div>
