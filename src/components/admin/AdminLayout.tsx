@@ -8,7 +8,8 @@ import {
   Settings, 
   Menu,
   X,
-  ChevronLeft
+  ChevronLeft,
+  Percent
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '../ThemeToggle';
@@ -22,6 +23,7 @@ interface AdminLayoutProps {
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/admin/products', label: 'Produk', icon: Package },
+  { path: '/admin/pricing', label: 'Harga Jual', icon: Percent },
   { path: '/admin/history', label: 'Riwayat', icon: History },
   { path: '/admin/reports', label: 'Laporan', icon: BarChart3 },
   { path: '/admin/settings', label: 'Pengaturan', icon: Settings },
