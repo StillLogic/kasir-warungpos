@@ -8,7 +8,7 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 import { ProductsPage } from "./pages/ProductsPage";
 import { HistoryPage } from "./pages/HistoryPage";
-import { DashboardPage, ReportsPage, SettingsPage } from "./pages/admin";
+import { DashboardPage, ReportsPage, SettingsPage, PricingPage } from "./pages/admin";
 import { Layout } from "./components/Layout";
 import { AdminLayout } from "./components/admin";
 import { InstallPWA } from "./components/InstallPWA";
@@ -37,6 +37,7 @@ const App = () => {
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminLayout><DashboardPage /></AdminLayout>} />
               <Route path="/admin/products" element={<AdminLayout><ProductsPage /></AdminLayout>} />
+              <Route path="/admin/pricing" element={<AdminLayout><PricingPage /></AdminLayout>} />
               <Route path="/admin/history" element={<AdminLayout><HistoryPage /></AdminLayout>} />
               <Route path="/admin/reports" element={<AdminLayout><ReportsPage /></AdminLayout>} />
               <Route path="/admin/settings" element={<AdminLayout><SettingsPage /></AdminLayout>} />

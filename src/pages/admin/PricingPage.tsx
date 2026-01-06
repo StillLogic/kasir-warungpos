@@ -1,0 +1,382 @@
+import { useState, useEffect } from 'react';
+import { Plus, Pencil, Trash2, Percent, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { MarkupRule } from '@/types/markup';
+import { 
+  getMarkupRules, 
+  addMarkupRule, 
+  updateMarkupRule, 
+  deleteMarkupRule 
+} from '@/database/markup';
+import { formatCurrency } from '@/lib/format';
+import { toast } from 'sonner';
+
+export function PricingPage() {
+  const [rules, setRules] = useState<MarkupRule[]>([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<MarkupRule | null>(null);
+  const [deletingRuleId, setDeletingRuleId] = useState<string | null>(null);
+  
+  // Form state
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [retailMarkup, setRetailMarkup] = useState('');
+  const [wholesaleMarkup, setWholesaleMarkup] = useState('');
+  const [noMaxLimit, setNoMaxLimit] = useState(false);
+
+  useEffect(() => {
+    loadRules();
+  }, []);
+
+  const loadRules = () => {
+    setRules(getMarkupRules());
+  };
+
+  const resetForm = () => {
+    setMinPrice('');
+    setMaxPrice('');
+    setRetailMarkup('');
+    setWholesaleMarkup('');
+    setNoMaxLimit(false);
+    setEditingRule(null);
+  };
+
+  const handleOpenDialog = (rule?: MarkupRule) => {
+    if (rule) {
+      setEditingRule(rule);
+      setMinPrice(rule.minPrice.toString());
+      setMaxPrice(rule.maxPrice?.toString() || '');
+      setRetailMarkup(rule.retailMarkupPercent.toString());
+      setWholesaleMarkup(rule.wholesaleMarkupPercent.toString());
+      setNoMaxLimit(rule.maxPrice === null);
+    } else {
+      resetForm();
+    }
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    resetForm();
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const min = parseInt(minPrice) || 0;
+    const max = noMaxLimit ? null : (parseInt(maxPrice) || null);
+    const retail = parseFloat(retailMarkup) || 0;
+    const wholesale = parseFloat(wholesaleMarkup) || 0;
+
+    // Validation
+    if (min < 0) {
+      toast.error('Harga minimum tidak boleh negatif');
+      return;
+    }
+    if (max !== null && max <= min) {
+      toast.error('Harga maksimum harus lebih besar dari harga minimum');
+      return;
+    }
+    if (retail < 0 || wholesale < 0) {
+      toast.error('Persentase markup tidak boleh negatif');
+      return;
+    }
+
+    const data = {
+      minPrice: min,
+      maxPrice: max,
+      retailMarkupPercent: retail,
+      wholesaleMarkupPercent: wholesale,
+    };
+
+    if (editingRule) {
+      updateMarkupRule(editingRule.id, data);
+      toast.success('Aturan markup berhasil diperbarui');
+    } else {
+      addMarkupRule(data);
+      toast.success('Aturan markup berhasil ditambahkan');
+    }
+
+    loadRules();
+    handleCloseDialog();
+  };
+
+  const handleDelete = () => {
+    if (deletingRuleId) {
+      deleteMarkupRule(deletingRuleId);
+      toast.success('Aturan markup berhasil dihapus');
+      loadRules();
+    }
+    setDeleteDialogOpen(false);
+    setDeletingRuleId(null);
+  };
+
+  const confirmDelete = (id: string) => {
+    setDeletingRuleId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const formatPriceRange = (min: number, max: number | null) => {
+    if (max === null) {
+      return `${formatCurrency(min)} ke atas`;
+    }
+    return `${formatCurrency(min)} - ${formatCurrency(max)}`;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">Pengaturan Harga Jual</h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            Atur markup otomatis berdasarkan rentang harga modal
+          </p>
+        </div>
+        <Button onClick={() => handleOpenDialog()} className="gap-2">
+          <Plus className="w-4 h-4" />
+          Tambah Aturan
+        </Button>
+      </div>
+
+      {/* Info Card */}
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Sistem akan otomatis menghitung harga jual berdasarkan harga modal dan persentase markup yang ditentukan.
+          Contoh: Harga modal Rp 10.000 dengan markup 100% = Harga jual Rp 20.000
+        </AlertDescription>
+      </Alert>
+
+      {/* Rules Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Daftar Aturan Markup</CardTitle>
+          <CardDescription>
+            Aturan diurutkan berdasarkan harga minimum terendah
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {rules.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Percent className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>Belum ada aturan markup</p>
+              <p className="text-sm mt-1">Klik "Tambah Aturan" untuk membuat aturan pertama</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Rentang Harga Modal</TableHead>
+                    <TableHead className="text-center">Markup Satuan</TableHead>
+                    <TableHead className="text-center">Markup Grosir</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rules.map((rule) => (
+                    <TableRow key={rule.id}>
+                      <TableCell className="font-medium">
+                        {formatPriceRange(rule.minPrice, rule.maxPrice)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary text-sm font-medium">
+                          +{rule.retailMarkupPercent}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary text-secondary-foreground text-sm font-medium">
+                          +{rule.wholesaleMarkupPercent}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => handleOpenDialog(rule)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => confirmDelete(rule.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Add/Edit Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editingRule ? 'Edit Aturan Markup' : 'Tambah Aturan Markup'}
+            </DialogTitle>
+            <DialogDescription>
+              Tentukan rentang harga modal dan persentase markup
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit}>
+            <div className="space-y-4 py-4">
+              {/* Price Range */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="minPrice">Harga Minimum</Label>
+                  <Input
+                    id="minPrice"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maxPrice">Harga Maksimum</Label>
+                  <Input
+                    id="maxPrice"
+                    type="number"
+                    min="0"
+                    placeholder="Tidak terbatas"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                    disabled={noMaxLimit}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="noMaxLimit"
+                  checked={noMaxLimit}
+                  onChange={(e) => {
+                    setNoMaxLimit(e.target.checked);
+                    if (e.target.checked) setMaxPrice('');
+                  }}
+                  className="rounded border-input"
+                />
+                <Label htmlFor="noMaxLimit" className="text-sm font-normal cursor-pointer">
+                  Tidak ada batas maksimum (ke atas)
+                </Label>
+              </div>
+
+              {/* Markup Percentages */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="retailMarkup">Markup Satuan (%)</Label>
+                  <Input
+                    id="retailMarkup"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="100"
+                    value={retailMarkup}
+                    onChange={(e) => setRetailMarkup(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="wholesaleMarkup">Markup Grosir (%)</Label>
+                  <Input
+                    id="wholesaleMarkup"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="50"
+                    value={wholesaleMarkup}
+                    onChange={(e) => setWholesaleMarkup(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Preview */}
+              {(minPrice || retailMarkup) && (
+                <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                  <p className="font-medium mb-1">Contoh Kalkulasi:</p>
+                  <p className="text-muted-foreground">
+                    Harga modal {formatCurrency(parseInt(minPrice) || 0)} → 
+                    Harga satuan {formatCurrency(Math.round((parseInt(minPrice) || 0) * (1 + (parseFloat(retailMarkup) || 0) / 100)))} | 
+                    Harga grosir {formatCurrency(Math.round((parseInt(minPrice) || 0) * (1 + (parseFloat(wholesaleMarkup) || 0) / 100)))}
+                  </p>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleCloseDialog}>
+                Batal
+              </Button>
+              <Button type="submit">
+                {editingRule ? 'Simpan Perubahan' : 'Tambah Aturan'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Aturan Markup?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Aturan ini akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
