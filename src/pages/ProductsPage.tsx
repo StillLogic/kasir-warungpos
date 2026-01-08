@@ -228,6 +228,7 @@ export function ProductsPage() {
               </TableHead>
               <TableHead>Produk</TableHead>
               <TableHead>Kategori</TableHead>
+              <TableHead className="text-right">Harga Modal</TableHead>
               <TableHead className="text-right">Harga Satuan</TableHead>
               <TableHead className="text-right">Harga Grosir</TableHead>
               <TableHead className="text-center">Stok</TableHead>
@@ -237,7 +238,7 @@ export function ProductsPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
+                <TableCell colSpan={8} className="h-32 text-center">
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
                     <Loader2 className="w-5 h-5 animate-spin" />
                     <span>Memuat data produk...</span>
@@ -246,7 +247,7 @@ export function ProductsPage() {
               </TableRow>
             ) : filteredProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                   {products.length === 0 
                     ? 'Belum ada produk. Klik "Tambah Produk" untuk memulai.'
                     : 'Tidak ditemukan produk yang sesuai.'}
@@ -276,6 +277,9 @@ export function ProductsPage() {
                       <span className="px-2 py-1 bg-accent text-accent-foreground text-xs rounded-full">
                         {product.category}
                       </span>
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      {product.costPrice > 0 ? formatCurrency(product.costPrice) : '-'}
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatCurrency(product.retailPrice)}
