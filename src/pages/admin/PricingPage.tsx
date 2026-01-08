@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Percent, AlertCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Percent, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -36,8 +36,10 @@ import {
   getMarkupRules, 
   addMarkupRule, 
   updateMarkupRule, 
-  deleteMarkupRule 
+  deleteMarkupRule,
+  calculateSellingPrices,
 } from '@/database/markup';
+import { getProducts, updateProduct, waitForProducts } from '@/database';
 import { formatCurrency } from '@/lib/format';
 import { toast } from 'sonner';
 
@@ -45,6 +47,8 @@ export function PricingPage() {
   const [rules, setRules] = useState<MarkupRule[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bulkUpdateDialogOpen, setBulkUpdateDialogOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [editingRule, setEditingRule] = useState<MarkupRule | null>(null);
   const [deletingRuleId, setDeletingRuleId] = useState<string | null>(null);
   
@@ -147,6 +151,45 @@ export function PricingPage() {
     setDeleteDialogOpen(true);
   };
 
+  const handleBulkUpdate = async () => {
+    setIsUpdating(true);
+    try {
+      await waitForProducts();
+      const products = getProducts();
+      let updatedCount = 0;
+      let skippedCount = 0;
+
+      for (const product of products) {
+        if (product.costPrice > 0) {
+          const prices = calculateSellingPrices(product.costPrice);
+          if (prices) {
+            updateProduct(product.id, {
+              retailPrice: prices.retailPrice,
+              wholesalePrice: prices.wholesalePrice,
+            });
+            updatedCount++;
+          } else {
+            skippedCount++;
+          }
+        } else {
+          skippedCount++;
+        }
+      }
+
+      if (updatedCount > 0) {
+        toast.success(`Berhasil update harga ${updatedCount} produk`);
+      }
+      if (skippedCount > 0) {
+        toast.info(`${skippedCount} produk dilewati (tidak ada harga modal atau aturan markup)`);
+      }
+    } catch (error) {
+      toast.error('Gagal update harga massal');
+    } finally {
+      setIsUpdating(false);
+      setBulkUpdateDialogOpen(false);
+    }
+  };
+
   const formatPriceRange = (min: number, max: number | null) => {
     if (max === null) {
       return `${formatCurrency(min)} ke atas`;
@@ -164,10 +207,21 @@ export function PricingPage() {
             Atur markup otomatis berdasarkan rentang harga modal
           </p>
         </div>
-        <Button onClick={() => handleOpenDialog()} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Tambah Aturan
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setBulkUpdateDialogOpen(true)} 
+            className="gap-2"
+            disabled={rules.length === 0}
+          >
+            <RefreshCw className="w-4 h-4" />
+            Update Harga Massal
+          </Button>
+          <Button onClick={() => handleOpenDialog()} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Tambah Aturan
+          </Button>
+        </div>
       </div>
 
       {/* Info Card */}
@@ -373,6 +427,33 @@ export function PricingPage() {
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Update Confirmation */}
+      <AlertDialog open={bulkUpdateDialogOpen} onOpenChange={setBulkUpdateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Update Harga Jual Massal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Semua produk yang memiliki harga modal akan diupdate harga jualnya berdasarkan aturan markup yang berlaku.
+              <br /><br />
+              <strong>Catatan:</strong> Harga jual yang sudah ada akan ditimpa dengan perhitungan baru.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isUpdating}>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkUpdate} disabled={isUpdating}>
+              {isUpdating ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Memproses...
+                </>
+              ) : (
+                'Update Semua'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
