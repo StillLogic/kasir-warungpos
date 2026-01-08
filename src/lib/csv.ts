@@ -4,6 +4,7 @@ export interface CSVProduct {
   name: string;
   sku: string;
   category: string;
+  costPrice: number;
   retailPrice: number;
   wholesalePrice: number;
   wholesaleMinQty: number;
@@ -16,11 +17,11 @@ const UNITS = ['pcs', 'kg', 'liter', 'pack', 'dus', 'sachet'];
 
 // Generate CSV template
 export function generateCSVTemplate(): string {
-  const headers = ['name', 'sku', 'category', 'retailPrice', 'wholesalePrice', 'wholesaleMinQty', 'stock', 'unit'];
+  const headers = ['name', 'sku', 'category', 'costPrice', 'retailPrice', 'wholesalePrice', 'wholesaleMinQty', 'stock', 'unit'];
   const exampleRows = [
-    ['Indomie Goreng', 'MKN0001', 'Makanan', '3500', '3200', '12', '100', 'pcs'],
-    ['Teh Botol Sosro', 'MNM0001', 'Minuman', '5000', '4500', '24', '50', 'pcs'],
-    ['Beras Premium 5kg', 'SMB0001', 'Sembako', '75000', '70000', '10', '20', 'pcs'],
+    ['Indomie Goreng', 'MKN0001', 'Makanan', '2500', '3500', '3200', '12', '100', 'pcs'],
+    ['Teh Botol Sosro', 'MNM0001', 'Minuman', '3500', '5000', '4500', '24', '50', 'pcs'],
+    ['Beras Premium 5kg', 'SMB0001', 'Sembako', '60000', '75000', '70000', '10', '20', 'pcs'],
   ];
   
   const csvContent = [
@@ -60,6 +61,7 @@ export function parseCSV(content: string): { products: CSVProduct[]; errors: str
   const nameIdx = headers.indexOf('name');
   const skuIdx = headers.indexOf('sku');
   const categoryIdx = headers.indexOf('category');
+  const costPriceIdx = headers.indexOf('costprice');
   const retailPriceIdx = headers.indexOf('retailprice');
   const wholesalePriceIdx = headers.indexOf('wholesaleprice');
   const wholesaleMinQtyIdx = headers.indexOf('wholesaleminqty');
@@ -115,6 +117,7 @@ export function parseCSV(content: string): { products: CSVProduct[]; errors: str
     }
     
     // Optional fields
+    const costPrice = parseFloat(values[costPriceIdx]?.trim() || '0') || 0;
     const wholesalePrice = parseFloat(values[wholesalePriceIdx]?.trim() || '0') || 0;
     const wholesaleMinQty = parseInt(values[wholesaleMinQtyIdx]?.trim() || '0') || 0;
     
@@ -122,6 +125,7 @@ export function parseCSV(content: string): { products: CSVProduct[]; errors: str
       name,
       sku,
       category,
+      costPrice,
       retailPrice,
       wholesalePrice,
       wholesaleMinQty,

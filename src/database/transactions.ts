@@ -27,6 +27,7 @@ async function itemFromRecord(r: CartItemRecord): Promise<CartItem> {
       name: r.pn,
       sku: '',
       category: '',
+      costPrice: 0,
       retailPrice: r.pt === 0 ? r.pp : 0,
       wholesalePrice: r.pt === 1 ? r.pp : 0,
       wholesaleMinQty: 1,

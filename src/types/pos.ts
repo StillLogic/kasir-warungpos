@@ -3,6 +3,7 @@ export interface Product {
   name: string;
   sku: string;
   category: string;
+  costPrice: number;
   retailPrice: number;
   wholesalePrice: number;
   wholesaleMinQty: number;
