@@ -1,9 +1,10 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Product, ProductFormData } from '@/types/pos';
 import { generateSKU } from '@/lib/sku';
+import { getMarkupForPrice, calculateSellingPrices } from '@/database/markup';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,11 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Calculator, Info } from 'lucide-react';
+import { formatCurrency } from '@/lib/format';
 
 const productSchema = z.object({
   name: z.string().min(1, 'Nama produk wajib diisi'),
   sku: z.string().min(1, 'SKU wajib diisi'),
   category: z.string().min(1, 'Kategori wajib diisi'),
+  costPrice: z.number().min(0, 'Harga tidak boleh negatif'),
   retailPrice: z.number().min(0, 'Harga tidak boleh negatif'),
   wholesalePrice: z.number().min(0, 'Harga tidak boleh negatif'),
   wholesaleMinQty: z.number().min(1, 'Minimal 1'),
@@ -44,6 +48,7 @@ const units = ['pcs', 'pack', 'dus', 'kg', 'liter', 'botol', 'sachet'];
 
 export function ProductForm({ open, onClose, onSubmit, product }: ProductFormProps) {
   const isEditing = !!product;
+  const [markupInfo, setMarkupInfo] = useState<{ retail: number; wholesale: number } | null>(null);
   
   const {
     register,
@@ -58,6 +63,7 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
       name: '',
       sku: '',
       category: 'Lainnya',
+      costPrice: 0,
       retailPrice: 0,
       wholesalePrice: 0,
       wholesaleMinQty: 10,
@@ -67,6 +73,7 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
   });
 
   const category = watch('category');
+  const costPrice = watch('costPrice');
 
   // Auto-generate SKU when category changes (only for new products)
   useEffect(() => {
@@ -84,6 +91,25 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
     }
   }, [open, isEditing, setValue]);
 
+  // Auto-calculate selling prices when cost price changes
+  useEffect(() => {
+    if (costPrice > 0) {
+      const markup = getMarkupForPrice(costPrice);
+      if (markup) {
+        setMarkupInfo({ retail: markup.retailPercent, wholesale: markup.wholesalePercent });
+        const prices = calculateSellingPrices(costPrice);
+        if (prices) {
+          setValue('retailPrice', prices.retailPrice);
+          setValue('wholesalePrice', prices.wholesalePrice);
+        }
+      } else {
+        setMarkupInfo(null);
+      }
+    } else {
+      setMarkupInfo(null);
+    }
+  }, [costPrice, setValue]);
+
   const handleFormSubmit = (data: ProductFormData) => {
     onSubmit(data);
     reset();
@@ -92,12 +118,13 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
 
   const handleClose = () => {
     reset();
+    setMarkupInfo(null);
     onClose();
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {product ? 'Edit Produk' : 'Tambah Produk Baru'}
@@ -153,6 +180,31 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
               </div>
             </div>
 
+            {/* Cost Price with Auto-Calculate Info */}
+            <div className="space-y-2">
+              <Label htmlFor="costPrice" className="flex items-center gap-2">
+                <Calculator className="h-4 w-4" />
+                Harga Modal
+              </Label>
+              <Input
+                id="costPrice"
+                type="number"
+                {...register('costPrice', { valueAsNumber: true })}
+                placeholder="0"
+              />
+              {markupInfo && (
+                <div className="flex items-start gap-2 p-2 bg-muted/50 rounded-md text-xs">
+                  <Info className="h-3.5 w-3.5 mt-0.5 text-primary" />
+                  <span className="text-muted-foreground">
+                    Markup otomatis: Eceran +{markupInfo.retail}%, Grosir +{markupInfo.wholesale}%
+                  </span>
+                </div>
+              )}
+              {errors.costPrice && (
+                <p className="text-sm text-destructive">{errors.costPrice.message}</p>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="retailPrice">Harga Satuan</Label>
@@ -162,6 +214,11 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
                   {...register('retailPrice', { valueAsNumber: true })}
                   placeholder="0"
                 />
+                {costPrice > 0 && watch('retailPrice') > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Margin: {formatCurrency(watch('retailPrice') - costPrice)}
+                  </p>
+                )}
                 {errors.retailPrice && (
                   <p className="text-sm text-destructive">{errors.retailPrice.message}</p>
                 )}
@@ -174,6 +231,11 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
                   {...register('wholesalePrice', { valueAsNumber: true })}
                   placeholder="0"
                 />
+                {costPrice > 0 && watch('wholesalePrice') > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Margin: {formatCurrency(watch('wholesalePrice') - costPrice)}
+                  </p>
+                )}
               </div>
             </div>
 

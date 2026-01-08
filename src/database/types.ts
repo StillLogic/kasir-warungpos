@@ -6,6 +6,7 @@ export interface ProductRecord {
   n: string;      // name
   s: string;      // sku
   c: string;      // category
+  cp: number;     // costPrice
   rp: number;     // retailPrice
   wp: number;     // wholesalePrice
   wq: number;     // wholesaleMinQty
