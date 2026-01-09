@@ -3,5 +3,9 @@
 
 export * from './products';
 export * from './transactions';
+export * from './customers';
+export * from './suppliers';
+export * from './expenses';
+export * from './cashSessions';
 export { getStorageSize } from './utils';
 export { migrateFromLocalStorage } from './db';
