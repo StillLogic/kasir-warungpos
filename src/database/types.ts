@@ -31,9 +31,10 @@ export interface TransactionRecord {
   t: number;      // total
   p: number;      // payment
   ch: number;     // change
+  db: number;     // debt (hutang)
   ca: number;     // createdAt (Unix timestamp)
-  cn?: string;    // customerName (optional)
   ci?: string;    // customerId (optional)
+  cn?: string;    // customerName (optional)
 }
 
 // Customer Record

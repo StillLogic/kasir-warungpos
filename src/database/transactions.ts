@@ -3,6 +3,7 @@ import { TransactionRecord, CartItemRecord } from './types';
 import { generateId, toUnix, fromUnix } from './utils';
 import { getDB } from './db';
 import { updateStockAsync, getProductsAsync } from './products';
+import { updateCustomerDebtAsync } from './customers';
 
 // Konversi CartItem ke format ringan
 function itemToRecord(item: CartItem): CartItemRecord {
@@ -51,7 +52,9 @@ async function fromRecord(r: TransactionRecord): Promise<Transaction> {
     total: r.t,
     payment: r.p,
     change: r.ch,
+    debt: r.db || 0,
     createdAt: fromUnix(r.ca),
+    customerId: r.ci,
     customerName: r.cn,
   };
 }
@@ -75,8 +78,10 @@ export async function saveTransactionAsync(transaction: Omit<Transaction, 'id' |
     t: transaction.total,
     p: transaction.payment,
     ch: transaction.change,
+    db: transaction.debt || 0,
     ca: now,
-    cn: transaction.customerName || undefined,
+    ci: transaction.customerId,
+    cn: transaction.customerName,
   };
 
   await db.put('transactions', newRecord);
@@ -84,6 +89,11 @@ export async function saveTransactionAsync(transaction: Omit<Transaction, 'id' |
   // Update stock for each item
   for (const item of transaction.items) {
     await updateStockAsync(item.product.id, -item.quantity);
+  }
+
+  // Update customer debt if there's debt and a customer
+  if (transaction.customerId && transaction.debt > 0) {
+    await updateCustomerDebtAsync(transaction.customerId, transaction.debt);
   }
 
   return fromRecord(newRecord);
@@ -122,6 +132,7 @@ export function saveTransaction(transaction: Omit<Transaction, 'id' | 'createdAt
     ...transaction,
     id: generateId(),
     createdAt: now,
+    debt: transaction.debt || 0,
   };
   cachedTransactions.unshift(newTransaction);
   
