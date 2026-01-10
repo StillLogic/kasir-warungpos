@@ -363,18 +363,55 @@ export function CustomersPage() {
               Hutang saat ini: <strong className="text-red-500">{formatCurrency(selectedCustomer?.debt || 0)}</strong>
             </p>
             <div>
-              <Label>Jumlah</Label>
+              <Label>Jumlah Pembayaran</Label>
               <Input
                 type="number"
                 value={debtAmount}
                 onChange={(e) => setDebtAmount(e.target.value)}
                 placeholder="0"
+                max={debtType === 'pay' ? selectedCustomer?.debt : undefined}
               />
+              {debtType === 'pay' && selectedCustomer && parseFloat(debtAmount) > selectedCustomer.debt && (
+                <p className="text-xs text-destructive mt-1">
+                  Pembayaran melebihi hutang ({formatCurrency(selectedCustomer.debt)})
+                </p>
+              )}
             </div>
+            {debtType === 'pay' && selectedCustomer && selectedCustomer.debt > 0 && (
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => setDebtAmount(selectedCustomer.debt.toString())}
+              >
+                Bayar Penuh ({formatCurrency(selectedCustomer.debt)})
+              </Button>
+            )}
+            {debtType === 'pay' && debtAmount && parseFloat(debtAmount) > 0 && selectedCustomer && (
+              <div className="p-3 bg-muted rounded-lg space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span>Hutang saat ini:</span>
+                  <span className="text-red-500">{formatCurrency(selectedCustomer.debt)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Pembayaran:</span>
+                  <span className="text-green-500">- {formatCurrency(Math.min(parseFloat(debtAmount), selectedCustomer.debt))}</span>
+                </div>
+                <div className="border-t pt-1 flex justify-between font-medium">
+                  <span>Sisa hutang:</span>
+                  <span className={selectedCustomer.debt - Math.min(parseFloat(debtAmount), selectedCustomer.debt) > 0 ? 'text-red-500' : 'text-green-500'}>
+                    {formatCurrency(Math.max(0, selectedCustomer.debt - parseFloat(debtAmount)))}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDebtDialogOpen(false)}>Batal</Button>
-            <Button onClick={handleDebtUpdate} variant={debtType === 'add' ? 'destructive' : 'default'}>
+            <Button 
+              onClick={handleDebtUpdate} 
+              variant={debtType === 'add' ? 'destructive' : 'default'}
+              disabled={debtType === 'pay' && selectedCustomer && parseFloat(debtAmount) > selectedCustomer.debt}
+            >
               {debtType === 'add' ? 'Tambah Hutang' : 'Catat Pembayaran'}
             </Button>
           </DialogFooter>
