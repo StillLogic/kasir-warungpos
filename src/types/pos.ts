@@ -26,7 +26,9 @@ export interface Transaction {
   total: number;
   payment: number;
   change: number;
+  debt: number;
   createdAt: string;
+  customerId?: string;
   customerName?: string;
 }
 
