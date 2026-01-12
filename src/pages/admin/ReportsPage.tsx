@@ -13,8 +13,18 @@ import {
   Loader2,
   Wallet,
   PiggyBank,
-  Percent
+  Percent,
+  Package,
+  ArrowUpDown
 } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
   BarChart,
   Bar,
@@ -30,13 +40,26 @@ import {
 } from 'recharts';
 
 type Period = 'daily' | 'weekly' | 'monthly';
-type ReportType = 'sales' | 'profit';
+type ReportType = 'sales' | 'profit' | 'product';
+type SortKey = 'profit' | 'revenue' | 'quantity' | 'margin';
+
+interface ProductProfitData {
+  productId: string;
+  productName: string;
+  quantity: number;
+  revenue: number;
+  cost: number;
+  profit: number;
+  margin: number;
+}
 
 export function ReportsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('daily');
   const [reportType, setReportType] = useState<ReportType>('sales');
+  const [productSortKey, setProductSortKey] = useState<SortKey>('profit');
+  const [productSortDesc, setProductSortDesc] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
@@ -154,16 +177,86 @@ export function ReportsPage() {
     };
   }, [reportData]);
 
+  // Product profit data
+  const productProfitData = useMemo(() => {
+    const productMap = new Map<string, ProductProfitData>();
+
+    transactions.forEach(tx => {
+      tx.items.forEach(item => {
+        const productId = item.product.id;
+        const costPrice = item.product.costPrice || 0;
+        const sellingPrice = item.priceType === 'wholesale' 
+          ? item.product.wholesalePrice 
+          : item.product.retailPrice;
+        const itemRevenue = sellingPrice * item.quantity;
+        const itemCost = costPrice * item.quantity;
+        const itemProfit = itemRevenue - itemCost;
+
+        if (productMap.has(productId)) {
+          const existing = productMap.get(productId)!;
+          existing.quantity += item.quantity;
+          existing.revenue += itemRevenue;
+          existing.cost += itemCost;
+          existing.profit += itemProfit;
+        } else {
+          productMap.set(productId, {
+            productId,
+            productName: item.product.name,
+            quantity: item.quantity,
+            revenue: itemRevenue,
+            cost: itemCost,
+            profit: itemProfit,
+            margin: 0,
+          });
+        }
+      });
+    });
+
+    // Calculate margin for each product
+    productMap.forEach(product => {
+      product.margin = product.revenue > 0 ? (product.profit / product.revenue) * 100 : 0;
+    });
+
+    // Sort products
+    const products = Array.from(productMap.values());
+    products.sort((a, b) => {
+      const multiplier = productSortDesc ? -1 : 1;
+      return multiplier * (a[productSortKey] - b[productSortKey]);
+    });
+
+    return products;
+  }, [transactions, productSortKey, productSortDesc]);
+
+  const handleProductSort = (key: SortKey) => {
+    if (productSortKey === key) {
+      setProductSortDesc(!productSortDesc);
+    } else {
+      setProductSortKey(key);
+      setProductSortDesc(true);
+    }
+  };
+
   const handleExportCSV = () => {
-    const headers = reportType === 'sales' 
-      ? ['Tanggal', 'Pendapatan', 'Transaksi']
-      : ['Tanggal', 'Pendapatan', 'Modal', 'Profit', 'Margin (%)'];
-    
-    const rows = reportData.map(d => 
-      reportType === 'sales'
-        ? [d.date, d.revenue, d.transactions]
-        : [d.date, d.revenue, d.cost, d.profit, d.margin.toFixed(1)]
-    );
+    let headers: string[];
+    let rows: (string | number)[][];
+
+    if (reportType === 'sales') {
+      headers = ['Tanggal', 'Pendapatan', 'Transaksi'];
+      rows = reportData.map(d => [d.date, d.revenue, d.transactions]);
+    } else if (reportType === 'profit') {
+      headers = ['Tanggal', 'Pendapatan', 'Modal', 'Profit', 'Margin (%)'];
+      rows = reportData.map(d => [d.date, d.revenue, d.cost, d.profit, d.margin.toFixed(1)]);
+    } else {
+      headers = ['Nama Produk', 'Qty Terjual', 'Pendapatan', 'Modal', 'Profit', 'Margin (%)'];
+      rows = productProfitData.map(p => [
+        p.productName,
+        p.quantity,
+        p.revenue,
+        p.cost,
+        p.profit,
+        p.margin.toFixed(1)
+      ]);
+    }
     
     const csvContent = [
       headers.join(','),
@@ -173,7 +266,7 @@ export function ReportsPage() {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `laporan-${reportType}-${period}-${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `laporan-${reportType}-${reportType === 'product' ? '' : period + '-'}${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
   };
 
@@ -210,18 +303,24 @@ export function ReportsPage() {
             <PiggyBank className="w-4 h-4" />
             Profit
           </TabsTrigger>
+          <TabsTrigger value="product" className="gap-2">
+            <Package className="w-4 h-4" />
+            Per Produk
+          </TabsTrigger>
         </TabsList>
 
-        {/* Period Tabs */}
-        <div className="mt-4">
-          <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
-            <TabsList>
-              <TabsTrigger value="daily">Harian</TabsTrigger>
-              <TabsTrigger value="weekly">Mingguan</TabsTrigger>
-              <TabsTrigger value="monthly">Bulanan</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+        {/* Period Tabs - only show for sales and profit */}
+        {reportType !== 'product' && (
+          <div className="mt-4">
+            <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
+              <TabsList>
+                <TabsTrigger value="daily">Harian</TabsTrigger>
+                <TabsTrigger value="weekly">Mingguan</TabsTrigger>
+                <TabsTrigger value="monthly">Bulanan</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
 
         {/* Sales Report */}
         <TabsContent value="sales" className="mt-6 space-y-6">
@@ -525,6 +624,199 @@ export function ReportsPage() {
                       name="Margin"
                     />
                   </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Product Profit Report */}
+        <TabsContent value="product" className="mt-6 space-y-6">
+          {/* Product Profit Summary */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                  Total Produk Terjual
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg sm:text-2xl font-bold">{productProfitData.length}</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                  Total Pendapatan
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg sm:text-2xl font-bold">
+                  {formatCurrency(productProfitData.reduce((sum, p) => sum + p.revenue, 0))}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-green-500/10 border-green-500/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs sm:text-sm font-medium text-green-600 dark:text-green-400">
+                  Total Profit
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">
+                  {formatCurrency(productProfitData.reduce((sum, p) => sum + p.profit, 0))}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                  Produk Teruntung
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg sm:text-2xl font-bold truncate">
+                  {productProfitData[0]?.productName || '-'}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Product Profit Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Package className="w-5 h-5" />
+                Profit Per Produk
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">#</TableHead>
+                      <TableHead>Nama Produk</TableHead>
+                      <TableHead 
+                        className="text-right cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleProductSort('quantity')}
+                      >
+                        <span className="flex items-center justify-end gap-1">
+                          Qty
+                          <ArrowUpDown className="w-3 h-3" />
+                        </span>
+                      </TableHead>
+                      <TableHead 
+                        className="text-right cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleProductSort('revenue')}
+                      >
+                        <span className="flex items-center justify-end gap-1">
+                          Pendapatan
+                          <ArrowUpDown className="w-3 h-3" />
+                        </span>
+                      </TableHead>
+                      <TableHead className="text-right hidden sm:table-cell">Modal</TableHead>
+                      <TableHead 
+                        className="text-right cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleProductSort('profit')}
+                      >
+                        <span className="flex items-center justify-end gap-1">
+                          Profit
+                          <ArrowUpDown className="w-3 h-3" />
+                        </span>
+                      </TableHead>
+                      <TableHead 
+                        className="text-right cursor-pointer hover:bg-muted/50 hidden sm:table-cell"
+                        onClick={() => handleProductSort('margin')}
+                      >
+                        <span className="flex items-center justify-end gap-1">
+                          Margin
+                          <ArrowUpDown className="w-3 h-3" />
+                        </span>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {productProfitData.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                          Belum ada data transaksi
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      productProfitData.map((product, index) => (
+                        <TableRow key={product.productId}>
+                          <TableCell className="font-medium text-muted-foreground">
+                            {index + 1}
+                          </TableCell>
+                          <TableCell className="font-medium">{product.productName}</TableCell>
+                          <TableCell className="text-right">{product.quantity}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(product.revenue)}</TableCell>
+                          <TableCell className="text-right hidden sm:table-cell text-muted-foreground">
+                            {formatCurrency(product.cost)}
+                          </TableCell>
+                          <TableCell className="text-right font-medium text-green-600 dark:text-green-400">
+                            {formatCurrency(product.profit)}
+                          </TableCell>
+                          <TableCell className="text-right hidden sm:table-cell">
+                            {product.margin.toFixed(1)}%
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Top 10 Products Bar Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <BarChart3 className="w-5 h-5" />
+                Top 10 Produk Paling Menguntungkan
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={productProfitData.slice(0, 10)} 
+                    layout="vertical"
+                    margin={{ left: 20, right: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      type="number"
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                      tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                    />
+                    <YAxis 
+                      type="category"
+                      dataKey="productName" 
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                      width={100}
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => formatCurrency(value)}
+                      labelStyle={{ color: 'hsl(var(--foreground))' }}
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="profit" 
+                      fill="hsl(142 76% 36%)" 
+                      radius={[0, 4, 4, 0]}
+                      name="Profit"
+                    />
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
