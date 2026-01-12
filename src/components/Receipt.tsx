@@ -70,7 +70,6 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
           ${settings.storePhone ? `<p style="margin: 2px 0 0; font-size: ${fontSize.small}px;">Telp: ${settings.storePhone}</p>` : ''}
           <p style="margin: 5px 0 0; font-size: ${fontSize.small}px;">${formatDate(transaction.createdAt)}</p>
           <p style="margin: 2px 0 0; font-size: ${fontSize.small}px;">No: ${transaction.id.slice(0, 8).toUpperCase()}</p>
-          ${transaction.customerName ? `<p style="margin: 3px 0 0; font-size: ${fontSize.small}px; font-weight: bold;">Pelanggan: ${transaction.customerName}</p>` : ''}
         </div>
         
         <div style="margin-bottom: 8px;">
@@ -94,17 +93,10 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
             <span>Bayar</span>
             <span>${formatCurrency(transaction.payment)}</span>
           </div>
-          ${transaction.debt > 0 ? `
-          <div style="display: flex; justify-content: space-between; font-size: ${fontSize.base}px; color: #ea580c;">
-            <span style="font-weight: bold;">Hutang</span>
-            <span style="font-weight: bold;">${formatCurrency(transaction.debt)}</span>
-          </div>
-          ` : `
           <div style="display: flex; justify-content: space-between; font-size: ${fontSize.base}px;">
             <span>Kembali</span>
             <span style="font-weight: bold;">${formatCurrency(transaction.change)}</span>
           </div>
-          `}
         </div>
         
         <div style="text-align: center; border-top: 1px dashed #333; padding-top: 8px;">
@@ -204,11 +196,6 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
             <p className="text-xs text-gray-600">
               No: {transaction.id.slice(0, 8).toUpperCase()}
             </p>
-            {transaction.customerName && (
-              <p className="text-xs text-gray-800 mt-1 font-medium">
-                Pelanggan: {transaction.customerName}
-              </p>
-            )}
           </div>
 
           {/* Items */}
@@ -240,21 +227,12 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
               <span className="text-gray-600">Bayar</span>
               <span>{formatCurrency(transaction.payment)}</span>
             </div>
-            {transaction.debt > 0 ? (
-              <div className="flex justify-between text-sm text-black">
-                <span className="text-orange-600 font-medium">Hutang</span>
-                <span className="text-orange-600 font-medium">
-                  {formatCurrency(transaction.debt)}
-                </span>
-              </div>
-            ) : (
-              <div className="flex justify-between text-sm text-black">
-                <span className="text-gray-600">Kembali</span>
-                <span className="text-green-600 font-medium">
-                  {formatCurrency(transaction.change)}
-                </span>
-              </div>
-            )}
+            <div className="flex justify-between text-sm text-black">
+              <span className="text-gray-600">Kembali</span>
+              <span className="text-green-600 font-medium">
+                {formatCurrency(transaction.change)}
+              </span>
+            </div>
           </div>
 
           {/* Footer */}

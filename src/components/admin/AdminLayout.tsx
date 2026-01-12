@@ -9,11 +9,7 @@ import {
   Menu,
   X,
   ChevronLeft,
-  Percent,
-  Users,
-  Truck,
-  Receipt,
-  Wallet
+  Percent
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '../ThemeToggle';
@@ -28,10 +24,6 @@ const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/admin/products', label: 'Produk', icon: Package },
   { path: '/admin/pricing', label: 'Harga Jual', icon: Percent },
-  { path: '/admin/customers', label: 'Pelanggan', icon: Users },
-  { path: '/admin/suppliers', label: 'Supplier', icon: Truck },
-  { path: '/admin/expenses', label: 'Pengeluaran', icon: Receipt },
-  { path: '/admin/cash', label: 'Rekonsiliasi', icon: Wallet },
   { path: '/admin/history', label: 'Riwayat', icon: History },
   { path: '/admin/reports', label: 'Laporan', icon: BarChart3 },
   { path: '/admin/settings', label: 'Pengaturan', icon: Settings },

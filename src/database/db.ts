@@ -1,13 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import { 
-  ProductRecord, 
-  TransactionRecord, 
-  CustomerRecord, 
-  SupplierRecord, 
-  PurchaseRecord, 
-  ExpenseRecord, 
-  CashSessionRecord 
-} from './types';
+import { ProductRecord, TransactionRecord } from './types';
 
 interface WarungPOSDB extends DBSchema {
   products: {
@@ -20,35 +12,10 @@ interface WarungPOSDB extends DBSchema {
     value: TransactionRecord;
     indexes: { 'by-date': number };
   };
-  customers: {
-    key: string;
-    value: CustomerRecord;
-    indexes: { 'by-name': string };
-  };
-  suppliers: {
-    key: string;
-    value: SupplierRecord;
-    indexes: { 'by-name': string };
-  };
-  purchases: {
-    key: string;
-    value: PurchaseRecord;
-    indexes: { 'by-date': number; 'by-supplier': string };
-  };
-  expenses: {
-    key: string;
-    value: ExpenseRecord;
-    indexes: { 'by-date': number; 'by-category': string };
-  };
-  cashSessions: {
-    key: string;
-    value: CashSessionRecord;
-    indexes: { 'by-date': number };
-  };
 }
 
 const DB_NAME = 'warungpos-db';
-const DB_VERSION = 2; // Increment version for new stores
+const DB_VERSION = 1;
 
 let dbInstance: IDBPDatabase<WarungPOSDB> | null = null;
 
@@ -56,7 +23,7 @@ export async function getDB(): Promise<IDBPDatabase<WarungPOSDB>> {
   if (dbInstance) return dbInstance;
 
   dbInstance = await openDB<WarungPOSDB>(DB_NAME, DB_VERSION, {
-    upgrade(db, oldVersion) {
+    upgrade(db) {
       // Products store
       if (!db.objectStoreNames.contains('products')) {
         const productStore = db.createObjectStore('products', { keyPath: 'i' });
@@ -67,41 +34,6 @@ export async function getDB(): Promise<IDBPDatabase<WarungPOSDB>> {
       if (!db.objectStoreNames.contains('transactions')) {
         const txStore = db.createObjectStore('transactions', { keyPath: 'i' });
         txStore.createIndex('by-date', 'ca');
-      }
-
-      // New stores added in version 2
-      if (oldVersion < 2) {
-        // Customers store
-        if (!db.objectStoreNames.contains('customers')) {
-          const customerStore = db.createObjectStore('customers', { keyPath: 'i' });
-          customerStore.createIndex('by-name', 'n');
-        }
-
-        // Suppliers store
-        if (!db.objectStoreNames.contains('suppliers')) {
-          const supplierStore = db.createObjectStore('suppliers', { keyPath: 'i' });
-          supplierStore.createIndex('by-name', 'n');
-        }
-
-        // Purchases store
-        if (!db.objectStoreNames.contains('purchases')) {
-          const purchaseStore = db.createObjectStore('purchases', { keyPath: 'i' });
-          purchaseStore.createIndex('by-date', 'ca');
-          purchaseStore.createIndex('by-supplier', 'si');
-        }
-
-        // Expenses store
-        if (!db.objectStoreNames.contains('expenses')) {
-          const expenseStore = db.createObjectStore('expenses', { keyPath: 'i' });
-          expenseStore.createIndex('by-date', 'ca');
-          expenseStore.createIndex('by-category', 'c');
-        }
-
-        // Cash Sessions store
-        if (!db.objectStoreNames.contains('cashSessions')) {
-          const cashStore = db.createObjectStore('cashSessions', { keyPath: 'i' });
-          cashStore.createIndex('by-date', 'ot');
-        }
       }
     },
   });

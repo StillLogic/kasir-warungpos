@@ -142,15 +142,12 @@ export function CashierPage() {
     setCheckoutOpen(true);
   };
 
-  const handleConfirmPayment = (payment: number, customerId?: string, customerName?: string, debt: number = 0) => {
+  const handleConfirmPayment = (payment: number) => {
     const transaction = saveTransaction({
       items: cart,
       total: cartTotal,
       payment,
-      change: Math.max(0, payment - cartTotal),
-      debt,
-      customerId,
-      customerName,
+      change: payment - cartTotal,
     });
 
     setLastTransaction(transaction);
@@ -158,13 +155,9 @@ export function CashierPage() {
     setCheckoutOpen(false);
     setReceiptOpen(true);
 
-    const message = debt > 0 
-      ? `Pembayaran ${payment.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })} + Hutang ${debt.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}`
-      : `Pembayaran sebesar ${payment.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })} diterima`;
-
     toast({
       title: 'Transaksi Berhasil',
-      description: message,
+      description: `Pembayaran sebesar ${payment.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })} diterima`,
     });
 
     // Refresh products to update stock

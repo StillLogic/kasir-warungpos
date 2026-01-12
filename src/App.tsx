@@ -8,7 +8,7 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 import { ProductsPage } from "./pages/ProductsPage";
 import { HistoryPage } from "./pages/HistoryPage";
-import { DashboardPage, ReportsPage, SettingsPage, PricingPage, CustomersPage, SuppliersPage, ExpensesPage, CashSessionsPage } from "./pages/admin";
+import { DashboardPage, ReportsPage, SettingsPage, PricingPage } from "./pages/admin";
 import { Layout } from "./components/Layout";
 import { AdminLayout } from "./components/admin";
 import { InstallPWA } from "./components/InstallPWA";
@@ -38,10 +38,6 @@ const App = () => {
               <Route path="/admin" element={<AdminLayout><DashboardPage /></AdminLayout>} />
               <Route path="/admin/products" element={<AdminLayout><ProductsPage /></AdminLayout>} />
               <Route path="/admin/pricing" element={<AdminLayout><PricingPage /></AdminLayout>} />
-              <Route path="/admin/customers" element={<AdminLayout><CustomersPage /></AdminLayout>} />
-              <Route path="/admin/suppliers" element={<AdminLayout><SuppliersPage /></AdminLayout>} />
-              <Route path="/admin/expenses" element={<AdminLayout><ExpensesPage /></AdminLayout>} />
-              <Route path="/admin/cash" element={<AdminLayout><CashSessionsPage /></AdminLayout>} />
               <Route path="/admin/history" element={<AdminLayout><HistoryPage /></AdminLayout>} />
               <Route path="/admin/reports" element={<AdminLayout><ReportsPage /></AdminLayout>} />
               <Route path="/admin/settings" element={<AdminLayout><SettingsPage /></AdminLayout>} />
