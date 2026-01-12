@@ -15,8 +15,14 @@ import {
   PiggyBank,
   Percent,
   Package,
-  ArrowUpDown
+  ArrowUpDown,
+  CalendarDays,
+  X
 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { id as idLocale } from 'date-fns/locale';
 import {
   Table,
   TableBody,
@@ -60,6 +66,8 @@ export function ReportsPage() {
   const [reportType, setReportType] = useState<ReportType>('sales');
   const [productSortKey, setProductSortKey] = useState<SortKey>('profit');
   const [productSortDesc, setProductSortDesc] = useState(true);
+  const [productDateFrom, setProductDateFrom] = useState<Date | undefined>(undefined);
+  const [productDateTo, setProductDateTo] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     const loadData = async () => {
@@ -177,11 +185,38 @@ export function ReportsPage() {
     };
   }, [reportData]);
 
+  // Filter transactions by date range for product report
+  const filteredProductTransactions = useMemo(() => {
+    if (!productDateFrom && !productDateTo) return transactions;
+    
+    return transactions.filter(tx => {
+      const txDate = new Date(tx.createdAt);
+      txDate.setHours(0, 0, 0, 0);
+      
+      if (productDateFrom && productDateTo) {
+        const from = new Date(productDateFrom);
+        from.setHours(0, 0, 0, 0);
+        const to = new Date(productDateTo);
+        to.setHours(23, 59, 59, 999);
+        return txDate >= from && txDate <= to;
+      } else if (productDateFrom) {
+        const from = new Date(productDateFrom);
+        from.setHours(0, 0, 0, 0);
+        return txDate >= from;
+      } else if (productDateTo) {
+        const to = new Date(productDateTo);
+        to.setHours(23, 59, 59, 999);
+        return txDate <= to;
+      }
+      return true;
+    });
+  }, [transactions, productDateFrom, productDateTo]);
+
   // Product profit data
   const productProfitData = useMemo(() => {
     const productMap = new Map<string, ProductProfitData>();
 
-    transactions.forEach(tx => {
+    filteredProductTransactions.forEach(tx => {
       tx.items.forEach(item => {
         const productId = item.product.id;
         const costPrice = item.product.costPrice || 0;
@@ -225,7 +260,12 @@ export function ReportsPage() {
     });
 
     return products;
-  }, [transactions, productSortKey, productSortDesc]);
+  }, [filteredProductTransactions, productSortKey, productSortDesc]);
+
+  const clearProductDateFilter = () => {
+    setProductDateFrom(undefined);
+    setProductDateTo(undefined);
+  };
 
   const handleProductSort = (key: SortKey) => {
     if (productSortKey === key) {
@@ -632,6 +672,64 @@ export function ReportsPage() {
 
         {/* Product Profit Report */}
         <TabsContent value="product" className="mt-6 space-y-6">
+          {/* Date Range Filter */}
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CalendarDays className="w-4 h-4" />
+                  Filter Tanggal:
+                </div>
+                <div className="flex flex-wrap gap-2 items-center">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="w-[140px] justify-start text-left font-normal">
+                        <Calendar className="mr-2 h-4 w-4" />
+                        {productDateFrom ? format(productDateFrom, 'dd MMM yyyy', { locale: idLocale }) : 'Dari'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={productDateFrom}
+                        onSelect={setProductDateFrom}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-muted-foreground">-</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="w-[140px] justify-start text-left font-normal">
+                        <Calendar className="mr-2 h-4 w-4" />
+                        {productDateTo ? format(productDateTo, 'dd MMM yyyy', { locale: idLocale }) : 'Sampai'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={productDateTo}
+                        onSelect={setProductDateTo}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {(productDateFrom || productDateTo) && (
+                    <Button variant="ghost" size="sm" onClick={clearProductDateFilter}>
+                      <X className="w-4 h-4 mr-1" />
+                      Reset
+                    </Button>
+                  )}
+                </div>
+                {(productDateFrom || productDateTo) && (
+                  <div className="text-xs text-muted-foreground">
+                    ({filteredProductTransactions.length} transaksi)
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Product Profit Summary */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
