@@ -61,11 +61,32 @@ export function deleteMarkupRule(id: string): boolean {
   return true;
 }
 
-// Get applicable markup for a given cost price
-export function getMarkupForPrice(costPrice: number): { retailPercent: number; wholesalePercent: number } | null {
+// Get applicable markup for a given cost price and optional category
+// Priority: category-specific rules > general rules (categoryId = null)
+export function getMarkupForPrice(costPrice: number, categoryId?: string | null): { retailPercent: number; wholesalePercent: number } | null {
   const rules = getMarkupRules();
   
+  // First, try to find category-specific rule
+  if (categoryId) {
+    for (const rule of rules) {
+      if (rule.categoryId !== categoryId) continue;
+      
+      const minMatch = costPrice >= rule.minPrice;
+      const maxMatch = rule.maxPrice === null || costPrice <= rule.maxPrice;
+      
+      if (minMatch && maxMatch) {
+        return {
+          retailPercent: rule.retailMarkupPercent,
+          wholesalePercent: rule.wholesaleMarkupPercent,
+        };
+      }
+    }
+  }
+  
+  // Fallback to general rules (categoryId = null)
   for (const rule of rules) {
+    if (rule.categoryId !== null) continue;
+    
     const minMatch = costPrice >= rule.minPrice;
     const maxMatch = rule.maxPrice === null || costPrice <= rule.maxPrice;
     
@@ -81,8 +102,9 @@ export function getMarkupForPrice(costPrice: number): { retailPercent: number; w
 }
 
 // Calculate selling prices from cost price using markup rules
-export function calculateSellingPrices(costPrice: number): { retailPrice: number; wholesalePrice: number } | null {
-  const markup = getMarkupForPrice(costPrice);
+// Priority: category-specific rules > general rules
+export function calculateSellingPrices(costPrice: number, categoryId?: string | null): { retailPrice: number; wholesalePrice: number } | null {
+  const markup = getMarkupForPrice(costPrice, categoryId);
   
   if (!markup) return null;
   

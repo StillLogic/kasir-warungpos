@@ -30,7 +30,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { MarkupRule } from '@/types/markup';
 import { 
   getMarkupRules, 
@@ -40,11 +48,13 @@ import {
   calculateSellingPrices,
 } from '@/database/markup';
 import { getProducts, updateProduct, waitForProducts } from '@/database';
+import { getCategories, Category } from '@/database/categories';
 import { formatCurrency } from '@/lib/format';
 import { toast } from 'sonner';
 
 export function PricingPage() {
   const [rules, setRules] = useState<MarkupRule[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkUpdateDialogOpen, setBulkUpdateDialogOpen] = useState(false);
@@ -58,13 +68,21 @@ export function PricingPage() {
   const [retailMarkup, setRetailMarkup] = useState('');
   const [wholesaleMarkup, setWholesaleMarkup] = useState('');
   const [noMaxLimit, setNoMaxLimit] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
 
   useEffect(() => {
     loadRules();
+    setCategories(getCategories());
   }, []);
 
   const loadRules = () => {
     setRules(getMarkupRules());
+  };
+
+  const getCategoryName = (categoryId: string | null): string => {
+    if (!categoryId) return 'Semua Produk';
+    const category = categories.find(c => c.id === categoryId);
+    return category?.name || 'Kategori tidak ditemukan';
   };
 
   const resetForm = () => {
@@ -73,6 +91,7 @@ export function PricingPage() {
     setRetailMarkup('');
     setWholesaleMarkup('');
     setNoMaxLimit(false);
+    setSelectedCategoryId('all');
     setEditingRule(null);
   };
 
@@ -84,6 +103,7 @@ export function PricingPage() {
       setRetailMarkup(rule.retailMarkupPercent.toString());
       setWholesaleMarkup(rule.wholesaleMarkupPercent.toString());
       setNoMaxLimit(rule.maxPrice === null);
+      setSelectedCategoryId(rule.categoryId || 'all');
     } else {
       resetForm();
     }
@@ -122,6 +142,7 @@ export function PricingPage() {
       maxPrice: max,
       retailMarkupPercent: retail,
       wholesaleMarkupPercent: wholesale,
+      categoryId: selectedCategoryId === 'all' ? null : selectedCategoryId,
     };
 
     if (editingRule) {
@@ -156,12 +177,18 @@ export function PricingPage() {
     try {
       await waitForProducts();
       const products = getProducts();
+      const allCategories = getCategories();
       let updatedCount = 0;
       let skippedCount = 0;
 
       for (const product of products) {
         if (product.costPrice > 0) {
-          const prices = calculateSellingPrices(product.costPrice);
+          // Find category ID by name
+          const category = allCategories.find(c => c.name === product.category);
+          const categoryId = category?.id || null;
+          
+          // Calculate prices with category priority
+          const prices = calculateSellingPrices(product.costPrice, categoryId);
           if (prices) {
             updateProduct(product.id, {
               retailPrice: prices.retailPrice,
@@ -228,8 +255,8 @@ export function PricingPage() {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Sistem akan otomatis menghitung harga jual berdasarkan harga modal dan persentase markup yang ditentukan.
-          Contoh: Harga modal Rp 10.000 dengan markup 100% = Harga jual Rp 20.000
+          Sistem akan otomatis menghitung harga jual berdasarkan harga modal dan persentase markup.
+          <strong> Aturan per kategori memiliki prioritas lebih tinggi</strong> dari aturan umum (Semua Produk).
         </AlertDescription>
       </Alert>
 
@@ -253,6 +280,7 @@ export function PricingPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Kategori</TableHead>
                     <TableHead>Rentang Harga Modal</TableHead>
                     <TableHead className="text-center">Markup Satuan</TableHead>
                     <TableHead className="text-center">Markup Grosir</TableHead>
@@ -262,6 +290,11 @@ export function PricingPage() {
                 <TableBody>
                   {rules.map((rule) => (
                     <TableRow key={rule.id}>
+                      <TableCell>
+                        <Badge variant={rule.categoryId ? "default" : "secondary"}>
+                          {getCategoryName(rule.categoryId)}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="font-medium">
                         {formatPriceRange(rule.minPrice, rule.maxPrice)}
                       </TableCell>
@@ -316,6 +349,27 @@ export function PricingPage() {
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
+              {/* Category Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="category">Berlaku Untuk</Label>
+                <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih kategori" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Produk</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Aturan per kategori akan diprioritaskan dari aturan "Semua Produk"
+                </p>
+              </div>
+
               {/* Price Range */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
