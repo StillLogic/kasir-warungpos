@@ -4,6 +4,7 @@ export interface MarkupRule {
   maxPrice: number | null; // null = unlimited
   retailMarkupPercent: number;
   wholesaleMarkupPercent: number;
+  categoryId: string | null; // null = berlaku untuk semua produk
   createdAt: string;
   updatedAt: string;
 }
