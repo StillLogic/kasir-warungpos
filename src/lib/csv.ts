@@ -1,4 +1,5 @@
 // CSV utilities for product import/export
+import { getCategoryNames } from '@/database/categories';
 
 export interface CSVProduct {
   name: string;
@@ -12,7 +13,6 @@ export interface CSVProduct {
   unit: string;
 }
 
-const CATEGORIES = ['Makanan', 'Minuman', 'Sembako', 'Snack', 'Rokok', 'Lainnya'];
 const UNITS = ['pcs', 'kg', 'liter', 'pack', 'dus', 'sachet'];
 
 // Generate CSV template
@@ -94,8 +94,9 @@ export function parseCSV(content: string): { products: CSVProduct[]; errors: str
       continue;
     }
     
-    if (!category || !CATEGORIES.includes(category)) {
-      errors.push(`Baris ${rowNum}: Kategori tidak valid (gunakan: ${CATEGORIES.join(', ')})`);
+    const validCategories = getCategoryNames();
+    if (!category || !validCategories.includes(category)) {
+      errors.push(`Baris ${rowNum}: Kategori tidak valid (gunakan: ${validCategories.join(', ')})`);
       continue;
     }
     

@@ -1,9 +1,10 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Product, ProductFormData } from '@/types/pos';
 import { generateSKU } from '@/lib/sku';
+import { getCategoryNames } from '@/database/categories';
 import { getMarkupForPrice, calculateSellingPrices } from '@/database/markup';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,12 +44,14 @@ interface ProductFormProps {
   product?: Product | null;
 }
 
-const categories = ['Makanan', 'Minuman', 'Snack', 'Rokok', 'Kebersihan', 'Lainnya'];
 const units = ['pcs', 'pack', 'dus', 'kg', 'liter', 'botol', 'sachet'];
 
 export function ProductForm({ open, onClose, onSubmit, product }: ProductFormProps) {
   const isEditing = !!product;
   const [markupInfo, setMarkupInfo] = useState<{ retail: number; wholesale: number } | null>(null);
+  
+  // Get dynamic categories
+  const categories = useMemo(() => getCategoryNames(), []);
   
   const {
     register,

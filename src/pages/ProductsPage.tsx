@@ -4,6 +4,7 @@ import { getProducts, addProduct, updateProduct, deleteProduct, updateStock, wai
 import { formatCurrency } from '@/lib/format';
 import { ProductForm } from '@/components/ProductForm';
 import { ImportProductDialog } from '@/components/ImportProductDialog';
+import { CategoryManager } from '@/components/CategoryManager';
 import { CSVProduct } from '@/lib/csv';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +33,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, MoreVertical, Pencil, Trash2, PackagePlus, PackageMinus, AlertCircle, Loader2, Upload } from 'lucide-react';
+import { Plus, Search, MoreVertical, Pencil, Trash2, PackagePlus, PackageMinus, AlertCircle, Loader2, Upload, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -48,6 +49,7 @@ export function ProductsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -180,7 +182,11 @@ export function ProductsPage() {
           <h1 className="text-2xl font-bold">Manajemen Produk</h1>
           <p className="text-muted-foreground">Kelola produk dan stok warung Anda</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => setCategoryManagerOpen(true)}>
+            <Tag className="w-4 h-4 mr-2" />
+            Kategori
+          </Button>
           <Button variant="outline" onClick={() => setImportOpen(true)}>
             <Upload className="w-4 h-4 mr-2" />
             Import CSV
@@ -431,6 +437,12 @@ export function ProductsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Category Manager */}
+      <CategoryManager 
+        open={categoryManagerOpen} 
+        onClose={() => setCategoryManagerOpen(false)} 
+      />
     </div>
   );
 }
