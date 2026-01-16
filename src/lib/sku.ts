@@ -1,15 +1,7 @@
-import { getProducts } from '@/database';
-
-const categoryPrefixes: Record<string, string> = {
-  'Makanan': 'MKN',
-  'Minuman': 'MNM',
-  'Snack': 'SNK',
-  'Rokok': 'RKK',
-  'Kebersihan': 'KBR',
-  'Lainnya': 'LNY',
-};
+import { getProducts, getCategoryPrefixes } from '@/database';
 
 export function generateSKU(category: string): string {
+  const categoryPrefixes = getCategoryPrefixes();
   const prefix = categoryPrefixes[category] || 'PRD';
   const products = getProducts();
   
