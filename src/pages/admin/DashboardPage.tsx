@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Product, Transaction } from '@/types/pos';
-import { waitForProducts, getTransactionsAsync } from '@/database';
+import { waitForProducts, waitForTransactions } from '@/database';
 import { formatCurrency } from '@/lib/format';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -28,17 +28,30 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+    
     const loadData = async () => {
-      setLoading(true);
-      const [productsData, transactionsData] = await Promise.all([
-        waitForProducts(),
-        getTransactionsAsync()
-      ]);
-      setProducts(productsData);
-      setTransactions(transactionsData);
-      setLoading(false);
+      try {
+        const [productsData, transactionsData] = await Promise.all([
+          waitForProducts(),
+          waitForTransactions()
+        ]);
+        if (mounted) {
+          setProducts(productsData);
+          setTransactions(transactionsData);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     };
+    
     loadData();
+    
+    return () => { mounted = false; };
   }, []);
 
   const stats = useMemo(() => {

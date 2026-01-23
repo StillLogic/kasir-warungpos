@@ -125,16 +125,31 @@ async function ensureCache(): Promise<void> {
   if (cachePromise) return cachePromise;
   
   cachePromise = (async () => {
-    cachedProducts = await getProductsAsync();
+    try {
+      // Add timeout to prevent infinite loading in certain environments
+      const timeoutPromise = new Promise<Product[]>((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 5000)
+      );
+      
+      cachedProducts = await Promise.race([getProductsAsync(), timeoutPromise]);
+    } catch (error) {
+      console.warn('Failed to load products from IndexedDB, using empty array:', error);
+      cachedProducts = [];
+    }
     cacheInitialized = true;
   })();
   
   return cachePromise;
 }
 
-// Wait for cache to be ready
+// Wait for cache to be ready with timeout
 export async function waitForProducts(): Promise<Product[]> {
-  await ensureCache();
+  try {
+    await ensureCache();
+  } catch {
+    // Ensure we always return, even on error
+    cacheInitialized = true;
+  }
   return cachedProducts;
 }
 

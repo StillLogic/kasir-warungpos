@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Transaction } from '@/types/pos';
-import { getTransactionsAsync } from '@/database';
+import { waitForTransactions } from '@/database';
 import { formatCurrency } from '@/lib/format';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,13 +39,26 @@ export function ReportsPage() {
   const [reportType, setReportType] = useState<ReportType>('sales');
 
   useEffect(() => {
+    let mounted = true;
+    
     const loadData = async () => {
-      setLoading(true);
-      const data = await getTransactionsAsync();
-      setTransactions(data);
-      setLoading(false);
+      try {
+        const data = await waitForTransactions();
+        if (mounted) {
+          setTransactions(data);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to load reports data:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     };
+    
     loadData();
+    
+    return () => { mounted = false; };
   }, []);
 
   // Calculate profit from a transaction

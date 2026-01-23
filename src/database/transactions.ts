@@ -103,12 +103,38 @@ export async function getTodayRevenueAsync(): Promise<number> {
 // Synchronous wrappers for backward compatibility
 let cachedTransactions: Transaction[] = [];
 let txCacheInitialized = false;
+let txCachePromise: Promise<void> | null = null;
 
-async function ensureTxCache() {
-  if (!txCacheInitialized) {
-    cachedTransactions = await getTransactionsAsync();
+async function ensureTxCache(): Promise<void> {
+  if (txCacheInitialized) return;
+  if (txCachePromise) return txCachePromise;
+  
+  txCachePromise = (async () => {
+    try {
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise<Transaction[]>((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 5000)
+      );
+      
+      cachedTransactions = await Promise.race([getTransactionsAsync(), timeoutPromise]);
+    } catch (error) {
+      console.warn('Failed to load transactions from IndexedDB:', error);
+      cachedTransactions = [];
+    }
+    txCacheInitialized = true;
+  })();
+  
+  return txCachePromise;
+}
+
+// Wait for transactions cache to be ready
+export async function waitForTransactions(): Promise<Transaction[]> {
+  try {
+    await ensureTxCache();
+  } catch {
     txCacheInitialized = true;
   }
+  return cachedTransactions;
 }
 
 export function getTransactions(): Transaction[] {

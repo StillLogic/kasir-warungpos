@@ -52,13 +52,26 @@ export function ProductsPage() {
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+    
     const loadProducts = async () => {
-      setLoading(true);
-      const data = await waitForProducts();
-      setProducts(data);
-      setLoading(false);
+      try {
+        const data = await waitForProducts();
+        if (mounted) {
+          setProducts(data);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to load products:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     };
+    
     loadProducts();
+    
+    return () => { mounted = false; };
   }, []);
 
   // Sort by stock (lowest first) then filter
