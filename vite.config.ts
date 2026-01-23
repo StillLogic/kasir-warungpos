@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => ({
         short_name: "WarungPOS",
         description: "Aplikasi Point of Sale untuk warung dan toko kecil",
         theme_color: "#22c55e",
-        background_color: "#f5f7fa",
+        background_color: "#171c26",
         display: "standalone",
         orientation: "portrait",
         scope: "/",
