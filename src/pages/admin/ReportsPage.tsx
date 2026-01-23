@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Transaction } from '@/types/pos';
+import { DebtPayment } from '@/types/debt';
 import { waitForTransactions } from '@/database';
+import { getAllPayments, getDebts } from '@/database/debts';
 import { formatCurrency } from '@/lib/format';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,6 +36,7 @@ type ReportType = 'sales' | 'profit';
 
 export function ReportsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [debtPayments, setDebtPayments] = useState<DebtPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('daily');
   const [reportType, setReportType] = useState<ReportType>('sales');
@@ -43,9 +46,13 @@ export function ReportsPage() {
     
     const loadData = async () => {
       try {
-        const data = await waitForTransactions();
+        const [txData, payments] = await Promise.all([
+          waitForTransactions(),
+          Promise.resolve(getAllPayments())
+        ]);
         if (mounted) {
-          setTransactions(data);
+          setTransactions(txData);
+          setDebtPayments(payments);
           setLoading(false);
         }
       } catch (error) {
@@ -61,8 +68,11 @@ export function ReportsPage() {
     return () => { mounted = false; };
   }, []);
 
-  // Calculate profit from a transaction
+  // Calculate profit from a cash transaction only
   const calculateProfit = (tx: Transaction) => {
+    // Debt transactions don't contribute to profit until paid
+    if (tx.paymentType === 'debt') return 0;
+    
     return tx.items.reduce((sum, item) => {
       const costPrice = item.product.costPrice || 0;
       const sellingPrice = item.priceType === 'wholesale' 
@@ -73,10 +83,95 @@ export function ReportsPage() {
     }, 0);
   };
 
+  // Calculate profit from debt payments
+  // When a debt is paid, we recognize the profit proportionally
+  const calculatePaymentProfit = useMemo(() => {
+    const debts = getDebts();
+    const debtProfitMap = new Map<string, { totalProfit: number; total: number }>();
+    
+    // Find related transactions for each debt (by customerId match)
+    const debtTransactions = transactions.filter(tx => tx.paymentType === 'debt');
+    
+    // Calculate profit margin for each debt transaction
+    debtTransactions.forEach(tx => {
+      if (!tx.customerId) return;
+      
+      const profit = tx.items.reduce((sum, item) => {
+        const costPrice = item.product.costPrice || 0;
+        const sellingPrice = item.priceType === 'wholesale' 
+          ? item.product.wholesalePrice 
+          : item.product.retailPrice;
+        return sum + (sellingPrice - costPrice) * item.quantity;
+      }, 0);
+      
+      const existing = debtProfitMap.get(tx.customerId) || { totalProfit: 0, total: 0 };
+      existing.totalProfit += profit;
+      existing.total += tx.total;
+      debtProfitMap.set(tx.customerId, existing);
+    });
+
+    // Also check debt records for margin calculation
+    debts.forEach(debt => {
+      if (debtProfitMap.has(debt.customerId)) return; // Already from transaction
+      
+      // For older debts without transaction records, estimate margin from debt items
+      // We don't have costPrice in debt items, so we skip these
+    });
+
+    return (payment: DebtPayment): number => {
+      const customerId = payment.customerId || 
+        (payment.debtId.startsWith('customer-') ? payment.debtId.replace('customer-', '') : null);
+      
+      if (!customerId) {
+        // Legacy single debt payment - find the debt and calculate
+        const debt = debts.find(d => d.id === payment.debtId);
+        if (!debt) return 0;
+        
+        // Find matching transaction
+        const tx = debtTransactions.find(t => 
+          t.customerId === debt.customerId && 
+          Math.abs(new Date(t.createdAt).getTime() - new Date(debt.createdAt).getTime()) < 60000
+        );
+        
+        if (tx) {
+          const txProfit = tx.items.reduce((sum, item) => {
+            const costPrice = item.product.costPrice || 0;
+            const sellingPrice = item.priceType === 'wholesale' 
+              ? item.product.wholesalePrice 
+              : item.product.retailPrice;
+            return sum + (sellingPrice - costPrice) * item.quantity;
+          }, 0);
+          const margin = tx.total > 0 ? txProfit / tx.total : 0;
+          return payment.amount * margin;
+        }
+        return 0;
+      }
+
+      const profitData = debtProfitMap.get(customerId);
+      if (!profitData || profitData.total === 0) return 0;
+      
+      // Proportional profit based on payment amount
+      const margin = profitData.totalProfit / profitData.total;
+      return payment.amount * margin;
+    };
+  }, [transactions]);
+
   const reportData = useMemo(() => {
-    const processTransactions = (txList: Transaction[]) => {
-      const revenue = txList.reduce((sum, t) => sum + t.total, 0);
-      const profit = txList.reduce((sum, t) => sum + calculateProfit(t), 0);
+    const processTransactions = (txList: Transaction[], paymentList: DebtPayment[]) => {
+      // Revenue: only cash transactions (debt is not revenue until paid)
+      const cashRevenue = txList
+        .filter(t => t.paymentType !== 'debt')
+        .reduce((sum, t) => sum + t.total, 0);
+      
+      // Add debt payments as revenue (money received)
+      const paymentRevenue = paymentList.reduce((sum, p) => sum + p.amount, 0);
+      const revenue = cashRevenue + paymentRevenue;
+      
+      // Profit: cash transactions profit + debt payment profit
+      const cashProfit = txList.reduce((sum, t) => sum + calculateProfit(t), 0);
+      const paymentProfit = paymentList.reduce((sum, p) => sum + calculatePaymentProfit(p), 0);
+      const profit = cashProfit + paymentProfit;
+      
       const cost = revenue - profit;
       return { revenue, profit, cost, transactions: txList.length };
     };
@@ -88,7 +183,8 @@ export function ReportsPage() {
         const date = new Date(Date.now() - i * 86400000);
         const dateStr = date.toDateString();
         const dayTx = transactions.filter(t => new Date(t.createdAt).toDateString() === dateStr);
-        const data = processTransactions(dayTx);
+        const dayPayments = debtPayments.filter(p => new Date(p.createdAt).toDateString() === dateStr);
+        const data = processTransactions(dayTx, dayPayments);
         
         last30Days.push({
           date: date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
@@ -109,8 +205,12 @@ export function ReportsPage() {
           const txDate = new Date(t.createdAt);
           return txDate >= weekStart && txDate <= weekEnd;
         });
+        const weekPayments = debtPayments.filter(p => {
+          const pDate = new Date(p.createdAt);
+          return pDate >= weekStart && pDate <= weekEnd;
+        });
         
-        const data = processTransactions(weekTx);
+        const data = processTransactions(weekTx, weekPayments);
         weeks.push({
           date: `${weekStart.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}`,
           ...data,
@@ -132,8 +232,12 @@ export function ReportsPage() {
           const txDate = new Date(t.createdAt);
           return txDate.getMonth() === month && txDate.getFullYear() === year;
         });
+        const monthPayments = debtPayments.filter(p => {
+          const pDate = new Date(p.createdAt);
+          return pDate.getMonth() === month && pDate.getFullYear() === year;
+        });
         
-        const data = processTransactions(monthTx);
+        const data = processTransactions(monthTx, monthPayments);
         months.push({
           date: date.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }),
           ...data,
@@ -143,7 +247,7 @@ export function ReportsPage() {
 
       return months;
     }
-  }, [transactions, period]);
+  }, [transactions, debtPayments, period, calculatePaymentProfit]);
 
   const summary = useMemo(() => {
     const totalRevenue = reportData.reduce((sum, d) => sum + d.revenue, 0);

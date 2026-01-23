@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Product, Transaction } from '@/types/pos';
+import { DebtPayment } from '@/types/debt';
 import { waitForProducts, waitForTransactions } from '@/database';
+import { getAllPayments } from '@/database/debts';
 import { formatCurrency } from '@/lib/format';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -25,6 +27,7 @@ import {
 export function DashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [debtPayments, setDebtPayments] = useState<DebtPayment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,13 +35,15 @@ export function DashboardPage() {
     
     const loadData = async () => {
       try {
-        const [productsData, transactionsData] = await Promise.all([
+        const [productsData, transactionsData, payments] = await Promise.all([
           waitForProducts(),
-          waitForTransactions()
+          waitForTransactions(),
+          Promise.resolve(getAllPayments())
         ]);
         if (mounted) {
           setProducts(productsData);
           setTransactions(transactionsData);
+          setDebtPayments(payments);
           setLoading(false);
         }
       } catch (error) {
@@ -54,6 +59,21 @@ export function DashboardPage() {
     return () => { mounted = false; };
   }, []);
 
+  // Calculate actual revenue: cash transactions + debt payments (money actually received)
+  const calculateDayRevenue = (dateStr: string) => {
+    // Cash transactions only
+    const cashRevenue = transactions
+      .filter(t => new Date(t.createdAt).toDateString() === dateStr && t.paymentType !== 'debt')
+      .reduce((sum, t) => sum + t.total, 0);
+    
+    // Debt payments received on this day
+    const paymentRevenue = debtPayments
+      .filter(p => new Date(p.createdAt).toDateString() === dateStr)
+      .reduce((sum, p) => sum + p.amount, 0);
+    
+    return cashRevenue + paymentRevenue;
+  };
+
   const stats = useMemo(() => {
     const today = new Date().toDateString();
     const yesterday = new Date(Date.now() - 86400000).toDateString();
@@ -61,8 +81,8 @@ export function DashboardPage() {
     const todayTx = transactions.filter(t => new Date(t.createdAt).toDateString() === today);
     const yesterdayTx = transactions.filter(t => new Date(t.createdAt).toDateString() === yesterday);
 
-    const todayRevenue = todayTx.reduce((sum, t) => sum + t.total, 0);
-    const yesterdayRevenue = yesterdayTx.reduce((sum, t) => sum + t.total, 0);
+    const todayRevenue = calculateDayRevenue(today);
+    const yesterdayRevenue = calculateDayRevenue(yesterday);
 
     const revenueChange = yesterdayRevenue > 0 
       ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100 
@@ -86,7 +106,7 @@ export function DashboardPage() {
       lowStockProducts,
       outOfStockProducts,
     };
-  }, [products, transactions]);
+  }, [products, transactions, debtPayments]);
 
   const topProducts = useMemo(() => {
     const productSales: Record<string, { name: string; sold: number; revenue: number }> = {};
@@ -116,13 +136,13 @@ export function DashboardPage() {
       
       last7Days.push({
         date: date.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' }),
-        revenue: dayTx.reduce((sum, t) => sum + t.total, 0),
+        revenue: calculateDayRevenue(dateStr),
         transactions: dayTx.length,
       });
     }
 
     return last7Days;
-  }, [transactions]);
+  }, [transactions, debtPayments]);
 
   if (loading) {
     return (
