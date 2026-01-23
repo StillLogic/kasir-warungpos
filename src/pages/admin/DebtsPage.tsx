@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search, User, CreditCard, ArrowLeft, Receipt, Calendar, Banknote } from 'lucide-react';
+import { Search, User, CreditCard, ArrowLeft, Banknote } from 'lucide-react';
 import { getCustomersWithDebt, getDebtsByCustomerId, payDebt, getDebtPayments } from '@/database/debts';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -239,6 +239,48 @@ export function DebtsPage() {
     );
   }
 
+  // Build combined transaction list (debt items + payments)
+  const combinedTransactions = useMemo(() => {
+    const transactions: Array<{
+      type: 'debt' | 'payment';
+      date: Date;
+      productName?: string;
+      quantity?: number;
+      unitPrice?: number;
+      totalPrice: number;
+      debtId: string;
+    }> = [];
+
+    customerDebts.forEach((debt) => {
+      // Add debt items
+      debt.items.forEach((item) => {
+        transactions.push({
+          type: 'debt',
+          date: new Date(debt.createdAt),
+          productName: item.productName,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          totalPrice: item.subtotal,
+          debtId: debt.id,
+        });
+      });
+
+      // Add payments
+      const payments = getDebtPayments(debt.id);
+      payments.forEach((payment) => {
+        transactions.push({
+          type: 'payment',
+          date: new Date(payment.createdAt),
+          totalPrice: payment.amount,
+          debtId: debt.id,
+        });
+      });
+    });
+
+    // Sort by date descending (newest first)
+    return transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [customerDebts]);
+
   // Customer Detail View
   return (
     <div className="space-y-6">
@@ -249,70 +291,119 @@ export function DebtsPage() {
         </Button>
         <div className="flex-1">
           <h2 className="text-xl font-semibold">{selectedCustomer.customerName}</h2>
-          <p className="text-sm text-muted-foreground">
-            Total Hutang: <span className="font-semibold text-destructive">{formatCurrency(selectedCustomer.totalDebt)}</span>
-          </p>
         </div>
       </div>
 
-      {/* Debt List */}
-      <div className="space-y-3">
-        {customerDebts.map((debt) => (
-          <Card key={debt.id}>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  {format(new Date(debt.createdAt), 'dd MMM yyyy, HH:mm', { locale: localeId })}
-                </div>
-                {getStatusBadge(debt.status)}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Items */}
-              <div className="space-y-1">
-                {debt.items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      {item.productName} x{item.quantity}
+      {/* Total Debt Summary */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Hutang</p>
+              <p className="text-2xl font-bold text-destructive">{formatCurrency(selectedCustomer.totalDebt)}</p>
+            </div>
+            {selectedCustomer.totalDebt > 0 && (
+              <Button onClick={() => {
+                const unpaidDebt = customerDebts.find(d => d.status !== 'paid');
+                if (unpaidDebt) handleOpenPayDialog(unpaidDebt);
+              }}>
+                <Banknote className="w-4 h-4 mr-2" />
+                Bayar
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Transaction Table */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Riwayat Transaksi</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {isMobile ? (
+            <div className="divide-y">
+              {combinedTransactions.map((tx, idx) => (
+                <div key={idx} className={`p-4 ${tx.type === 'payment' ? 'bg-green-50 dark:bg-green-950/20' : ''}`}>
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="text-xs text-muted-foreground">
+                      {format(tx.date, 'dd/MM/yyyy HH:mm', { locale: localeId })}
                     </span>
-                    <span>{formatCurrency(item.subtotal)}</span>
+                    {tx.type === 'payment' ? (
+                      <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                        Pembayaran
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">Hutang</Badge>
+                    )}
                   </div>
+                  {tx.type === 'debt' ? (
+                    <>
+                      <p className="font-medium">{tx.productName}</p>
+                      <div className="flex justify-between text-sm text-muted-foreground mt-1">
+                        <span>{tx.quantity} x {formatCurrency(tx.unitPrice || 0)}</span>
+                        <span className="font-semibold text-foreground">{formatCurrency(tx.totalPrice)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between items-center">
+                      <span className="text-green-600 dark:text-green-400 font-medium">Pembayaran Diterima</span>
+                      <span className="font-semibold text-green-600 dark:text-green-400">-{formatCurrency(tx.totalPrice)}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tanggal & Jam</TableHead>
+                  <TableHead>Keterangan</TableHead>
+                  <TableHead className="text-center">Jumlah</TableHead>
+                  <TableHead className="text-right">Harga Satuan</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {combinedTransactions.map((tx, idx) => (
+                  <TableRow key={idx} className={tx.type === 'payment' ? 'bg-green-50 dark:bg-green-950/20' : ''}>
+                    <TableCell className="text-muted-foreground">
+                      {format(tx.date, 'dd/MM/yyyy HH:mm', { locale: localeId })}
+                    </TableCell>
+                    <TableCell>
+                      {tx.type === 'debt' ? (
+                        <span>{tx.productName}</span>
+                      ) : (
+                        <span className="text-green-600 dark:text-green-400 font-medium flex items-center gap-2">
+                          <Banknote className="w-4 h-4" />
+                          Pembayaran
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {tx.type === 'debt' ? tx.quantity : '-'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {tx.type === 'debt' ? formatCurrency(tx.unitPrice || 0) : '-'}
+                    </TableCell>
+                    <TableCell className={`text-right font-semibold ${tx.type === 'payment' ? 'text-green-600 dark:text-green-400' : ''}`}>
+                      {tx.type === 'payment' ? `-${formatCurrency(tx.totalPrice)}` : formatCurrency(tx.totalPrice)}
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </div>
-
-              {/* Summary */}
-              <div className="border-t pt-3 space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total</span>
-                  <span className="font-medium">{formatCurrency(debt.total)}</span>
-                </div>
-                {debt.paidAmount > 0 && (
-                  <div className="flex justify-between text-sm text-green-600">
-                    <span>Sudah Dibayar</span>
-                    <span>-{formatCurrency(debt.paidAmount)}</span>
-                  </div>
+                {combinedTransactions.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                      Tidak ada transaksi
+                    </TableCell>
+                  </TableRow>
                 )}
-                <div className="flex justify-between font-semibold">
-                  <span>Sisa Hutang</span>
-                  <span className="text-destructive">{formatCurrency(debt.remainingAmount)}</span>
-                </div>
-              </div>
-
-              {/* Pay Button */}
-              {debt.status !== 'paid' && (
-                <Button
-                  className="w-full"
-                  onClick={() => handleOpenPayDialog(debt)}
-                >
-                  <Banknote className="w-4 h-4 mr-2" />
-                  Bayar Hutang
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Pay Dialog */}
       <Dialog open={payDialogOpen} onOpenChange={setPayDialogOpen}>
