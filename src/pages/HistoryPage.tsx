@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Search, Receipt as ReceiptIcon, TrendingUp, ShoppingCart, Calendar } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 export function HistoryPage() {
   const [transactions] = useState<Transaction[]>(() => getTransactions());
@@ -120,6 +121,7 @@ export function HistoryPage() {
               <TableHead>No. Transaksi</TableHead>
               <TableHead>Tanggal</TableHead>
               <TableHead>Item</TableHead>
+              <TableHead>Tipe</TableHead>
               <TableHead className="text-right">Total</TableHead>
               <TableHead className="text-right">Bayar</TableHead>
               <TableHead className="text-right">Kembali</TableHead>
@@ -129,7 +131,7 @@ export function HistoryPage() {
           <TableBody>
             {filteredTransactions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                   {transactions.length === 0 
                     ? 'Belum ada transaksi.'
                     : 'Tidak ditemukan transaksi yang sesuai.'}
@@ -154,14 +156,26 @@ export function HistoryPage() {
                       </p>
                     </div>
                   </TableCell>
+                  <TableCell>
+                    {transaction.paymentType === 'debt' ? (
+                      <Badge variant="destructive" className="text-xs">
+                        Hutang
+                        {transaction.customerName && (
+                          <span className="ml-1 opacity-80">({transaction.customerName})</span>
+                        )}
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">Tunai</Badge>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right font-medium">
                     {formatCurrency(transaction.total)}
                   </TableCell>
                   <TableCell className="text-right text-sm">
-                    {formatCurrency(transaction.payment)}
+                    {transaction.paymentType === 'debt' ? '-' : formatCurrency(transaction.payment)}
                   </TableCell>
                   <TableCell className="text-right text-sm text-primary">
-                    {formatCurrency(transaction.change)}
+                    {transaction.paymentType === 'debt' ? '-' : formatCurrency(transaction.change)}
                   </TableCell>
                   <TableCell>
                     <Button

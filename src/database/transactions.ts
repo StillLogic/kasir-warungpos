@@ -53,6 +53,8 @@ async function fromRecord(r: TransactionRecord): Promise<Transaction> {
     change: r.ch,
     createdAt: fromUnix(r.ca),
     customerName: r.cn,
+    paymentType: r.pt === 1 ? 'debt' : 'cash',
+    customerId: r.ci,
   };
 }
 
@@ -77,13 +79,17 @@ export async function saveTransactionAsync(transaction: Omit<Transaction, 'id' |
     ch: transaction.change,
     ca: now,
     cn: transaction.customerName || undefined,
+    pt: transaction.paymentType === 'debt' ? 1 : 0,
+    ci: transaction.customerId,
   };
 
   await db.put('transactions', newRecord);
 
-  // Update stock for each item
-  for (const item of transaction.items) {
-    await updateStockAsync(item.product.id, -item.quantity);
+  // Update stock for each item (only for cash transactions, debt handles stock separately)
+  if (transaction.paymentType !== 'debt') {
+    for (const item of transaction.items) {
+      await updateStockAsync(item.product.id, -item.quantity);
+    }
   }
 
   return fromRecord(newRecord);
@@ -148,6 +154,7 @@ export function saveTransaction(transaction: Omit<Transaction, 'id' | 'createdAt
     ...transaction,
     id: generateId(),
     createdAt: now,
+    paymentType: transaction.paymentType || 'cash',
   };
   cachedTransactions.unshift(newTransaction);
   

@@ -152,6 +152,7 @@ export function CashierPage() {
       total: cartTotal,
       payment,
       change: payment - cartTotal,
+      paymentType: 'cash',
     });
 
     setLastTransaction(transaction);
@@ -174,7 +175,19 @@ export function CashierPage() {
   };
 
   const handleConfirmDebt = async (customer: Customer) => {
+    // Create debt record
     await createDebt(customer.id, customer.name, cart, cartTotal);
+    
+    // Also save as transaction for history/reports
+    saveTransaction({
+      items: cart,
+      total: cartTotal,
+      payment: 0,
+      change: 0,
+      paymentType: 'debt',
+      customerId: customer.id,
+      customerName: customer.name,
+    });
 
     setCart([]);
     setDebtDialogOpen(false);
