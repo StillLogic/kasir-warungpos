@@ -26,10 +26,20 @@ export function MobileCalculator() {
     return getMarkupForPrice(cost, categoryId);
   }, [cost, selectedCategory]);
 
-  const retailMarkup = markup?.retailPercent || 0;
-  const wholesaleMarkup = markup?.wholesalePercent || 0;
-  const rawRetailPrice = cost + (cost * retailMarkup / 100);
-  const rawWholesalePrice = cost + (cost * wholesaleMarkup / 100);
+  const isFixedMarkup = markup?.type === 'fixed';
+
+  // Calculate prices based on markup type
+  let rawRetailPrice: number;
+  let rawWholesalePrice: number;
+  
+  if (isFixedMarkup) {
+    rawRetailPrice = cost + (markup?.retailFixed || 0);
+    rawWholesalePrice = cost + (markup?.wholesaleFixed || 0);
+  } else {
+    rawRetailPrice = cost + (cost * (markup?.retailPercent || 0) / 100);
+    rawWholesalePrice = cost + (cost * (markup?.wholesalePercent || 0) / 100);
+  }
+  
   const retailPrice = roundToThousand(rawRetailPrice);
   const wholesalePrice = roundToThousand(rawWholesalePrice);
 
@@ -185,7 +195,10 @@ export function MobileCalculator() {
             {formatCurrency(retailPrice)}
           </div>
           <div className="text-xs text-muted-foreground">
-            +{retailMarkup}%
+            {isFixedMarkup 
+              ? `+${formatCurrency(markup?.retailFixed || 0)}`
+              : `+${markup?.retailPercent || 0}%`
+            }
           </div>
         </button>
 
@@ -207,7 +220,10 @@ export function MobileCalculator() {
             {formatCurrency(wholesalePrice)}
           </div>
           <div className="text-xs text-muted-foreground">
-            +{wholesaleMarkup}%
+            {isFixedMarkup 
+              ? `+${formatCurrency(markup?.wholesaleFixed || 0)}`
+              : `+${markup?.wholesalePercent || 0}%`
+            }
           </div>
         </button>
       </div>

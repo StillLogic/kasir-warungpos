@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { useEffect, useState, useMemo } from 'react';
 import { Product, ProductFormData } from '@/types/pos';
 import { generateSKU } from '@/lib/sku';
-import { getCategoryNames } from '@/database/categories';
+import { getCategoryNames, getCategories } from '@/database/categories';
 import { getMarkupForPrice, calculateSellingPrices } from '@/database/markup';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,7 +48,7 @@ const units = ['pcs', 'pack', 'dus', 'kg', 'liter', 'botol', 'sachet'];
 
 export function ProductForm({ open, onClose, onSubmit, product }: ProductFormProps) {
   const isEditing = !!product;
-  const [markupInfo, setMarkupInfo] = useState<{ retail: number; wholesale: number } | null>(null);
+  const [markupInfo, setMarkupInfo] = useState<{ retail: number; wholesale: number; type?: 'percent' | 'fixed' } | null>(null);
   
   // Get dynamic categories
   const categories = useMemo(() => getCategoryNames(), []);
@@ -94,13 +94,30 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
     }
   }, [open, isEditing, setValue]);
 
-  // Auto-calculate selling prices when cost price changes
+  // Auto-calculate selling prices when cost price or category changes
   useEffect(() => {
-    if (costPrice > 0) {
-      const markup = getMarkupForPrice(costPrice);
+    if (costPrice > 0 && category) {
+      // Find category ID from category name
+      const allCategories = getCategories();
+      const catData = allCategories.find((c) => c.name === category);
+      const categoryId = catData?.id || null;
+      
+      const markup = getMarkupForPrice(costPrice, categoryId);
       if (markup) {
-        setMarkupInfo({ retail: markup.retailPercent, wholesale: markup.wholesalePercent });
-        const prices = calculateSellingPrices(costPrice);
+        if (markup.type === 'fixed') {
+          setMarkupInfo({ 
+            retail: markup.retailFixed, 
+            wholesale: markup.wholesaleFixed,
+            type: 'fixed'
+          });
+        } else {
+          setMarkupInfo({ 
+            retail: markup.retailPercent, 
+            wholesale: markup.wholesalePercent,
+            type: 'percent'
+          });
+        }
+        const prices = calculateSellingPrices(costPrice, categoryId);
         if (prices) {
           setValue('retailPrice', prices.retailPrice);
           setValue('wholesalePrice', prices.wholesalePrice);
@@ -111,7 +128,7 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
     } else {
       setMarkupInfo(null);
     }
-  }, [costPrice, setValue]);
+  }, [costPrice, category, setValue]);
 
   const handleFormSubmit = (data: ProductFormData) => {
     onSubmit(data);
@@ -199,7 +216,10 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
                 <div className="flex items-start gap-2 p-2 bg-muted/50 rounded-md text-xs">
                   <Info className="h-3.5 w-3.5 mt-0.5 text-primary" />
                   <span className="text-muted-foreground">
-                    Markup otomatis: Eceran +{markupInfo.retail}%, Grosir +{markupInfo.wholesale}%
+                    {markupInfo.type === 'fixed' 
+                      ? `Markup otomatis: Eceran +${formatCurrency(markupInfo.retail)}, Grosir +${formatCurrency(markupInfo.wholesale)}`
+                      : `Markup otomatis: Eceran +${markupInfo.retail}%, Grosir +${markupInfo.wholesale}%`
+                    }
                   </span>
                 </div>
               )}

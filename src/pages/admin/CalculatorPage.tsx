@@ -42,11 +42,20 @@ function DesktopCalculator() {
     return getMarkupForPrice(cost, categoryId);
   }, [cost, selectedCategory]);
 
-  const retailMarkup = markup?.retailPercent || 0;
-  const wholesaleMarkupPercent = markup?.wholesalePercent || 0;
-
-  const rawRetailPrice = cost + (cost * retailMarkup / 100);
-  const rawWholesalePrice = cost + (cost * wholesaleMarkupPercent / 100);
+  // Calculate prices based on markup type
+  const isFixedMarkup = markup?.type === 'fixed';
+  
+  let rawRetailPrice: number;
+  let rawWholesalePrice: number;
+  
+  if (isFixedMarkup) {
+    rawRetailPrice = cost + (markup?.retailFixed || 0);
+    rawWholesalePrice = cost + (markup?.wholesaleFixed || 0);
+  } else {
+    rawRetailPrice = cost + (cost * (markup?.retailPercent || 0) / 100);
+    rawWholesalePrice = cost + (cost * (markup?.wholesalePercent || 0) / 100);
+  }
+  
   const retailPrice = roundToThousand(rawRetailPrice);
   const wholesalePrice = roundToThousand(rawWholesalePrice);
   const retailProfit = retailPrice - cost;
@@ -144,7 +153,11 @@ function DesktopCalculator() {
                 {formatCurrency(retailPrice)}
               </p>
               <p className="text-sm text-muted-foreground">
-                Profit: {formatCurrency(retailProfit)} ({retailMarkup}%)
+                Profit: {formatCurrency(retailProfit)} 
+                {isFixedMarkup 
+                  ? `(+${formatCurrency(markup?.retailFixed || 0)})` 
+                  : `(${markup?.retailPercent || 0}%)`
+                }
               </p>
             </div>
 
@@ -165,7 +178,11 @@ function DesktopCalculator() {
                 {formatCurrency(wholesalePrice)}
               </p>
               <p className="text-sm text-muted-foreground">
-                Profit: {formatCurrency(wholesaleProfit)} ({wholesaleMarkupPercent}%)
+                Profit: {formatCurrency(wholesaleProfit)} 
+                {isFixedMarkup 
+                  ? `(+${formatCurrency(markup?.wholesaleFixed || 0)})` 
+                  : `(${markup?.wholesalePercent || 0}%)`
+                }
               </p>
             </div>
 
@@ -242,7 +259,10 @@ function DesktopCalculator() {
                       Rentang: {formatCurrency(appliedRule.minPrice)} - {appliedRule.maxPrice ? formatCurrency(appliedRule.maxPrice) : '∞'}
                     </p>
                     <p>
-                      Eceran: {appliedRule.retailMarkupPercent}% | Grosir: {appliedRule.wholesaleMarkupPercent}%
+                      {appliedRule.markupType === 'fixed' 
+                        ? `Eceran: +${formatCurrency(appliedRule.retailMarkupFixed || 0)} | Grosir: +${formatCurrency(appliedRule.wholesaleMarkupFixed || 0)}`
+                        : `Eceran: ${appliedRule.retailMarkupPercent}% | Grosir: ${appliedRule.wholesaleMarkupPercent}%`
+                      }
                     </p>
                     {appliedRule.categoryName && (
                       <p className="text-primary">Kategori: {appliedRule.categoryName}</p>
@@ -298,8 +318,17 @@ function DesktopCalculator() {
                       )}
                     </div>
                     <div className="text-right text-sm">
-                      <p>Eceran: <span className="font-medium">{rule.retailMarkupPercent}%</span></p>
-                      <p>Grosir: <span className="font-medium">{rule.wholesaleMarkupPercent}%</span></p>
+                      {rule.markupType === 'fixed' ? (
+                        <>
+                          <p>Eceran: <span className="font-medium">+{formatCurrency(rule.retailMarkupFixed || 0)}</span></p>
+                          <p>Grosir: <span className="font-medium">+{formatCurrency(rule.wholesaleMarkupFixed || 0)}</span></p>
+                        </>
+                      ) : (
+                        <>
+                          <p>Eceran: <span className="font-medium">{rule.retailMarkupPercent}%</span></p>
+                          <p>Grosir: <span className="font-medium">{rule.wholesaleMarkupPercent}%</span></p>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
