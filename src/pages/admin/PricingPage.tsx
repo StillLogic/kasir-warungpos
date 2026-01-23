@@ -49,7 +49,7 @@ import {
 } from '@/database/markup';
 import { getProducts, updateProduct, waitForProducts } from '@/database';
 import { getCategories, Category } from '@/database/categories';
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, roundToThousand } from '@/lib/format';
 import { toast } from 'sonner';
 
 export function PricingPage() {
@@ -450,8 +450,8 @@ export function PricingPage() {
                   <p className="font-medium mb-1">Contoh Kalkulasi:</p>
                   <p className="text-muted-foreground">
                     Harga modal {formatCurrency(parseInt(minPrice) || 0)} → 
-                    Harga satuan {formatCurrency(Math.round((parseInt(minPrice) || 0) * (1 + (parseFloat(retailMarkup) || 0) / 100)))} | 
-                    Harga grosir {formatCurrency(Math.round((parseInt(minPrice) || 0) * (1 + (parseFloat(wholesaleMarkup) || 0) / 100)))}
+                    Harga satuan {formatCurrency(roundToThousand((parseInt(minPrice) || 0) * (1 + (parseFloat(retailMarkup) || 0) / 100)))} | 
+                    Harga grosir {formatCurrency(roundToThousand((parseInt(minPrice) || 0) * (1 + (parseFloat(wholesaleMarkup) || 0) / 100)))}
                   </p>
                 </div>
               )}
