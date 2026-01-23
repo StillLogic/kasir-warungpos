@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => ({
         description: "Aplikasi Point of Sale untuk warung dan toko kecil",
         theme_color: "#1a202c",
         background_color: "#1a202c",
-        display: "fullscreen",
+        display: "standalone",
         orientation: "portrait",
         scope: "/",
         start_url: "/",
