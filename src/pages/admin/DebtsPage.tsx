@@ -241,6 +241,8 @@ export function DebtsPage() {
 
   // Build combined transaction list (debt items + payments)
   const combinedTransactions = useMemo(() => {
+    if (!selectedCustomer) return [];
+    
     const transactions: Array<{
       type: 'debt' | 'payment';
       date: Date;
@@ -279,7 +281,7 @@ export function DebtsPage() {
 
     // Sort by date descending (newest first)
     return transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
-  }, [customerDebts]);
+  }, [customerDebts, selectedCustomer]);
 
   // Customer Detail View
   return (
