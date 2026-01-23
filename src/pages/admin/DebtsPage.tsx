@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Debt, DebtPayment } from '@/types/debt';
 import { formatCurrency } from '@/lib/format';
 import { Button } from '@/components/ui/button';
@@ -26,12 +26,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search, User, CreditCard, ArrowLeft, Banknote, Plus } from 'lucide-react';
+import { Search, User, CreditCard, ArrowLeft, Banknote, Plus, Printer, Download } from 'lucide-react';
 import { getCustomersWithDebt, getDebtsByCustomerId, payDebt, getDebtPayments } from '@/database/debts';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
+import html2canvas from 'html2canvas';
 
 interface CustomerDebtSummary {
   customerId: string;
@@ -59,6 +60,7 @@ export function DebtsPage() {
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const isMobile = useIsMobile();
+  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadCustomers();
@@ -126,6 +128,106 @@ export function DebtsPage() {
     } else {
       // Customer has no more debt, go back
       handleBack();
+    }
+  };
+
+  const handlePrint = () => {
+    if (!selectedCustomer) return;
+    
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Rincian Hutang - ${selectedCustomer.customerName}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+          h1 { font-size: 18px; margin-bottom: 5px; }
+          .subtitle { color: #666; font-size: 12px; margin-bottom: 20px; }
+          .total-box { background: #fee2e2; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+          .total-label { font-weight: 600; }
+          .total-amount { font-size: 24px; font-weight: bold; color: #dc2626; float: right; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background: #f5f5f5; font-weight: 600; }
+          .text-right { text-align: right; }
+          .text-center { text-align: center; }
+          .payment { color: #16a34a; font-weight: 500; }
+          .footer { margin-top: 20px; font-size: 11px; color: #666; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <h1>${selectedCustomer.customerName}</h1>
+        <div class="subtitle">Rincian Hutang - Dicetak: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: localeId })}</div>
+        
+        <div class="total-box">
+          <span class="total-label">Total Hutang</span>
+          <span class="total-amount">${formatCurrency(selectedCustomer.totalDebt)}</span>
+          <div style="clear: both;"></div>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>Waktu</th>
+              <th>Keterangan</th>
+              <th class="text-center">Qty</th>
+              <th class="text-right">Harga Satuan</th>
+              <th class="text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows.map(row => `
+              <tr>
+                <td>${format(new Date(row.timestamp), 'dd/MM/yy HH:mm', { locale: localeId })}</td>
+                <td${row.type === 'payment' ? ' class="payment"' : ''}>${row.type === 'debt' ? row.productName : '+ Pembayaran'}</td>
+                <td class="text-center">${row.type === 'debt' ? row.quantity : '-'}</td>
+                <td class="text-right">${row.type === 'debt' ? formatCurrency(row.unitPrice || 0) : '-'}</td>
+                <td class="text-right${row.type === 'payment' ? ' payment' : ''}">${row.type === 'payment' ? formatCurrency(Math.abs(row.totalPrice)) + ' (-)' : formatCurrency(row.totalPrice)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">Warung POS - Sistem Kasir Digital</div>
+      </body>
+      </html>
+    `;
+    
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+    }
+  };
+
+  const handleSaveImage = async () => {
+    if (!printRef.current || !selectedCustomer) return;
+    
+    try {
+      const canvas = await html2canvas(printRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+      });
+      
+      const link = document.createElement('a');
+      link.download = `hutang-${selectedCustomer.customerName.replace(/\s+/g, '-')}-${format(new Date(), 'yyyyMMdd')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      toast({
+        title: 'Berhasil',
+        description: 'Rincian hutang berhasil disimpan sebagai gambar',
+      });
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Gagal menyimpan gambar',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -295,24 +397,36 @@ export function DebtsPage() {
           <p className="text-sm text-muted-foreground">Rincian Hutang</p>
         </div>
         {selectedCustomer.totalDebt > 0 && (
-          <Button onClick={handleOpenPayDialog}>
-            <Banknote className="w-4 h-4 mr-2" />
-            Bayar
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="icon" onClick={handlePrint} title="Cetak">
+              <Printer className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleSaveImage} title="Simpan Gambar">
+              <Download className="w-4 h-4" />
+            </Button>
+            <Button onClick={handleOpenPayDialog}>
+              <Banknote className="w-4 h-4 mr-2" />
+              Bayar
+            </Button>
+          </div>
         )}
       </div>
 
       {/* Total Summary - Top */}
-      <Card className="bg-destructive/5 border-destructive/20">
-        <CardContent className="py-4">
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-semibold">Total Hutang</span>
-            <span className="text-2xl font-bold text-destructive">
-              {formatCurrency(selectedCustomer.totalDebt)}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+      <div ref={printRef} className="space-y-4">
+        <Card className="bg-destructive/5 border-destructive/20">
+          <CardContent className="py-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm text-muted-foreground">{selectedCustomer.customerName}</p>
+                <span className="text-lg font-semibold">Total Hutang</span>
+              </div>
+              <span className="text-2xl font-bold text-destructive">
+                {formatCurrency(selectedCustomer.totalDebt)}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
 
       {/* Debt Table */}
       <Card>
@@ -359,6 +473,7 @@ export function DebtsPage() {
           </Table>
         </div>
       </Card>
+      </div>
 
       {/* Pay Dialog */}
       <Dialog open={payDialogOpen} onOpenChange={setPayDialogOpen}>
