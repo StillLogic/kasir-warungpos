@@ -276,7 +276,7 @@ export function CashierPage() {
         </div>
 
         {/* Products */}
-        <div className="flex-1 overflow-auto scrollbar-thin">
+        <div className="flex-1 overflow-auto scrollbar-thin" data-scrollable>
           {loading ? (
             <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
               <Loader2 className="w-8 h-8 animate-spin mb-4" />

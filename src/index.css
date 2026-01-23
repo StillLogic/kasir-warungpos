@@ -101,15 +101,16 @@
     font-family: "Plus Jakarta Sans", sans-serif;
     overscroll-behavior-y: none;
     -webkit-overflow-scrolling: touch;
-    position: fixed;
     width: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   /* Ensure full viewport height on mobile PWA */
   html {
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   body,
@@ -118,25 +119,30 @@
     min-height: 100dvh;
     min-height: -webkit-fill-available;
     min-height: calc(var(--vh, 1vh) * 100);
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     overscroll-behavior: none;
   }
 
   /* PWA standalone mode - fill entire screen */
   @media all and (display-mode: standalone) {
     html {
-      height: 100dvh;
-      height: -webkit-fill-available;
-      height: calc(var(--vh, 1vh) * 100);
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      min-height: calc(var(--vh, 1vh) * 100);
+      overflow-x: hidden;
+      overflow-y: auto;
     }
 
     body,
     #root {
-      height: 100dvh;
-      height: -webkit-fill-available;
-      height: calc(var(--vh, 1vh) * 100);
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      min-height: calc(var(--vh, 1vh) * 100);
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
+      overflow-x: hidden;
+      overflow-y: auto;
     }
   }
 
