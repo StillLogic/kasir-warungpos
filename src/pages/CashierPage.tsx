@@ -1,9 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Product, CartItem, Transaction } from '@/types/pos';
+import { Customer } from '@/types/debt';
 import { saveTransaction, waitForProducts } from '@/database';
+import { createDebt } from '@/database/debts';
 import { ProductCard } from '@/components/ProductCard';
 import { Cart } from '@/components/Cart';
 import { CheckoutDialog } from '@/components/CheckoutDialog';
+import { DebtDialog } from '@/components/DebtDialog';
 import { Receipt } from '@/components/Receipt';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -33,6 +36,7 @@ export function CashierPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string>('all');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [debtDialogOpen, setDebtDialogOpen] = useState(false);
   const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -164,6 +168,26 @@ export function CashierPage() {
     waitForProducts().then(setProducts);
   };
 
+  const handleDebt = () => {
+    if (cart.length === 0) return;
+    setDebtDialogOpen(true);
+  };
+
+  const handleConfirmDebt = async (customer: Customer) => {
+    await createDebt(customer.id, customer.name, cart, cartTotal);
+
+    setCart([]);
+    setDebtDialogOpen(false);
+
+    toast({
+      title: 'Hutang Dicatat',
+      description: `Hutang atas nama ${customer.name} sebesar ${cartTotal.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })} telah dicatat`,
+    });
+
+    // Refresh products to update stock
+    waitForProducts().then(setProducts);
+  };
+
   const CartContent = () => (
     <Cart
       items={cart}
@@ -171,6 +195,10 @@ export function CashierPage() {
       onRemoveItem={removeFromCart}
       onCheckout={() => {
         handleCheckout();
+        if (isMobile) setCartOpen(false);
+      }}
+      onDebt={() => {
+        handleDebt();
         if (isMobile) setCartOpen(false);
       }}
       total={cartTotal}
@@ -275,6 +303,15 @@ export function CashierPage() {
         open={checkoutOpen}
         onClose={() => setCheckoutOpen(false)}
         onConfirm={handleConfirmPayment}
+        total={cartTotal}
+        items={cart}
+      />
+
+      {/* Debt Dialog */}
+      <DebtDialog
+        open={debtDialogOpen}
+        onClose={() => setDebtDialogOpen(false)}
+        onConfirm={handleConfirmDebt}
         total={cartTotal}
         items={cart}
       />
