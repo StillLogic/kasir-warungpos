@@ -27,7 +27,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Search, User, CreditCard, ArrowLeft, Banknote, Plus, Printer, Download, CalendarIcon, X } from 'lucide-react';
-import { getCustomersWithDebt, getDebtsByCustomerId, payDebt, getDebtPayments } from '@/database/debts';
+import { getCustomersWithDebt, getDebtsByCustomerId, payCustomerDebt, getCustomerPayments } from '@/database/debts';
 import { toast } from '@/hooks/use-toast';
 import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
@@ -100,19 +100,16 @@ export function DebtsPage() {
   const handlePayDebt = () => {
     if (!selectedCustomer || paymentAmount <= 0) return;
 
-    // Get unpaid debts sorted by oldest first
-    const unpaidDebts = customerDebts
-      .filter(d => d.status !== 'paid')
-      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-
-    let remainingPayment = paymentAmount;
-
-    for (const debt of unpaidDebts) {
-      if (remainingPayment <= 0) break;
-
-      const payAmount = Math.min(remainingPayment, debt.remainingAmount);
-      payDebt(debt.id, payAmount);
-      remainingPayment -= payAmount;
+    // Use new consolidated payment function
+    const result = payCustomerDebt(selectedCustomer.customerId, paymentAmount);
+    
+    if (!result) {
+      toast({
+        title: 'Pembayaran Gagal',
+        description: 'Tidak ada hutang yang dapat dibayar',
+        variant: 'destructive',
+      });
+      return;
     }
 
     toast({
@@ -238,12 +235,14 @@ export function DebtsPage() {
     }
   };
 
-  // Build table rows from debts and payments
+  // Build table rows from debts and customer payments (consolidated)
   const tableRows = useMemo((): DebtTableRow[] => {
+    if (!selectedCustomer) return [];
+    
     const rows: DebtTableRow[] = [];
 
+    // Add all debt items
     for (const debt of customerDebts) {
-      // Add debt items
       for (const item of debt.items) {
         rows.push({
           id: `${debt.id}-${item.productId}`,
@@ -256,17 +255,17 @@ export function DebtsPage() {
           debtId: debt.id,
         });
       }
+    }
 
-      // Add payments for this debt
-      const payments = getDebtPayments(debt.id);
-      for (const payment of payments) {
-        rows.push({
-          id: payment.id,
-          timestamp: payment.createdAt,
-          type: 'payment',
-          totalPrice: -payment.amount,
-        });
-      }
+    // Add customer payments (consolidated - one entry per payment)
+    const customerPayments = getCustomerPayments(selectedCustomer.customerId);
+    for (const payment of customerPayments) {
+      rows.push({
+        id: payment.id,
+        timestamp: payment.createdAt,
+        type: 'payment',
+        totalPrice: -payment.amount,
+      });
     }
 
     // Sort by timestamp descending
@@ -288,7 +287,7 @@ export function DebtsPage() {
     }
     
     return sortedRows;
-  }, [customerDebts, dateFrom, dateTo]);
+  }, [customerDebts, selectedCustomer, dateFrom, dateTo]);
 
   const filteredCustomers = useMemo(() => {
     if (!search.trim()) return customers;
