@@ -101,11 +101,10 @@
     font-family: 'Plus Jakarta Sans', sans-serif;
   }
   
-  /* Safe area support for PWA on mobile devices */
+  /* Ensure full viewport height on mobile PWA */
   html, body, #root {
-    padding-bottom: env(safe-area-inset-bottom, 0);
-    padding-left: env(safe-area-inset-left, 0);
-    padding-right: env(safe-area-inset-right, 0);
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
   }
 }
 
