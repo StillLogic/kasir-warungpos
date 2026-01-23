@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/hooks/use-toast';
+import { toTitleCase } from '@/lib/text';
 import { Store, Receipt, Settings2, Save, Printer, Eye } from 'lucide-react';
 import { ReceiptPreview } from '@/components/admin/ReceiptPreview';
 import { BackupRestore } from '@/components/BackupRestore';
@@ -176,7 +177,7 @@ return (
             <Input
               id="storeName"
               value={settings.storeName}
-              onChange={(e) => updateSettings('storeName', e.target.value)}
+              onChange={(e) => updateSettings('storeName', toTitleCase(e.target.value))}
               placeholder="Nama toko Anda"
             />
           </div>
@@ -185,7 +186,7 @@ return (
             <Textarea
               id="storeAddress"
               value={settings.storeAddress}
-              onChange={(e) => updateSettings('storeAddress', e.target.value)}
+              onChange={(e) => updateSettings('storeAddress', toTitleCase(e.target.value))}
               placeholder="Alamat lengkap toko"
               rows={2}
             />

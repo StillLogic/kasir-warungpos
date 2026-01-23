@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { CartItem } from '@/types/pos';
 import { Customer } from '@/types/debt';
 import { formatCurrency } from '@/lib/format';
+import { toTitleCase } from '@/lib/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -156,7 +157,7 @@ export function DebtDialog({ open, onClose, onConfirm, total, items }: DebtDialo
                 <Input
                   id="customerName"
                   value={newCustomerName}
-                  onChange={(e) => setNewCustomerName(e.target.value)}
+                  onChange={(e) => setNewCustomerName(toTitleCase(e.target.value))}
                   placeholder="Masukkan nama pelanggan"
                   autoFocus
                 />

@@ -271,7 +271,7 @@ export function CategoryManager({ open, onClose, onCategoriesChange }: CategoryM
               <Input
                 id="categoryName"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => setName(e.target.value.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' '))}
                 placeholder="Contoh: Elektronik"
               />
             </div>

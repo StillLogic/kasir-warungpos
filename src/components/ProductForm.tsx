@@ -6,6 +6,7 @@ import { Product, ProductFormData } from '@/types/pos';
 import { generateSKU } from '@/lib/sku';
 import { getCategoryNames, getCategories } from '@/database/categories';
 import { getMarkupForPrice, calculateSellingPrices } from '@/database/markup';
+import { toTitleCase } from '@/lib/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -157,6 +158,7 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
                 id="name"
                 {...register('name')}
                 placeholder="Masukkan nama produk"
+                onChange={(e) => setValue('name', toTitleCase(e.target.value))}
               />
               {errors.name && (
                 <p className="text-sm text-destructive">{errors.name.message}</p>
