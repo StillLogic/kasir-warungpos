@@ -332,6 +332,19 @@ export function getDebtPayments(debtId: string): DebtPayment[] {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
+// Get all payments (for profit calculation)
+export function getAllPayments(): DebtPayment[] {
+  return loadPayments()
+    .map(p => ({
+      id: p.i,
+      debtId: p.di,
+      customerId: p.ci,
+      amount: p.a,
+      createdAt: fromUnix(p.ca),
+    }))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
 export function getCustomerTotalDebt(customerId: string): number {
   return getDebtsByCustomerId(customerId)
     .filter(d => d.status !== 'paid')
