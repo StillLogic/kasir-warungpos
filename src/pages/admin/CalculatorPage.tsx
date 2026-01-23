@@ -11,8 +11,21 @@ import { useToast } from '@/hooks/use-toast';
 import { getMarkupForPrice, getMarkupRules } from '@/database/markup';
 import { getCategories } from '@/database/categories';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { MobileCalculator } from '@/components/admin/MobileCalculator';
 
 export function CalculatorPage() {
+  const isMobile = useIsMobile();
+  
+  // Show mobile calculator on mobile devices
+  if (isMobile) {
+    return <MobileCalculator />;
+  }
+
+  return <DesktopCalculator />;
+}
+
+function DesktopCalculator() {
   const { toast } = useToast();
   const [costPrice, setCostPrice] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('__all__');
