@@ -17,7 +17,10 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
 
   return (
-    <div className="min-h-dvh h-dvh bg-background flex flex-col overflow-hidden" style={{ paddingBottom: 'var(--safe-area-inset-bottom, 0px)' }}>
+    <div
+      className="min-h-dvh h-dvh bg-background flex flex-col overflow-hidden"
+      style={{ paddingBottom: "var(--safe-area-inset-bottom, 0px)" }}
+    >
       {/* Header */}
       <header className="bg-card border-b border-border shrink-0 z-50">
         <div className="w-full flex items-center justify-between h-14 px-4 lg:px-6">

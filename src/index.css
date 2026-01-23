@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
 
 @layer base {
   :root {
@@ -38,7 +38,7 @@
 
     --success: 152 60% 40%;
     --success-foreground: 0 0% 100%;
-    
+
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
@@ -98,24 +98,28 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: "Plus Jakarta Sans", sans-serif;
   }
-  
+
   /* Ensure full viewport height on mobile PWA */
-  html, body, #root {
+  html,
+  body,
+  #root {
     height: 100%;
     min-height: 100dvh;
     min-height: -webkit-fill-available;
   }
-  
+
   /* PWA standalone mode - fill entire screen */
   @media all and (display-mode: standalone) {
-    html, body, #root {
+    html,
+    body,
+    #root {
       height: 100dvh;
       height: -webkit-fill-available;
     }
   }
-  
+
   /* Handle safe area insets for devices with navigation bars */
   :root {
     --safe-area-inset-top: env(safe-area-inset-top, 0px);
@@ -131,9 +135,8 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
-  
+
   *::-webkit-scrollbar {
     display: none;
   }
 }
-
