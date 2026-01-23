@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/hooks/use-toast';
 import { Store, Receipt, Settings2, Save, Printer, Eye } from 'lucide-react';
 import { ReceiptPreview } from '@/components/admin/ReceiptPreview';
-
+import { BackupRestore } from '@/components/BackupRestore';
 interface StoreSettings {
   storeName: string;
   storeAddress: string;
@@ -156,6 +156,9 @@ export function SettingsPage() {
 return (
     <div className="grid gap-6 lg:grid-cols-[1fr,auto]">
       <div className="space-y-6 max-w-2xl">
+      {/* Backup & Restore - Top Priority */}
+      <BackupRestore />
+      
       {/* Store Info */}
       <Card>
         <CardHeader>

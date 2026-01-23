@@ -12,6 +12,7 @@ import { DashboardPage, ReportsPage, SettingsPage, PricingPage, CalculatorPage, 
 import { Layout } from "./components/Layout";
 import { AdminLayout } from "./components/admin";
 import { InstallPWA } from "./components/InstallPWA";
+import { PWAUpdateNotification } from "./components/PWAUpdateNotification";
 import NotFound from "./pages/NotFound";
 import { migrateFromLocalStorage } from "./database";
 
@@ -48,6 +49,7 @@ const App = () => {
             </Routes>
           </BrowserRouter>
           <InstallPWA />
+          <PWAUpdateNotification />
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>
