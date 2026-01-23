@@ -7,6 +7,14 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
+/**
+ * Round a number to the nearest thousand
+ * Examples: 5800 → 6000, 5400 → 5000
+ */
+export function roundToThousand(amount: number): number {
+  return Math.round(amount / 1000) * 1000;
+}
+
 export function formatDate(date: string | Date): string {
   return new Intl.DateTimeFormat('id-ID', {
     dateStyle: 'medium',

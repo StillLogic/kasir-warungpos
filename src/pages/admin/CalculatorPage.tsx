@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calculator, Copy, RotateCcw, AlertCircle, Info } from 'lucide-react';
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, roundToThousand } from '@/lib/format';
 import { useToast } from '@/hooks/use-toast';
 import { getMarkupForPrice, getMarkupRules } from '@/database/markup';
 import { getCategories } from '@/database/categories';
@@ -45,8 +45,10 @@ function DesktopCalculator() {
   const retailMarkup = markup?.retailPercent || 0;
   const wholesaleMarkupPercent = markup?.wholesalePercent || 0;
 
-  const retailPrice = cost + (cost * retailMarkup / 100);
-  const wholesalePrice = cost + (cost * wholesaleMarkupPercent / 100);
+  const rawRetailPrice = cost + (cost * retailMarkup / 100);
+  const rawWholesalePrice = cost + (cost * wholesaleMarkupPercent / 100);
+  const retailPrice = roundToThousand(rawRetailPrice);
+  const wholesalePrice = roundToThousand(rawWholesalePrice);
   const retailProfit = retailPrice - cost;
   const wholesaleProfit = wholesalePrice - cost;
 

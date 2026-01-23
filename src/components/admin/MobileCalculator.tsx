@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Copy, Delete, RotateCcw, Info } from 'lucide-react';
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, roundToThousand } from '@/lib/format';
 import { useToast } from '@/hooks/use-toast';
 import { getMarkupForPrice, getMarkupRules } from '@/database/markup';
 import { getCategories } from '@/database/categories';
@@ -28,8 +28,10 @@ export function MobileCalculator() {
 
   const retailMarkup = markup?.retailPercent || 0;
   const wholesaleMarkup = markup?.wholesalePercent || 0;
-  const retailPrice = cost + (cost * retailMarkup / 100);
-  const wholesalePrice = cost + (cost * wholesaleMarkup / 100);
+  const rawRetailPrice = cost + (cost * retailMarkup / 100);
+  const rawWholesalePrice = cost + (cost * wholesaleMarkup / 100);
+  const retailPrice = roundToThousand(rawRetailPrice);
+  const wholesalePrice = roundToThousand(rawWholesalePrice);
 
   // Find applied rule
   const appliedRule = useMemo(() => {

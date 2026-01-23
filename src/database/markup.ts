@@ -1,4 +1,5 @@
 import { MarkupRule } from '@/types/markup';
+import { roundToThousand } from '@/lib/format';
 
 const STORAGE_KEY = 'warungpos_markup_rules';
 
@@ -103,13 +104,17 @@ export function getMarkupForPrice(costPrice: number, categoryId?: string | null)
 
 // Calculate selling prices from cost price using markup rules
 // Priority: category-specific rules > general rules
+// Rounds to nearest thousand (e.g., 5800 → 6000, 5400 → 5000)
 export function calculateSellingPrices(costPrice: number, categoryId?: string | null): { retailPrice: number; wholesalePrice: number } | null {
   const markup = getMarkupForPrice(costPrice, categoryId);
   
   if (!markup) return null;
   
+  const rawRetail = costPrice * (1 + markup.retailPercent / 100);
+  const rawWholesale = costPrice * (1 + markup.wholesalePercent / 100);
+  
   return {
-    retailPrice: Math.round(costPrice * (1 + markup.retailPercent / 100)),
-    wholesalePrice: Math.round(costPrice * (1 + markup.wholesalePercent / 100)),
+    retailPrice: roundToThousand(rawRetail),
+    wholesalePrice: roundToThousand(rawWholesale),
   };
 }
