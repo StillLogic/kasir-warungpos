@@ -96,10 +96,16 @@
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground;
     font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  
+  /* Safe area support for PWA on mobile devices */
+  html, body, #root {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
   }
 }
 
