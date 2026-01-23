@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 export function CalculatorPage() {
   const { toast } = useToast();
   const [costPrice, setCostPrice] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('__all__');
 
   const categories = useMemo(() => getCategories(), []);
   const markupRules = useMemo(() => getMarkupRules(), []);
@@ -25,7 +25,7 @@ export function CalculatorPage() {
   // Get markup from rules based on cost price and category
   const markup = useMemo(() => {
     if (cost <= 0) return null;
-    const categoryId = selectedCategory === '' ? null : selectedCategory;
+    const categoryId = selectedCategory === '__all__' ? null : selectedCategory;
     return getMarkupForPrice(cost, categoryId);
   }, [cost, selectedCategory]);
 
@@ -40,7 +40,7 @@ export function CalculatorPage() {
   // Find which rule is being applied
   const appliedRule = useMemo(() => {
     if (!markup || cost <= 0) return null;
-    const categoryId = selectedCategory === '' ? null : selectedCategory;
+    const categoryId = selectedCategory === '__all__' ? null : selectedCategory;
     
     // Find matching rule
     for (const rule of markupRules) {
@@ -70,7 +70,7 @@ export function CalculatorPage() {
 
   const handleReset = () => {
     setCostPrice('');
-    setSelectedCategory('');
+    setSelectedCategory('__all__');
   };
 
   const copyToClipboard = (value: number, label: string) => {
@@ -122,7 +122,7 @@ export function CalculatorPage() {
                   <SelectValue placeholder="Semua Kategori" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Semua Kategori</SelectItem>
+                  <SelectItem value="__all__">Semua Kategori</SelectItem>
                   {categories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
