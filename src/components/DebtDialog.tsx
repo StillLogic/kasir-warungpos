@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { CartItem } from '@/types/pos';
 import { Customer } from '@/types/debt';
 import { formatCurrency } from '@/lib/format';
-import { toTitleCase } from '@/lib/text';
+import { toTitleCase, handlePhoneChange, handlePhoneBlur } from '@/lib/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -167,9 +167,11 @@ export function DebtDialog({ open, onClose, onConfirm, total, items }: DebtDialo
                 <Input
                   id="customerPhone"
                   value={newCustomerPhone}
-                  onChange={(e) => setNewCustomerPhone(e.target.value)}
-                  placeholder="Masukkan nomor telepon"
+                  onChange={(e) => handlePhoneChange(e, setNewCustomerPhone)}
+                  onBlur={() => handlePhoneBlur(newCustomerPhone, setNewCustomerPhone)}
+                  placeholder="08xxxxxxxxxx"
                 />
+                <p className="text-xs text-muted-foreground">Otomatis diformat ke +62</p>
               </div>
               <div className="flex gap-2">
                 <Button

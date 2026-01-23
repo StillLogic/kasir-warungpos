@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/hooks/use-toast';
-import { toTitleCase } from '@/lib/text';
+import { toTitleCase, formatPhoneNumber } from '@/lib/text';
 import { Store, Receipt, Settings2, Save, Printer, Eye } from 'lucide-react';
 import { ReceiptPreview } from '@/components/admin/ReceiptPreview';
 import { BackupRestore } from '@/components/BackupRestore';
@@ -196,9 +196,15 @@ return (
             <Input
               id="storePhone"
               value={settings.storePhone}
-              onChange={(e) => updateSettings('storePhone', e.target.value)}
+              onChange={(e) => updateSettings('storePhone', e.target.value.replace(/[^\d+\-\s]/g, ''))}
+              onBlur={() => {
+                if (settings.storePhone.trim()) {
+                  updateSettings('storePhone', formatPhoneNumber(settings.storePhone));
+                }
+              }}
               placeholder="08xxxxxxxxxx"
             />
+            <p className="text-xs text-muted-foreground">Otomatis diformat ke +62</p>
           </div>
         </CardContent>
       </Card>
