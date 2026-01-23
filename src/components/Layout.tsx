@@ -18,8 +18,9 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div
-      className="min-h-dvh h-dvh bg-background flex flex-col overflow-hidden"
+      className="min-h-dvh bg-background flex flex-col overflow-x-hidden overflow-y-auto"
       style={{ paddingBottom: "var(--safe-area-inset-bottom, 0px)" }}
+      data-scrollable
     >
       {/* Header */}
       <header className="bg-card border-b border-border shrink-0 z-50">
@@ -58,7 +59,7 @@ export function Layout({ children }: LayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full px-4 lg:px-6 py-4 overflow-hidden">
+      <main className="flex-1 w-full px-4 lg:px-6 py-4 overflow-x-hidden overflow-y-auto" data-scrollable>
         {children}
       </main>
     </div>
