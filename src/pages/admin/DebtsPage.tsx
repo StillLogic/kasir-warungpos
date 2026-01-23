@@ -302,6 +302,18 @@ export function DebtsPage() {
         )}
       </div>
 
+      {/* Total Summary - Top */}
+      <Card className="bg-destructive/5 border-destructive/20">
+        <CardContent className="py-4">
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-semibold">Total Hutang</span>
+            <span className="text-2xl font-bold text-destructive">
+              {formatCurrency(selectedCustomer.totalDebt)}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Debt Table */}
       <Card>
         <div className="overflow-x-auto">
@@ -345,16 +357,6 @@ export function DebtsPage() {
               ))}
             </TableBody>
           </Table>
-        </div>
-
-        {/* Total Summary */}
-        <div className="border-t p-4">
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-semibold">Total Hutang</span>
-            <span className="text-2xl font-bold text-destructive">
-              {formatCurrency(selectedCustomer.totalDebt)}
-            </span>
-          </div>
         </div>
       </Card>
 
