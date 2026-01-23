@@ -33,4 +33,6 @@ export interface TransactionRecord {
   ch: number;     // change
   ca: number;     // createdAt (Unix timestamp)
   cn?: string;    // customerName (optional)
+  pt?: 0 | 1;     // paymentType (0 = cash, 1 = debt)
+  ci?: string;    // customerId (optional, for debt)
 }
