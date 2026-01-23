@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { MarkupRule } from '@/types/markup';
+import { MarkupRule, MarkupType } from '@/types/markup';
 import { 
   getMarkupRules, 
   addMarkupRule, 
@@ -65,8 +65,11 @@ export function PricingPage() {
   // Form state
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
+  const [markupType, setMarkupType] = useState<MarkupType>('percent');
   const [retailMarkup, setRetailMarkup] = useState('');
   const [wholesaleMarkup, setWholesaleMarkup] = useState('');
+  const [retailMarkupFixed, setRetailMarkupFixed] = useState('');
+  const [wholesaleMarkupFixed, setWholesaleMarkupFixed] = useState('');
   const [noMaxLimit, setNoMaxLimit] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
 
@@ -88,8 +91,11 @@ export function PricingPage() {
   const resetForm = () => {
     setMinPrice('');
     setMaxPrice('');
+    setMarkupType('percent');
     setRetailMarkup('');
     setWholesaleMarkup('');
+    setRetailMarkupFixed('');
+    setWholesaleMarkupFixed('');
     setNoMaxLimit(false);
     setSelectedCategoryId('all');
     setEditingRule(null);
@@ -100,8 +106,11 @@ export function PricingPage() {
       setEditingRule(rule);
       setMinPrice(rule.minPrice.toString());
       setMaxPrice(rule.maxPrice?.toString() || '');
+      setMarkupType(rule.markupType || 'percent');
       setRetailMarkup(rule.retailMarkupPercent.toString());
       setWholesaleMarkup(rule.wholesaleMarkupPercent.toString());
+      setRetailMarkupFixed((rule.retailMarkupFixed || 0).toString());
+      setWholesaleMarkupFixed((rule.wholesaleMarkupFixed || 0).toString());
       setNoMaxLimit(rule.maxPrice === null);
       setSelectedCategoryId(rule.categoryId || 'all');
     } else {
@@ -122,6 +131,8 @@ export function PricingPage() {
     const max = noMaxLimit ? null : (parseInt(maxPrice) || null);
     const retail = parseFloat(retailMarkup) || 0;
     const wholesale = parseFloat(wholesaleMarkup) || 0;
+    const retailFixed = parseInt(retailMarkupFixed) || 0;
+    const wholesaleFixed = parseInt(wholesaleMarkupFixed) || 0;
 
     // Validation
     if (min < 0) {
@@ -132,16 +143,23 @@ export function PricingPage() {
       toast.error('Harga maksimum harus lebih besar dari harga minimum');
       return;
     }
-    if (retail < 0 || wholesale < 0) {
+    if (markupType === 'percent' && (retail < 0 || wholesale < 0)) {
       toast.error('Persentase markup tidak boleh negatif');
+      return;
+    }
+    if (markupType === 'fixed' && (retailFixed < 0 || wholesaleFixed < 0)) {
+      toast.error('Markup rupiah tidak boleh negatif');
       return;
     }
 
     const data = {
       minPrice: min,
       maxPrice: max,
+      markupType,
       retailMarkupPercent: retail,
       wholesaleMarkupPercent: wholesale,
+      retailMarkupFixed: retailFixed,
+      wholesaleMarkupFixed: wholesaleFixed,
       categoryId: selectedCategoryId === 'all' ? null : selectedCategoryId,
     };
 
@@ -224,6 +242,44 @@ export function PricingPage() {
     return `${formatCurrency(min)} - ${formatCurrency(max)}`;
   };
 
+  const formatMarkupDisplay = (rule: MarkupRule) => {
+    if (rule.markupType === 'fixed') {
+      return {
+        retail: formatCurrency(rule.retailMarkupFixed || 0),
+        wholesale: formatCurrency(rule.wholesaleMarkupFixed || 0),
+        isFixed: true,
+      };
+    }
+    return {
+      retail: `+${rule.retailMarkupPercent}%`,
+      wholesale: `+${rule.wholesaleMarkupPercent}%`,
+      isFixed: false,
+    };
+  };
+
+  const calculatePreview = () => {
+    const costPrice = parseInt(minPrice) || 0;
+    if (costPrice === 0) return null;
+    
+    if (markupType === 'fixed') {
+      const retailFixed = parseInt(retailMarkupFixed) || 0;
+      const wholesaleFixed = parseInt(wholesaleMarkupFixed) || 0;
+      return {
+        retail: roundToThousand(costPrice + retailFixed),
+        wholesale: roundToThousand(costPrice + wholesaleFixed),
+      };
+    }
+    
+    const retail = parseFloat(retailMarkup) || 0;
+    const wholesale = parseFloat(wholesaleMarkup) || 0;
+    return {
+      retail: roundToThousand(costPrice * (1 + retail / 100)),
+      wholesale: roundToThousand(costPrice * (1 + wholesale / 100)),
+    };
+  };
+
+  const preview = calculatePreview();
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -255,7 +311,7 @@ export function PricingPage() {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Sistem akan otomatis menghitung harga jual berdasarkan harga modal dan persentase markup.
+          Sistem akan otomatis menghitung harga jual berdasarkan harga modal dan markup (persen atau rupiah).
           <strong> Aturan per kategori memiliki prioritas lebih tinggi</strong> dari aturan umum (Semua Produk).
         </AlertDescription>
       </Alert>
@@ -282,53 +338,70 @@ export function PricingPage() {
                   <TableRow>
                     <TableHead>Kategori</TableHead>
                     <TableHead>Rentang Harga Modal</TableHead>
+                    <TableHead className="text-center">Tipe</TableHead>
                     <TableHead className="text-center">Markup Satuan</TableHead>
                     <TableHead className="text-center">Markup Grosir</TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rules.map((rule) => (
-                    <TableRow key={rule.id}>
-                      <TableCell>
-                        <Badge variant={rule.categoryId ? "default" : "secondary"}>
-                          {getCategoryName(rule.categoryId)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {formatPriceRange(rule.minPrice, rule.maxPrice)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary text-sm font-medium">
-                          +{rule.retailMarkupPercent}%
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary text-secondary-foreground text-sm font-medium">
-                          +{rule.wholesaleMarkupPercent}%
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handleOpenDialog(rule)}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => confirmDelete(rule.id)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {rules.map((rule) => {
+                    const markup = formatMarkupDisplay(rule);
+                    return (
+                      <TableRow key={rule.id}>
+                        <TableCell>
+                          <Badge variant={rule.categoryId ? "default" : "secondary"}>
+                            {getCategoryName(rule.categoryId)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {formatPriceRange(rule.minPrice, rule.maxPrice)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline">
+                            {rule.markupType === 'fixed' ? 'Rupiah' : 'Persen'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium ${
+                            markup.isFixed 
+                              ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
+                              : 'bg-primary/10 text-primary'
+                          }`}>
+                            {markup.isFixed ? '+' : ''}{markup.retail}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium ${
+                            markup.isFixed 
+                              ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
+                              : 'bg-secondary text-secondary-foreground'
+                          }`}>
+                            {markup.isFixed ? '+' : ''}{markup.wholesale}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleOpenDialog(rule)}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => confirmDelete(rule.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -344,7 +417,7 @@ export function PricingPage() {
               {editingRule ? 'Edit Aturan Markup' : 'Tambah Aturan Markup'}
             </DialogTitle>
             <DialogDescription>
-              Tentukan rentang harga modal dan persentase markup
+              Tentukan rentang harga modal dan markup (persen atau rupiah)
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
@@ -414,44 +487,87 @@ export function PricingPage() {
                 </Label>
               </div>
 
-              {/* Markup Percentages */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="retailMarkup">Markup Satuan (%)</Label>
-                  <Input
-                    id="retailMarkup"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    placeholder="100"
-                    value={retailMarkup}
-                    onChange={(e) => setRetailMarkup(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="wholesaleMarkup">Markup Grosir (%)</Label>
-                  <Input
-                    id="wholesaleMarkup"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    placeholder="50"
-                    value={wholesaleMarkup}
-                    onChange={(e) => setWholesaleMarkup(e.target.value)}
-                    required
-                  />
-                </div>
+              {/* Markup Type Selection */}
+              <div className="space-y-2">
+                <Label>Tipe Markup</Label>
+                <Select value={markupType} onValueChange={(v) => setMarkupType(v as MarkupType)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="percent">Persentase (%)</SelectItem>
+                    <SelectItem value="fixed">Rupiah Tetap (Rp)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
+              {/* Markup Values - Conditional based on type */}
+              {markupType === 'percent' ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="retailMarkup">Markup Satuan (%)</Label>
+                    <Input
+                      id="retailMarkup"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      placeholder="100"
+                      value={retailMarkup}
+                      onChange={(e) => setRetailMarkup(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="wholesaleMarkup">Markup Grosir (%)</Label>
+                    <Input
+                      id="wholesaleMarkup"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      placeholder="50"
+                      value={wholesaleMarkup}
+                      onChange={(e) => setWholesaleMarkup(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="retailMarkupFixed">Markup Satuan (Rp)</Label>
+                    <Input
+                      id="retailMarkupFixed"
+                      type="number"
+                      min="0"
+                      placeholder="5000"
+                      value={retailMarkupFixed}
+                      onChange={(e) => setRetailMarkupFixed(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="wholesaleMarkupFixed">Markup Grosir (Rp)</Label>
+                    <Input
+                      id="wholesaleMarkupFixed"
+                      type="number"
+                      min="0"
+                      placeholder="3000"
+                      value={wholesaleMarkupFixed}
+                      onChange={(e) => setWholesaleMarkupFixed(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Preview */}
-              {(minPrice || retailMarkup) && (
+              {preview && (
                 <div className="p-3 rounded-lg bg-muted/50 text-sm">
                   <p className="font-medium mb-1">Contoh Kalkulasi:</p>
                   <p className="text-muted-foreground">
                     Harga modal {formatCurrency(parseInt(minPrice) || 0)} → 
-                    Harga satuan {formatCurrency(roundToThousand((parseInt(minPrice) || 0) * (1 + (parseFloat(retailMarkup) || 0) / 100)))} | 
-                    Harga grosir {formatCurrency(roundToThousand((parseInt(minPrice) || 0) * (1 + (parseFloat(wholesaleMarkup) || 0) / 100)))}
+                    Harga satuan {formatCurrency(preview.retail)} | 
+                    Harga grosir {formatCurrency(preview.wholesale)}
                   </p>
                 </div>
               )}
