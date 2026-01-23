@@ -1,16 +1,16 @@
-import { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Settings, Store } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { ThemeToggle } from './ThemeToggle';
+import { ReactNode } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { ShoppingCart, Settings, Store } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 const navItems = [
-  { path: '/', label: 'Kasir', icon: ShoppingCart },
-  { path: '/admin', label: 'Admin', icon: Settings },
+  { path: "/", label: "Kasir", icon: ShoppingCart },
+  { path: "/admin", label: "Admin", icon: Settings },
 ];
 
 export function Layout({ children }: LayoutProps) {
@@ -37,10 +37,10 @@ export function Layout({ children }: LayoutProps) {
                     key={item.path}
                     to={item.path}
                     className={cn(
-                      'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                      "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                       isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                     )}
                   >
                     <Icon className="w-4 h-4" />
