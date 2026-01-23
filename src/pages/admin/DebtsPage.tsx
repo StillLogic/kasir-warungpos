@@ -26,13 +26,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search, User, CreditCard, ArrowLeft, Banknote, Plus, Printer, Download } from 'lucide-react';
+import { Search, User, CreditCard, ArrowLeft, Banknote, Plus, Printer, Download, CalendarIcon, X } from 'lucide-react';
 import { getCustomersWithDebt, getDebtsByCustomerId, payDebt, getDebtPayments } from '@/database/debts';
 import { toast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
 import html2canvas from 'html2canvas';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 interface CustomerDebtSummary {
   customerId: string;
@@ -61,6 +64,8 @@ export function DebtsPage() {
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const isMobile = useIsMobile();
   const printRef = useRef<HTMLDivElement>(null);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     loadCustomers();
@@ -82,6 +87,8 @@ export function DebtsPage() {
   const handleBack = () => {
     setSelectedCustomer(null);
     setCustomerDebts([]);
+    setDateFrom(undefined);
+    setDateTo(undefined);
     loadCustomers();
   };
 
@@ -263,8 +270,25 @@ export function DebtsPage() {
     }
 
     // Sort by timestamp descending
-    return rows.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [customerDebts]);
+    const sortedRows = rows.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    
+    // Apply date filter
+    if (dateFrom || dateTo) {
+      return sortedRows.filter(row => {
+        const rowDate = new Date(row.timestamp);
+        if (dateFrom && dateTo) {
+          return isWithinInterval(rowDate, { start: startOfDay(dateFrom), end: endOfDay(dateTo) });
+        } else if (dateFrom) {
+          return rowDate >= startOfDay(dateFrom);
+        } else if (dateTo) {
+          return rowDate <= endOfDay(dateTo);
+        }
+        return true;
+      });
+    }
+    
+    return sortedRows;
+  }, [customerDebts, dateFrom, dateTo]);
 
   const filteredCustomers = useMemo(() => {
     if (!search.trim()) return customers;
@@ -409,6 +433,75 @@ export function DebtsPage() {
               Bayar
             </Button>
           </div>
+        )}
+      </div>
+
+      {/* Date Filter */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "justify-start text-left font-normal",
+                !dateFrom && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Dari tanggal"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 z-50" align="start">
+            <Calendar
+              mode="single"
+              selected={dateFrom}
+              onSelect={setDateFrom}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+
+        <span className="text-muted-foreground">-</span>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "justify-start text-left font-normal",
+                !dateTo && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {dateTo ? format(dateTo, "dd/MM/yyyy") : "Sampai tanggal"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 z-50" align="start">
+            <Calendar
+              mode="single"
+              selected={dateTo}
+              onSelect={setDateTo}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+
+        {(dateFrom || dateTo) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setDateFrom(undefined);
+              setDateTo(undefined);
+            }}
+          >
+            <X className="h-4 w-4 mr-1" />
+            Reset
+          </Button>
         )}
       </div>
 
