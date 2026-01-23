@@ -2,7 +2,7 @@ import { CartItem } from '@/types/pos';
 import { formatCurrency } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CartProps {
@@ -10,10 +10,11 @@ interface CartProps {
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
   onCheckout: () => void;
+  onDebt?: () => void;
   total: number;
 }
 
-export function Cart({ items, onUpdateQuantity, onRemoveItem, onCheckout, total }: CartProps) {
+export function Cart({ items, onUpdateQuantity, onRemoveItem, onCheckout, onDebt, total }: CartProps) {
   if (items.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
@@ -93,9 +94,21 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem, onCheckout, total 
             {formatCurrency(total)}
           </span>
         </div>
-        <Button className="w-full h-12 text-lg font-semibold" onClick={onCheckout}>
-          Bayar Sekarang
-        </Button>
+        <div className="flex gap-2">
+          {onDebt && (
+            <Button 
+              variant="outline" 
+              className="flex-1 h-12 text-base font-semibold border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground" 
+              onClick={onDebt}
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              Hutang
+            </Button>
+          )}
+          <Button className="flex-1 h-12 text-base font-semibold" onClick={onCheckout}>
+            Bayar
+          </Button>
+        </div>
       </div>
     </div>
   );

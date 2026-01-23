@@ -10,7 +10,8 @@ import {
   X,
   ChevronLeft,
   Percent,
-  Calculator
+  Calculator,
+  CreditCard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '../ThemeToggle';
@@ -26,6 +27,7 @@ const navItems = [
   { path: '/admin/products', label: 'Produk', icon: Package },
   { path: '/admin/pricing', label: 'Harga Jual', icon: Percent },
   { path: '/admin/calculator', label: 'Kalkulator', icon: Calculator },
+  { path: '/admin/debts', label: 'Hutang', icon: CreditCard },
   { path: '/admin/history', label: 'Riwayat', icon: History },
   { path: '/admin/reports', label: 'Laporan', icon: BarChart3 },
   { path: '/admin/settings', label: 'Pengaturan', icon: Settings },
