@@ -92,6 +92,14 @@ export function MobileCalculator() {
     });
   };
 
+  const handleDoubleZero = () => {
+    setDisplay(prev => {
+      if (prev === '0') return prev;
+      if (prev.length >= 13) return prev;
+      return prev + '00';
+    });
+  };
+
   const numpadButtons = [
     { label: '7', action: () => handleNumber('7') },
     { label: '8', action: () => handleNumber('8') },
@@ -104,8 +112,9 @@ export function MobileCalculator() {
     { label: '1', action: () => handleNumber('1') },
     { label: '2', action: () => handleNumber('2') },
     { label: '3', action: () => handleNumber('3') },
-    { label: '000', action: handleTripleZero, variant: 'secondary' as const },
-    { label: '0', action: () => handleNumber('0'), span: 2 },
+    { label: '000', action: handleTripleZero, variant: 'outline' as const },
+    { label: '0', action: () => handleNumber('0') },
+    { label: '00', action: handleDoubleZero, variant: 'outline' as const },
     { label: <RotateCcw className="w-5 h-5" />, action: () => { handleClear(); setSelectedCategory('__all__'); }, variant: 'destructive' as const, span: 2 },
   ];
 
