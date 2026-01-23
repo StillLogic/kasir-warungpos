@@ -103,8 +103,17 @@
   
   /* Ensure full viewport height on mobile PWA */
   html, body, #root {
+    height: 100%;
     min-height: 100dvh;
     min-height: -webkit-fill-available;
+  }
+  
+  /* PWA standalone mode - fill entire screen */
+  @media all and (display-mode: standalone) {
+    html, body, #root {
+      height: 100dvh;
+      height: -webkit-fill-available;
+    }
   }
 }
 
