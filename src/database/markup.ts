@@ -7,7 +7,15 @@ const STORAGE_KEY = 'warungpos_markup_rules';
 export function getMarkupRules(): MarkupRule[] {
   const data = localStorage.getItem(STORAGE_KEY);
   if (!data) return [];
-  return JSON.parse(data);
+  
+  // Migrate old rules without markupType
+  const rules = JSON.parse(data) as MarkupRule[];
+  return rules.map(rule => ({
+    ...rule,
+    markupType: rule.markupType || 'percent',
+    retailMarkupFixed: rule.retailMarkupFixed || 0,
+    wholesaleMarkupFixed: rule.wholesaleMarkupFixed || 0,
+  }));
 }
 
 // Save all markup rules
@@ -64,7 +72,13 @@ export function deleteMarkupRule(id: string): boolean {
 
 // Get applicable markup for a given cost price and optional category
 // Priority: category-specific rules > general rules (categoryId = null)
-export function getMarkupForPrice(costPrice: number, categoryId?: string | null): { retailPercent: number; wholesalePercent: number } | null {
+export function getMarkupForPrice(costPrice: number, categoryId?: string | null): { 
+  type: 'percent' | 'fixed';
+  retailPercent: number; 
+  wholesalePercent: number;
+  retailFixed: number;
+  wholesaleFixed: number;
+} | null {
   const rules = getMarkupRules();
   
   // First, try to find category-specific rule
@@ -77,8 +91,11 @@ export function getMarkupForPrice(costPrice: number, categoryId?: string | null)
       
       if (minMatch && maxMatch) {
         return {
+          type: rule.markupType || 'percent',
           retailPercent: rule.retailMarkupPercent,
           wholesalePercent: rule.wholesaleMarkupPercent,
+          retailFixed: rule.retailMarkupFixed || 0,
+          wholesaleFixed: rule.wholesaleMarkupFixed || 0,
         };
       }
     }
@@ -93,8 +110,11 @@ export function getMarkupForPrice(costPrice: number, categoryId?: string | null)
     
     if (minMatch && maxMatch) {
       return {
+        type: rule.markupType || 'percent',
         retailPercent: rule.retailMarkupPercent,
         wholesalePercent: rule.wholesaleMarkupPercent,
+        retailFixed: rule.retailMarkupFixed || 0,
+        wholesaleFixed: rule.wholesaleMarkupFixed || 0,
       };
     }
   }
@@ -110,8 +130,18 @@ export function calculateSellingPrices(costPrice: number, categoryId?: string | 
   
   if (!markup) return null;
   
-  const rawRetail = costPrice * (1 + markup.retailPercent / 100);
-  const rawWholesale = costPrice * (1 + markup.wholesalePercent / 100);
+  let rawRetail: number;
+  let rawWholesale: number;
+  
+  if (markup.type === 'fixed') {
+    // Markup dalam rupiah tetap
+    rawRetail = costPrice + markup.retailFixed;
+    rawWholesale = costPrice + markup.wholesaleFixed;
+  } else {
+    // Markup dalam persentase
+    rawRetail = costPrice * (1 + markup.retailPercent / 100);
+    rawWholesale = costPrice * (1 + markup.wholesalePercent / 100);
+  }
   
   return {
     retailPrice: roundToThousand(rawRetail),
