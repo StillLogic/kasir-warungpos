@@ -104,85 +104,7 @@ function DesktopCalculator() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Input Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calculator className="w-5 h-5" />
-              Input Perhitungan
-            </CardTitle>
-            <CardDescription>
-              Masukkan harga modal, markup akan otomatis diambil dari aturan
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="costPrice">Harga Modal (Rp)</Label>
-              <Input
-                id="costPrice"
-                type="number"
-                placeholder="Contoh: 10000"
-                value={costPrice}
-                onChange={(e) => setCostPrice(e.target.value)}
-                min="0"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="category">Kategori (Opsional)</Label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Semua Kategori" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">Semua Kategori</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Pilih kategori untuk menggunakan aturan markup khusus kategori
-              </p>
-            </div>
-
-            {/* Applied Rule Info */}
-            {cost > 0 && (
-              <div className="p-3 rounded-lg bg-muted/50 space-y-1">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Info className="w-4 h-4" />
-                  Aturan yang Diterapkan
-                </div>
-                {appliedRule ? (
-                  <div className="text-sm text-muted-foreground">
-                    <p>
-                      Rentang: {formatCurrency(appliedRule.minPrice)} - {appliedRule.maxPrice ? formatCurrency(appliedRule.maxPrice) : '∞'}
-                    </p>
-                    <p>
-                      Eceran: {appliedRule.retailMarkupPercent}% | Grosir: {appliedRule.wholesaleMarkupPercent}%
-                    </p>
-                    {appliedRule.categoryName && (
-                      <p className="text-primary">Kategori: {appliedRule.categoryName}</p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-destructive">
-                    Tidak ada aturan yang cocok untuk harga ini
-                  </p>
-                )}
-              </div>
-            )}
-
-            <Button variant="outline" onClick={handleReset} className="w-full">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Result Section */}
+        {/* Result Section - Now First */}
         <Card>
           <CardHeader>
             <CardTitle>Hasil Perhitungan</CardTitle>
@@ -258,6 +180,84 @@ function DesktopCalculator() {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Input Section - Now Second */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calculator className="w-5 h-5" />
+              Input Perhitungan
+            </CardTitle>
+            <CardDescription>
+              Masukkan harga modal, markup akan otomatis diambil dari aturan
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="costPrice">Harga Modal (Rp)</Label>
+              <Input
+                id="costPrice"
+                type="number"
+                placeholder="Contoh: 10000"
+                value={costPrice}
+                onChange={(e) => setCostPrice(e.target.value)}
+                min="0"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">Kategori (Opsional)</Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Semua Kategori</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Pilih kategori untuk menggunakan aturan markup khusus kategori
+              </p>
+            </div>
+
+            {/* Applied Rule Info */}
+            {cost > 0 && (
+              <div className="p-3 rounded-lg bg-muted/50 space-y-1">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Info className="w-4 h-4" />
+                  Aturan yang Diterapkan
+                </div>
+                {appliedRule ? (
+                  <div className="text-sm text-muted-foreground">
+                    <p>
+                      Rentang: {formatCurrency(appliedRule.minPrice)} - {appliedRule.maxPrice ? formatCurrency(appliedRule.maxPrice) : '∞'}
+                    </p>
+                    <p>
+                      Eceran: {appliedRule.retailMarkupPercent}% | Grosir: {appliedRule.wholesaleMarkupPercent}%
+                    </p>
+                    {appliedRule.categoryName && (
+                      <p className="text-primary">Kategori: {appliedRule.categoryName}</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-destructive">
+                    Tidak ada aturan yang cocok untuk harga ini
+                  </p>
+                )}
+              </div>
+            )}
+
+            <Button variant="outline" onClick={handleReset} className="w-full">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reset
+            </Button>
           </CardContent>
         </Card>
       </div>
