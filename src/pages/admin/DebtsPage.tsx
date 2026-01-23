@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Debt, Customer } from '@/types/debt';
+import { Debt, DebtPayment } from '@/types/debt';
 import { formatCurrency } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Card,
   CardContent,
@@ -27,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search, User, CreditCard, ArrowLeft, Receipt, Calendar, Banknote } from 'lucide-react';
+import { Search, User, CreditCard, ArrowLeft, Banknote, Plus } from 'lucide-react';
 import { getCustomersWithDebt, getDebtsByCustomerId, payDebt, getDebtPayments } from '@/database/debts';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -41,12 +40,22 @@ interface CustomerDebtSummary {
   debtCount: number;
 }
 
+interface DebtTableRow {
+  id: string;
+  timestamp: string;
+  type: 'debt' | 'payment';
+  productName?: string;
+  quantity?: number;
+  unitPrice?: number;
+  totalPrice: number;
+  debtId?: string;
+}
+
 export function DebtsPage() {
   const [customers, setCustomers] = useState<CustomerDebtSummary[]>([]);
   const [search, setSearch] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerDebtSummary | null>(null);
   const [customerDebts, setCustomerDebts] = useState<Debt[]>([]);
-  const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -74,41 +83,86 @@ export function DebtsPage() {
     loadCustomers();
   };
 
-  const handleOpenPayDialog = (debt: Debt) => {
-    setSelectedDebt(debt);
-    setPaymentAmount(debt.remainingAmount);
+  const handleOpenPayDialog = () => {
+    setPaymentAmount(selectedCustomer?.totalDebt || 0);
     setPayDialogOpen(true);
   };
 
   const handlePayDebt = () => {
-    if (!selectedDebt || paymentAmount <= 0) return;
+    if (!selectedCustomer || paymentAmount <= 0) return;
 
-    const result = payDebt(selectedDebt.id, paymentAmount);
-    if (result) {
-      toast({
-        title: 'Pembayaran Berhasil',
-        description: `Pembayaran ${formatCurrency(paymentAmount)} telah dicatat`,
-      });
-      setPayDialogOpen(false);
-      setSelectedDebt(null);
-      setPaymentAmount(0);
+    // Get unpaid debts sorted by oldest first
+    const unpaidDebts = customerDebts
+      .filter(d => d.status !== 'paid')
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
-      if (selectedCustomer) {
-        loadCustomerDebts(selectedCustomer.customerId);
-        loadCustomers();
-        
-        // Update selected customer total
-        const updatedCustomers = getCustomersWithDebt();
-        const updated = updatedCustomers.find(c => c.customerId === selectedCustomer.customerId);
-        if (updated) {
-          setSelectedCustomer(updated);
-        } else {
-          // Customer has no more debt, go back
-          handleBack();
-        }
-      }
+    let remainingPayment = paymentAmount;
+
+    for (const debt of unpaidDebts) {
+      if (remainingPayment <= 0) break;
+
+      const payAmount = Math.min(remainingPayment, debt.remainingAmount);
+      payDebt(debt.id, payAmount);
+      remainingPayment -= payAmount;
+    }
+
+    toast({
+      title: 'Pembayaran Berhasil',
+      description: `Pembayaran ${formatCurrency(paymentAmount)} telah dicatat`,
+    });
+
+    setPayDialogOpen(false);
+    setPaymentAmount(0);
+
+    // Refresh data
+    loadCustomerDebts(selectedCustomer.customerId);
+    loadCustomers();
+
+    // Update selected customer total
+    const updatedCustomers = getCustomersWithDebt();
+    const updated = updatedCustomers.find(c => c.customerId === selectedCustomer.customerId);
+    if (updated) {
+      setSelectedCustomer(updated);
+    } else {
+      // Customer has no more debt, go back
+      handleBack();
     }
   };
+
+  // Build table rows from debts and payments
+  const tableRows = useMemo((): DebtTableRow[] => {
+    const rows: DebtTableRow[] = [];
+
+    for (const debt of customerDebts) {
+      // Add debt items
+      for (const item of debt.items) {
+        rows.push({
+          id: `${debt.id}-${item.productId}`,
+          timestamp: debt.createdAt,
+          type: 'debt',
+          productName: item.productName,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          totalPrice: item.subtotal,
+          debtId: debt.id,
+        });
+      }
+
+      // Add payments for this debt
+      const payments = getDebtPayments(debt.id);
+      for (const payment of payments) {
+        rows.push({
+          id: payment.id,
+          timestamp: payment.createdAt,
+          type: 'payment',
+          totalPrice: -payment.amount,
+        });
+      }
+    }
+
+    // Sort by timestamp descending
+    return rows.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [customerDebts]);
 
   const filteredCustomers = useMemo(() => {
     if (!search.trim()) return customers;
@@ -119,17 +173,6 @@ export function DebtsPage() {
   const totalAllDebts = useMemo(() => {
     return customers.reduce((sum, c) => sum + c.totalDebt, 0);
   }, [customers]);
-
-  const getStatusBadge = (status: Debt['status']) => {
-    switch (status) {
-      case 'unpaid':
-        return <Badge variant="destructive">Belum Bayar</Badge>;
-      case 'partial':
-        return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-600">Sebagian</Badge>;
-      case 'paid':
-        return <Badge variant="default" className="bg-green-500/20 text-green-600">Lunas</Badge>;
-    }
-  };
 
   // Customer List View
   if (!selectedCustomer) {
@@ -239,7 +282,7 @@ export function DebtsPage() {
     );
   }
 
-  // Customer Detail View
+  // Customer Detail View - Simple Table
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -249,70 +292,71 @@ export function DebtsPage() {
         </Button>
         <div className="flex-1">
           <h2 className="text-xl font-semibold">{selectedCustomer.customerName}</h2>
-          <p className="text-sm text-muted-foreground">
-            Total Hutang: <span className="font-semibold text-destructive">{formatCurrency(selectedCustomer.totalDebt)}</span>
-          </p>
+          <p className="text-sm text-muted-foreground">Rincian Hutang</p>
         </div>
+        {selectedCustomer.totalDebt > 0 && (
+          <Button onClick={handleOpenPayDialog}>
+            <Banknote className="w-4 h-4 mr-2" />
+            Bayar
+          </Button>
+        )}
       </div>
 
-      {/* Debt List */}
-      <div className="space-y-3">
-        {customerDebts.map((debt) => (
-          <Card key={debt.id}>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  {format(new Date(debt.createdAt), 'dd MMM yyyy, HH:mm', { locale: localeId })}
-                </div>
-                {getStatusBadge(debt.status)}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Items */}
-              <div className="space-y-1">
-                {debt.items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      {item.productName} x{item.quantity}
-                    </span>
-                    <span>{formatCurrency(item.subtotal)}</span>
-                  </div>
-                ))}
-              </div>
+      {/* Debt Table */}
+      <Card>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Waktu</TableHead>
+                <TableHead>Keterangan</TableHead>
+                <TableHead className="text-center">Qty</TableHead>
+                <TableHead className="text-right">Harga Satuan</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {tableRows.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                    {format(new Date(row.timestamp), 'dd/MM/yy HH:mm', { locale: localeId })}
+                  </TableCell>
+                  <TableCell>
+                    {row.type === 'debt' ? (
+                      <span>{row.productName}</span>
+                    ) : (
+                      <span className="text-green-600 font-medium flex items-center gap-1">
+                        <Plus className="w-3 h-3" />
+                        Pembayaran
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {row.type === 'debt' ? row.quantity : '-'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {row.type === 'debt' ? formatCurrency(row.unitPrice || 0) : '-'}
+                  </TableCell>
+                  <TableCell className={`text-right font-medium ${row.type === 'payment' ? 'text-green-600' : ''}`}>
+                    {row.type === 'payment' ? formatCurrency(Math.abs(row.totalPrice)) : formatCurrency(row.totalPrice)}
+                    {row.type === 'payment' && <span className="ml-1">(-)</span>}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
-              {/* Summary */}
-              <div className="border-t pt-3 space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total</span>
-                  <span className="font-medium">{formatCurrency(debt.total)}</span>
-                </div>
-                {debt.paidAmount > 0 && (
-                  <div className="flex justify-between text-sm text-green-600">
-                    <span>Sudah Dibayar</span>
-                    <span>-{formatCurrency(debt.paidAmount)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between font-semibold">
-                  <span>Sisa Hutang</span>
-                  <span className="text-destructive">{formatCurrency(debt.remainingAmount)}</span>
-                </div>
-              </div>
-
-              {/* Pay Button */}
-              {debt.status !== 'paid' && (
-                <Button
-                  className="w-full"
-                  onClick={() => handleOpenPayDialog(debt)}
-                >
-                  <Banknote className="w-4 h-4 mr-2" />
-                  Bayar Hutang
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+        {/* Total Summary */}
+        <div className="border-t p-4">
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-semibold">Total Hutang</span>
+            <span className="text-2xl font-bold text-destructive">
+              {formatCurrency(selectedCustomer.totalDebt)}
+            </span>
+          </div>
+        </div>
+      </Card>
 
       {/* Pay Dialog */}
       <Dialog open={payDialogOpen} onOpenChange={setPayDialogOpen}>
@@ -321,64 +365,62 @@ export function DebtsPage() {
             <DialogTitle>Bayar Hutang</DialogTitle>
           </DialogHeader>
 
-          {selectedDebt && (
-            <div className="space-y-4">
-              <div className="bg-muted rounded-lg p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Sisa Hutang</span>
-                  <span className="font-semibold text-destructive">
-                    {formatCurrency(selectedDebt.remainingAmount)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="payAmount">Jumlah Bayar</Label>
-                <Input
-                  id="payAmount"
-                  type="number"
-                  value={paymentAmount || ''}
-                  onChange={(e) => setPaymentAmount(Number(e.target.value))}
-                  className="text-xl h-14 font-semibold"
-                  autoFocus
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPaymentAmount(selectedDebt.remainingAmount)}
-                >
-                  Lunas
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPaymentAmount(Math.round(selectedDebt.remainingAmount / 2))}
-                >
-                  50%
-                </Button>
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setPayDialogOpen(false)}
-                >
-                  Batal
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={handlePayDebt}
-                  disabled={paymentAmount <= 0 || paymentAmount > selectedDebt.remainingAmount}
-                >
-                  Konfirmasi
-                </Button>
+          <div className="space-y-4">
+            <div className="bg-muted rounded-lg p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Total Hutang</span>
+                <span className="font-semibold text-destructive">
+                  {formatCurrency(selectedCustomer.totalDebt)}
+                </span>
               </div>
             </div>
-          )}
+
+            <div className="space-y-2">
+              <Label htmlFor="payAmount">Jumlah Bayar</Label>
+              <Input
+                id="payAmount"
+                type="number"
+                value={paymentAmount || ''}
+                onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                className="text-xl h-14 font-semibold"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPaymentAmount(selectedCustomer.totalDebt)}
+              >
+                Lunas
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPaymentAmount(Math.round(selectedCustomer.totalDebt / 2))}
+              >
+                50%
+              </Button>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setPayDialogOpen(false)}
+              >
+                Batal
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handlePayDebt}
+                disabled={paymentAmount <= 0 || paymentAmount > selectedCustomer.totalDebt}
+              >
+                Konfirmasi
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
