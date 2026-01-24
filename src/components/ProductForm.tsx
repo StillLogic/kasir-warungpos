@@ -9,6 +9,7 @@ import { getMarkupForPrice, calculateSellingPrices } from '@/database/markup';
 import { toTitleCase } from '@/lib/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PriceInput, formatWithThousandSeparator, parseThousandSeparator } from '@/components/ui/price-input';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
@@ -51,6 +52,11 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
   const isEditing = !!product;
   const [markupInfo, setMarkupInfo] = useState<{ retail: number; wholesale: number; type?: 'percent' | 'fixed' } | null>(null);
   
+  // Price state as strings for formatting
+  const [costPriceStr, setCostPriceStr] = useState('');
+  const [retailPriceStr, setRetailPriceStr] = useState('');
+  const [wholesalePriceStr, setWholesalePriceStr] = useState('');
+  
   // Get dynamic categories
   const categories = useMemo(() => getCategoryNames(), []);
   
@@ -78,6 +84,34 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
 
   const category = watch('category');
   const costPrice = watch('costPrice');
+
+  // Initialize price strings when product changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      if (product) {
+        setCostPriceStr(product.costPrice > 0 ? String(product.costPrice) : '');
+        setRetailPriceStr(product.retailPrice > 0 ? String(product.retailPrice) : '');
+        setWholesalePriceStr(product.wholesalePrice > 0 ? String(product.wholesalePrice) : '');
+      } else {
+        setCostPriceStr('');
+        setRetailPriceStr('');
+        setWholesalePriceStr('');
+      }
+    }
+  }, [open, product]);
+
+  // Sync price strings to form values
+  useEffect(() => {
+    setValue('costPrice', parseInt(costPriceStr) || 0);
+  }, [costPriceStr, setValue]);
+
+  useEffect(() => {
+    setValue('retailPrice', parseInt(retailPriceStr) || 0);
+  }, [retailPriceStr, setValue]);
+
+  useEffect(() => {
+    setValue('wholesalePrice', parseInt(wholesalePriceStr) || 0);
+  }, [wholesalePriceStr, setValue]);
 
   // Auto-generate SKU when category changes (only for new products)
   useEffect(() => {
@@ -120,8 +154,8 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
         }
         const prices = calculateSellingPrices(costPrice, categoryId);
         if (prices) {
-          setValue('retailPrice', prices.retailPrice);
-          setValue('wholesalePrice', prices.wholesalePrice);
+          setRetailPriceStr(String(prices.retailPrice));
+          setWholesalePriceStr(String(prices.wholesalePrice));
         }
       } else {
         setMarkupInfo(null);
@@ -129,17 +163,23 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
     } else {
       setMarkupInfo(null);
     }
-  }, [costPrice, category, setValue]);
+  }, [costPrice, category]);
 
   const handleFormSubmit = (data: ProductFormData) => {
     onSubmit(data);
     reset();
+    setCostPriceStr('');
+    setRetailPriceStr('');
+    setWholesalePriceStr('');
     onClose();
   };
 
   const handleClose = () => {
     reset();
     setMarkupInfo(null);
+    setCostPriceStr('');
+    setRetailPriceStr('');
+    setWholesalePriceStr('');
     onClose();
   };
 
@@ -208,10 +248,10 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
                 <Calculator className="h-4 w-4" />
                 Harga Modal
               </Label>
-              <Input
+              <PriceInput
                 id="costPrice"
-                type="number"
-                {...register('costPrice', { valueAsNumber: true })}
+                value={costPriceStr}
+                onChange={setCostPriceStr}
                 placeholder="0"
               />
               {markupInfo && (
@@ -233,10 +273,10 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="retailPrice">Harga Satuan</Label>
-                <Input
+                <PriceInput
                   id="retailPrice"
-                  type="number"
-                  {...register('retailPrice', { valueAsNumber: true })}
+                  value={retailPriceStr}
+                  onChange={setRetailPriceStr}
                   placeholder="0"
                 />
                 {costPrice > 0 && watch('retailPrice') > 0 && (
@@ -250,10 +290,10 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
               </div>
               <div className="space-y-2">
                 <Label htmlFor="wholesalePrice">Harga Grosir</Label>
-                <Input
+                <PriceInput
                   id="wholesalePrice"
-                  type="number"
-                  {...register('wholesalePrice', { valueAsNumber: true })}
+                  value={wholesalePriceStr}
+                  onChange={setWholesalePriceStr}
                   placeholder="0"
                 />
                 {costPrice > 0 && watch('wholesalePrice') > 0 && (
