@@ -100,7 +100,7 @@ export function DebtsPage() {
   const handlePayDebt = () => {
     if (!selectedCustomer || paymentAmount <= 0) return;
 
-    
+    // Use new consolidated payment function
     const result = payCustomerDebt(selectedCustomer.customerId, paymentAmount);
     
     if (!result) {
@@ -120,17 +120,17 @@ export function DebtsPage() {
     setPayDialogOpen(false);
     setPaymentAmount(0);
 
-    
+    // Refresh data
     loadCustomerDebts(selectedCustomer.customerId);
     loadCustomers();
 
-    
+    // Update selected customer total
     const updatedCustomers = getCustomersWithDebt();
     const updated = updatedCustomers.find(c => c.customerId === selectedCustomer.customerId);
     if (updated) {
       setSelectedCustomer(updated);
     } else {
-      
+      // Customer has no more debt, go back
       handleBack();
     }
   };
@@ -235,13 +235,13 @@ export function DebtsPage() {
     }
   };
 
-  
+  // Build table rows from debts and customer payments (consolidated)
   const tableRows = useMemo((): DebtTableRow[] => {
     if (!selectedCustomer) return [];
     
     const rows: DebtTableRow[] = [];
 
-    
+    // Add all debt items
     for (const debt of customerDebts) {
       for (const item of debt.items) {
         rows.push({
@@ -257,7 +257,7 @@ export function DebtsPage() {
       }
     }
 
-    
+    // Add customer payments (consolidated - one entry per payment)
     const customerPayments = getCustomerPayments(selectedCustomer.customerId);
     for (const payment of customerPayments) {
       rows.push({
@@ -268,10 +268,10 @@ export function DebtsPage() {
       });
     }
 
-    
+    // Sort by timestamp descending
     const sortedRows = rows.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     
-    
+    // Apply date filter
     if (dateFrom || dateTo) {
       return sortedRows.filter(row => {
         const rowDate = new Date(row.timestamp);
@@ -299,11 +299,11 @@ export function DebtsPage() {
     return customers.reduce((sum, c) => sum + c.totalDebt, 0);
   }, [customers]);
 
-  
+  // Customer List View
   if (!selectedCustomer) {
     return (
       <div className="space-y-6">
-        
+        {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card>
             <CardHeader className="pb-2">
@@ -319,7 +319,7 @@ export function DebtsPage() {
           </Card>
         </div>
 
-        
+        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -330,7 +330,7 @@ export function DebtsPage() {
           />
         </div>
 
-        
+        {/* Customer List */}
         {filteredCustomers.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -407,10 +407,10 @@ export function DebtsPage() {
     );
   }
 
-  
+  // Customer Detail View - Simple Table
   return (
     <div className="space-y-6">
-      
+      {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={handleBack}>
           <ArrowLeft className="w-5 h-5" />
@@ -435,7 +435,7 @@ export function DebtsPage() {
         )}
       </div>
 
-      
+      {/* Date Filter */}
       <div className="flex flex-wrap items-center gap-2">
         <Popover>
           <PopoverTrigger asChild>
@@ -504,7 +504,7 @@ export function DebtsPage() {
         )}
       </div>
 
-      
+      {/* Total Summary - Top */}
       <div ref={printRef} className="space-y-4">
         <Card className="bg-destructive/5 border-destructive/20">
           <CardContent className="py-4">
@@ -520,7 +520,7 @@ export function DebtsPage() {
           </CardContent>
         </Card>
 
-      
+      {/* Debt Table */}
       <Card>
         <div className="overflow-x-auto">
           <Table>
@@ -567,7 +567,7 @@ export function DebtsPage() {
       </Card>
       </div>
 
-      
+      {/* Pay Dialog */}
       <Dialog open={payDialogOpen} onOpenChange={setPayDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>

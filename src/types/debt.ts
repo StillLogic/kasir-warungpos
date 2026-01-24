@@ -1,4 +1,4 @@
-
+// Tipe data untuk fitur hutang
 
 export interface Customer {
   id: string;
@@ -33,8 +33,8 @@ export interface Debt {
 
 export interface DebtPayment {
   id: string;
-  debtId: string; 
-  customerId?: string; 
+  debtId: string; // Keep for backward compatibility, but can be 'customer-{customerId}'
+  customerId?: string; // New: link to customer directly
   amount: number;
   createdAt: string;
 }

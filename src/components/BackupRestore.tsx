@@ -83,7 +83,7 @@ export function BackupRestore() {
           title: 'Data Dipulihkan',
           description: `${result.itemCounts?.products || 0} produk, ${result.itemCounts?.transactions || 0} transaksi berhasil dipulihkan`,
         });
-        
+        // Reload to refresh all cached data
         setTimeout(() => {
           window.location.reload();
         }, 1500);
@@ -121,7 +121,7 @@ export function BackupRestore() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          
+          {/* Storage Stats */}
           {stats && (
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-3 bg-muted/50 rounded-lg">
               <div className="flex items-center gap-2 text-sm">
@@ -152,7 +152,7 @@ export function BackupRestore() {
             </div>
           )}
 
-          
+          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <Button 
               onClick={handleExport} 
@@ -182,7 +182,7 @@ export function BackupRestore() {
             />
           </div>
 
-          
+          {/* Tips */}
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 space-y-2">
             <div className="flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
@@ -199,7 +199,7 @@ export function BackupRestore() {
         </CardContent>
       </Card>
 
-      
+      {/* Confirm Import Dialog */}
       <AlertDialog open={confirmImport} onOpenChange={setConfirmImport}>
         <AlertDialogContent>
           <AlertDialogHeader>

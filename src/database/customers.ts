@@ -4,12 +4,12 @@ import { generateId, toUnix, fromUnix } from './utils';
 const STORAGE_KEY = 'db_customers';
 
 interface CustomerRecord {
-  i: string;      
-  n: string;      
-  p?: string;     
-  a?: string;     
-  ca: number;     
-  ua: number;     
+  i: string;      // id
+  n: string;      // name
+  p?: string;     // phone
+  a?: string;     // address
+  ca: number;     // createdAt
+  ua: number;     // updatedAt
 }
 
 function toRecord(customer: Customer): CustomerRecord {

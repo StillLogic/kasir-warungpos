@@ -68,9 +68,9 @@ export function ReportsPage() {
     return () => { mounted = false; };
   }, []);
 
-  
+  // Calculate profit from a cash transaction only
   const calculateProfit = (tx: Transaction) => {
-    
+    // Debt transactions don't contribute to profit until paid
     if (tx.paymentType === 'debt') return 0;
     
     return tx.items.reduce((sum, item) => {
@@ -83,16 +83,16 @@ export function ReportsPage() {
     }, 0);
   };
 
-  
-  
+  // Calculate profit from debt payments
+  // When a debt is paid, we recognize the profit proportionally
   const calculatePaymentProfit = useMemo(() => {
     const debts = getDebts();
     const debtProfitMap = new Map<string, { totalProfit: number; total: number }>();
     
-    
+    // Find related transactions for each debt (by customerId match)
     const debtTransactions = transactions.filter(tx => tx.paymentType === 'debt');
     
-    
+    // Calculate profit margin for each debt transaction
     debtTransactions.forEach(tx => {
       if (!tx.customerId) return;
       
@@ -110,12 +110,12 @@ export function ReportsPage() {
       debtProfitMap.set(tx.customerId, existing);
     });
 
-    
+    // Also check debt records for margin calculation
     debts.forEach(debt => {
-      if (debtProfitMap.has(debt.customerId)) return; 
+      if (debtProfitMap.has(debt.customerId)) return; // Already from transaction
       
-      
-      
+      // For older debts without transaction records, estimate margin from debt items
+      // We don't have costPrice in debt items, so we skip these
     });
 
     return (payment: DebtPayment): number => {
@@ -123,11 +123,11 @@ export function ReportsPage() {
         (payment.debtId.startsWith('customer-') ? payment.debtId.replace('customer-', '') : null);
       
       if (!customerId) {
-        
+        // Legacy single debt payment - find the debt and calculate
         const debt = debts.find(d => d.id === payment.debtId);
         if (!debt) return 0;
         
-        
+        // Find matching transaction
         const tx = debtTransactions.find(t => 
           t.customerId === debt.customerId && 
           Math.abs(new Date(t.createdAt).getTime() - new Date(debt.createdAt).getTime()) < 60000
@@ -150,7 +150,7 @@ export function ReportsPage() {
       const profitData = debtProfitMap.get(customerId);
       if (!profitData || profitData.total === 0) return 0;
       
-      
+      // Proportional profit based on payment amount
       const margin = profitData.totalProfit / profitData.total;
       return payment.amount * margin;
     };
@@ -158,16 +158,16 @@ export function ReportsPage() {
 
   const reportData = useMemo(() => {
     const processTransactions = (txList: Transaction[], paymentList: DebtPayment[]) => {
-      
+      // Revenue: only cash transactions (debt is not revenue until paid)
       const cashRevenue = txList
         .filter(t => t.paymentType !== 'debt')
         .reduce((sum, t) => sum + t.total, 0);
       
-      
+      // Add debt payments as revenue (money received)
       const paymentRevenue = paymentList.reduce((sum, p) => sum + p.amount, 0);
       const revenue = cashRevenue + paymentRevenue;
       
-      
+      // Profit: cash transactions profit + debt payment profit
       const cashProfit = txList.reduce((sum, t) => sum + calculateProfit(t), 0);
       const paymentProfit = paymentList.reduce((sum, p) => sum + calculatePaymentProfit(p), 0);
       const profit = cashProfit + paymentProfit;
@@ -304,7 +304,7 @@ export function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      
+      {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold">Laporan</h1>
@@ -316,7 +316,7 @@ export function ReportsPage() {
         </Button>
       </div>
 
-      
+      {/* Report Type Tabs */}
       <Tabs value={reportType} onValueChange={(v) => setReportType(v as ReportType)}>
         <TabsList>
           <TabsTrigger value="sales" className="gap-2">
@@ -329,7 +329,7 @@ export function ReportsPage() {
           </TabsTrigger>
         </TabsList>
 
-        
+        {/* Period Tabs */}
         <div className="mt-4">
           <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
             <TabsList>
@@ -340,9 +340,9 @@ export function ReportsPage() {
           </Tabs>
         </div>
 
-        
+        {/* Sales Report */}
         <TabsContent value="sales" className="mt-6 space-y-6">
-          
+          {/* Summary Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="pb-2">
@@ -391,7 +391,7 @@ export function ReportsPage() {
             </Card>
           </div>
 
-          
+          {/* Revenue Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -436,7 +436,7 @@ export function ReportsPage() {
             </CardContent>
           </Card>
 
-          
+          {/* Transactions Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -482,9 +482,9 @@ export function ReportsPage() {
           </Card>
         </TabsContent>
 
-        
+        {/* Profit Report */}
         <TabsContent value="profit" className="mt-6 space-y-6">
-          
+          {/* Profit Summary Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="pb-2">
@@ -541,7 +541,7 @@ export function ReportsPage() {
             </Card>
           </div>
 
-          
+          {/* Profit vs Revenue Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -599,7 +599,7 @@ export function ReportsPage() {
             </CardContent>
           </Card>
 
-          
+          {/* Margin Trend Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">

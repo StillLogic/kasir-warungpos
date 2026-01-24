@@ -1,4 +1,4 @@
-
+// Text transformation utilities
 
 /**
  * Capitalize first letter of each word (Title Case)
@@ -33,7 +33,7 @@ export function handleTitleCaseChange(
   const newValue = toTitleCase(e.target.value);
   setter(newValue);
   
-  
+  // Restore cursor position after React re-render
   setTimeout(() => {
     e.target.setSelectionRange(cursorPosition, cursorPosition);
   }, 0);
@@ -66,25 +66,25 @@ export function handleUpperCaseChange(
 export function formatPhoneNumber(phone: string): string {
   if (!phone) return phone;
   
-  
+  // Remove all non-digit characters except +
   let cleaned = phone.replace(/[^\d+]/g, '');
   
-  
+  // Handle different formats
   if (cleaned.startsWith('+62')) {
-    
+    // Already in correct format
     return cleaned;
   } else if (cleaned.startsWith('62')) {
-    
+    // Has 62 prefix but no +
     return '+' + cleaned;
   } else if (cleaned.startsWith('0')) {
-    
+    // Indonesian local format (08xxx)
     return '+62' + cleaned.substring(1);
   } else if (cleaned.startsWith('8')) {
-    
+    // Missing prefix entirely
     return '+62' + cleaned;
   }
   
-  
+  // Return as-is if doesn't match known patterns
   return cleaned;
 }
 
@@ -97,7 +97,7 @@ export function handlePhoneChange(
 ) {
   const value = e.target.value;
   
-  
+  // Only allow digits, +, and common separators during typing
   const cleaned = value.replace(/[^\d+\-\s]/g, '');
   setter(cleaned);
 }

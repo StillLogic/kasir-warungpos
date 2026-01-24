@@ -30,24 +30,24 @@ export function parseThousandSeparator(value: string): string {
  */
 const PriceInput = React.forwardRef<HTMLInputElement, PriceInputProps>(
   ({ className, value, onChange, placeholder = "0", ...props }, ref) => {
-    
+    // Format the display value
     const displayValue = formatWithThousandSeparator(value);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const rawValue = e.target.value;
-      
+      // Remove all non-digit characters
       const numericValue = rawValue.replace(/\D/g, '');
       onChange(numericValue);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      
+      // Allow: backspace, delete, tab, escape, enter
       if ([8, 46, 9, 27, 13].includes(e.keyCode)) return;
-      
+      // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
       if (e.ctrlKey && [65, 67, 86, 88].includes(e.keyCode)) return;
-      
+      // Allow: home, end, left, right
       if ([35, 36, 37, 39].includes(e.keyCode)) return;
-      
+      // Block anything that's not a number
       if (e.key < '0' || e.key > '9') {
         e.preventDefault();
       }

@@ -82,7 +82,7 @@ export function PricingPage() {
   const [deletingRuleId, setDeletingRuleId] = useState<string | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   
-  
+  // Form state for single rule
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [markupType, setMarkupType] = useState<MarkupType>('percent');
@@ -93,7 +93,7 @@ export function PricingPage() {
   const [noMaxLimit, setNoMaxLimit] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
 
-  
+  // Batch creation state
   const [batchCategoryId, setBatchCategoryId] = useState<string>('all');
   const [batchMarkupType, setBatchMarkupType] = useState<MarkupType>('percent');
   const [tiers, setTiers] = useState<TierInput[]>([]);
@@ -113,11 +113,11 @@ export function PricingPage() {
     return category?.name || 'Kategori tidak ditemukan';
   };
 
-  
+  // Group rules by category
   const groupedRules = useMemo(() => {
     const groups: { [key: string]: { categoryId: string | null; categoryName: string; rules: MarkupRule[] } } = {};
     
-    
+    // First add "Semua Produk" group
     const generalRules = rules.filter(r => r.categoryId === null).sort((a, b) => a.minPrice - b.minPrice);
     if (generalRules.length > 0) {
       groups['__all__'] = {
@@ -127,7 +127,7 @@ export function PricingPage() {
       };
     }
     
-    
+    // Then add category-specific groups
     for (const rule of rules) {
       if (rule.categoryId) {
         if (!groups[rule.categoryId]) {
@@ -141,7 +141,7 @@ export function PricingPage() {
       }
     }
     
-    
+    // Sort rules within each group by minPrice
     for (const key in groups) {
       groups[key].rules.sort((a, b) => a.minPrice - b.minPrice);
     }
@@ -149,13 +149,13 @@ export function PricingPage() {
     return groups;
   }, [rules, categories]);
 
-  
+  // Get categories that don't have markup rules yet
   const categoriesWithoutRules = useMemo(() => {
     const categoriesWithRules = new Set(rules.filter(r => r.categoryId).map(r => r.categoryId));
     return categories.filter(c => !categoriesWithRules.has(c.id));
   }, [categories, rules]);
 
-  
+  // Get next min price for a category (auto-increment logic)
   const getNextMinPrice = (categoryId: string | null): number => {
     const catKey = categoryId || '__all__';
     const categoryRules = groupedRules[catKey]?.rules || [];
@@ -198,11 +198,11 @@ export function PricingPage() {
       setSelectedCategoryId(rule.categoryId || 'all');
     } else {
       resetForm();
-      
+      // Set category from context
       if (categoryId !== undefined) {
         setSelectedCategoryId(categoryId || 'all');
       }
-      
+      // Auto-set minPrice for new rules
       const catId = categoryId !== undefined ? categoryId : null;
       const nextMin = getNextMinPrice(catId);
       setMinPrice(nextMin.toString());
@@ -210,12 +210,12 @@ export function PricingPage() {
     setDialogOpen(true);
   };
 
-  
+  // Initialize batch creation with default tiers
   const handleOpenBatchDialog = (categoryId?: string | null) => {
     setBatchCategoryId(categoryId || 'all');
     setBatchMarkupType('percent');
     
-    
+    // Create initial tiers with sequential ranges
     const initialTiers: TierInput[] = [
       { id: crypto.randomUUID(), minPrice: '0', maxPrice: '50000', noMaxLimit: false, retailMarkup: '', wholesaleMarkup: '', retailMarkupFixed: '', wholesaleMarkupFixed: '' },
       { id: crypto.randomUUID(), minPrice: '50001', maxPrice: '100000', noMaxLimit: false, retailMarkup: '', wholesaleMarkup: '', retailMarkupFixed: '', wholesaleMarkupFixed: '' },
@@ -231,7 +231,7 @@ export function PricingPage() {
     
     if (lastTier) {
       if (lastTier.noMaxLimit) {
-        
+        // Can't add after unlimited tier, update it first
         toast.error('Hapus batas "tidak terbatas" pada tier terakhir untuk menambah tier baru');
         return;
       }
@@ -265,12 +265,12 @@ export function PricingPage() {
       
       const updated = { ...t, [field]: value };
       
-      
+      // Auto-update next tier's minPrice when maxPrice changes
       if (field === 'maxPrice' && typeof value === 'string') {
         const tierIndex = tiers.findIndex(tier => tier.id === id);
         if (tierIndex < tiers.length - 1 && value) {
           const nextMin = (parseInt(value) || 0) + 1;
-          
+          // Update next tier
           setTimeout(() => {
             setTiers(prev => prev.map((tier, idx) => {
               if (idx === tierIndex + 1) {
@@ -282,7 +282,7 @@ export function PricingPage() {
         }
       }
       
-      
+      // Clear maxPrice when noMaxLimit is set
       if (field === 'noMaxLimit' && value === true) {
         updated.maxPrice = '';
       }
@@ -294,7 +294,7 @@ export function PricingPage() {
   const handleBatchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    
+    // Validate all tiers
     for (let i = 0; i < tiers.length; i++) {
       const tier = tiers[i];
       const min = parseInt(tier.minPrice) || 0;
@@ -326,7 +326,7 @@ export function PricingPage() {
       }
     }
     
-    
+    // Create all rules
     const categoryId = batchCategoryId === 'all' ? null : batchCategoryId;
     
     for (const tier of tiers) {
@@ -349,7 +349,7 @@ export function PricingPage() {
     loadRules();
     setBatchDialogOpen(false);
     
-    
+    // Expand the category to show new rules
     setExpandedCategory(categoryId || '__all__');
   };
 
@@ -513,7 +513,7 @@ export function PricingPage() {
 
   return (
     <div className="space-y-6">
-      
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">Pengaturan Harga Jual</h2>
@@ -534,7 +534,7 @@ export function PricingPage() {
         </div>
       </div>
 
-      
+      {/* Info Card */}
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
@@ -542,180 +542,177 @@ export function PricingPage() {
         </AlertDescription>
       </Alert>
 
-      
-      {(categoriesWithoutRules.length > 0 || !groupedRules['__all__']) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Plus className="w-5 h-5" />
-              Tambah Aturan Markup
-            </CardTitle>
-            <CardDescription>
-              Pilih kategori untuk membuat aturan markup baru
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              
-              {!groupedRules['__all__'] && (
-                <button
-                  onClick={() => handleOpenBatchDialog(null)}
-                  className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-primary/5 transition-colors text-center group"
-                >
-                  <Layers className="w-6 h-6 mx-auto mb-2 text-muted-foreground group-hover:text-primary" />
-                  <p className="font-medium text-sm">Semua Produk</p>
-                  <p className="text-xs text-muted-foreground mt-1">Aturan default</p>
-                </button>
-              )}
-              
-              
-              {categoriesWithoutRules.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => handleOpenBatchDialog(cat.id)}
-                  className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-primary/5 transition-colors text-center group"
-                >
-                  <Percent className="w-6 h-6 mx-auto mb-2 text-muted-foreground group-hover:text-primary" />
-                  <p className="font-medium text-sm">{cat.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Belum ada aturan</p>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      
-      {Object.keys(groupedRules).length === 0 && categoriesWithoutRules.length === 0 && !categories.length && (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center text-muted-foreground">
-              <Percent className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>Belum ada kategori produk</p>
-              <p className="text-sm mt-1">Buat kategori terlebih dahulu di menu Produk</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      
-      {Object.keys(groupedRules).length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Aturan Markup Aktif</h3>
-          {Object.entries(groupedRules).map(([key, group]) => (
-            <Collapsible
-              key={key}
-              open={expandedCategory === key}
-              onOpenChange={(open) => setExpandedCategory(open ? key : null)}
-            >
-              <Card>
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <ChevronRight className={cn(
-                          "w-5 h-5 transition-transform",
-                          expandedCategory === key && "rotate-90"
-                        )} />
-                        <Badge variant={group.categoryId ? "default" : "secondary"} className="text-sm">
-                          {group.categoryName}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {group.rules.length} aturan
-                        </span>
-                      </div>
+      {/* Categories with Markup Rules */}
+      <div className="space-y-3">
+        {Object.entries(groupedRules).map(([key, group]) => (
+          <Collapsible
+            key={key}
+            open={expandedCategory === key}
+            onOpenChange={(open) => setExpandedCategory(open ? key : null)}
+          >
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <ChevronRight className={cn(
+                        "w-5 h-5 transition-transform",
+                        expandedCategory === key && "rotate-90"
+                      )} />
+                      <Badge variant={group.categoryId ? "default" : "secondary"} className="text-sm">
+                        {group.categoryName}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {group.rules.length} aturan
+                      </span>
                     </div>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="pt-0">
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Rentang Harga Modal</TableHead>
-                            <TableHead className="text-center">Tipe</TableHead>
-                            <TableHead className="text-center">Markup Satuan</TableHead>
-                            <TableHead className="text-center">Markup Grosir</TableHead>
-                            <TableHead className="text-right">Aksi</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {group.rules.map((rule) => {
-                            const markup = formatMarkupDisplay(rule);
-                            return (
-                              <TableRow key={rule.id}>
-                                <TableCell className="font-medium">
-                                  {formatPriceRange(rule.minPrice, rule.maxPrice)}
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  <Badge variant="outline">
-                                    {rule.markupType === 'fixed' ? 'Rupiah' : 'Persen'}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium ${
-                                    markup.isFixed 
-                                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
-                                      : 'bg-primary/10 text-primary'
-                                  }`}>
-                                    {markup.isFixed ? '+' : ''}{markup.retail}
-                                  </span>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium ${
-                                    markup.isFixed 
-                                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
-                                      : 'bg-secondary text-secondary-foreground'
-                                  }`}>
-                                    {markup.isFixed ? '+' : ''}{markup.wholesale}
-                                  </span>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon"
-                                      onClick={() => handleOpenDialog(rule)}
-                                    >
-                                      <Pencil className="w-4 h-4" />
-                                    </Button>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon"
-                                      onClick={() => confirmDelete(rule.id)}
-                                      className="text-destructive hover:text-destructive"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </div>
-                    <div className="mt-4 flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleOpenDialog(undefined, group.categoryId)}
-                        className="gap-1"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Tambah Aturan
-                      </Button>
-                    </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-          ))}
-        </div>
-      )}
+                  </div>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-0">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Rentang Harga Modal</TableHead>
+                          <TableHead className="text-center">Tipe</TableHead>
+                          <TableHead className="text-center">Markup Satuan</TableHead>
+                          <TableHead className="text-center">Markup Grosir</TableHead>
+                          <TableHead className="text-right">Aksi</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {group.rules.map((rule) => {
+                          const markup = formatMarkupDisplay(rule);
+                          return (
+                            <TableRow key={rule.id}>
+                              <TableCell className="font-medium">
+                                {formatPriceRange(rule.minPrice, rule.maxPrice)}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant="outline">
+                                  {rule.markupType === 'fixed' ? 'Rupiah' : 'Persen'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium ${
+                                  markup.isFixed 
+                                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
+                                    : 'bg-primary/10 text-primary'
+                                }`}>
+                                  {markup.isFixed ? '+' : ''}{markup.retail}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium ${
+                                  markup.isFixed 
+                                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
+                                    : 'bg-secondary text-secondary-foreground'
+                                }`}>
+                                  {markup.isFixed ? '+' : ''}{markup.wholesale}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    onClick={() => handleOpenDialog(rule)}
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    onClick={() => confirmDelete(rule.id)}
+                                    className="text-destructive hover:text-destructive"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleOpenDialog(undefined, group.categoryId)}
+                      className="gap-1"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Tambah Aturan
+                    </Button>
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+        ))}
 
-      
+        {/* Categories without rules - show as options to add */}
+        {(categoriesWithoutRules.length > 0 || !groupedRules['__all__']) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Plus className="w-5 h-5" />
+                Tambah Aturan Markup
+              </CardTitle>
+              <CardDescription>
+                Pilih kategori untuk membuat aturan markup baru
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {/* General rules option */}
+                {!groupedRules['__all__'] && (
+                  <button
+                    onClick={() => handleOpenBatchDialog(null)}
+                    className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-primary/5 transition-colors text-center group"
+                  >
+                    <Layers className="w-6 h-6 mx-auto mb-2 text-muted-foreground group-hover:text-primary" />
+                    <p className="font-medium text-sm">Semua Produk</p>
+                    <p className="text-xs text-muted-foreground mt-1">Aturan default</p>
+                  </button>
+                )}
+                
+                {/* Categories without rules */}
+                {categoriesWithoutRules.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleOpenBatchDialog(cat.id)}
+                    className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-primary/5 transition-colors text-center group"
+                  >
+                    <Percent className="w-6 h-6 mx-auto mb-2 text-muted-foreground group-hover:text-primary" />
+                    <p className="font-medium text-sm">{cat.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Belum ada aturan</p>
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Empty state */}
+        {Object.keys(groupedRules).length === 0 && categoriesWithoutRules.length === 0 && !categories.length && (
+          <Card>
+            <CardContent className="py-12">
+              <div className="text-center text-muted-foreground">
+                <Percent className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>Belum ada kategori produk</p>
+                <p className="text-sm mt-1">Buat kategori terlebih dahulu di menu Produk</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Single Rule Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -728,7 +725,7 @@ export function PricingPage() {
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
-              
+              {/* Category Selection */}
               <div className="space-y-2">
                 <Label htmlFor="category">Berlaku Untuk</Label>
                 <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
@@ -746,7 +743,7 @@ export function PricingPage() {
                 </Select>
               </div>
 
-              
+              {/* Price Range */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="minPrice">Harga Minimum</Label>
@@ -785,7 +782,7 @@ export function PricingPage() {
                 </Label>
               </div>
 
-              
+              {/* Markup Type Selection */}
               <div className="space-y-2">
                 <Label>Tipe Markup</Label>
                 <Select value={markupType} onValueChange={(v) => setMarkupType(v as MarkupType)}>
@@ -799,7 +796,7 @@ export function PricingPage() {
                 </Select>
               </div>
 
-              
+              {/* Markup Values */}
               {markupType === 'percent' ? (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -852,7 +849,7 @@ export function PricingPage() {
                 </div>
               )}
 
-              
+              {/* Preview */}
               {preview && (
                 <div className="p-3 rounded-lg bg-muted/50 text-sm">
                   <p className="font-medium mb-1">Contoh Kalkulasi:</p>
@@ -876,7 +873,7 @@ export function PricingPage() {
         </DialogContent>
       </Dialog>
 
-      
+      {/* Batch Create Dialog */}
       <Dialog open={batchDialogOpen} onOpenChange={setBatchDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -893,7 +890,7 @@ export function PricingPage() {
           </DialogHeader>
           <form onSubmit={handleBatchSubmit}>
             <div className="space-y-4 py-4">
-              
+              {/* Markup Type Selection */}
               <div className="space-y-2">
                 <Label>Tipe Markup</Label>
                 <Select value={batchMarkupType} onValueChange={(v) => setBatchMarkupType(v as MarkupType)}>
@@ -907,7 +904,7 @@ export function PricingPage() {
                 </Select>
               </div>
 
-              
+              {/* Tiers */}
               <div className="space-y-3">
                 <Label>Tingkatan Harga</Label>
                 {tiers.map((tier, index) => (
@@ -917,7 +914,7 @@ export function PricingPage() {
                         {index + 1}
                       </div>
                       <div className="flex-1 space-y-3">
-                        
+                        {/* Price Range */}
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1">
                             <Label className="text-xs">Harga Min</Label>
@@ -951,7 +948,7 @@ export function PricingPage() {
                           </Label>
                         </div>
 
-                        
+                        {/* Markup Values */}
                         <div className="grid grid-cols-2 gap-3">
                           {batchMarkupType === 'percent' ? (
                             <>
@@ -1001,7 +998,7 @@ export function PricingPage() {
                         </div>
                       </div>
                       
-                      
+                      {/* Remove button */}
                       <Button
                         type="button"
                         variant="ghost"
@@ -1038,7 +1035,7 @@ export function PricingPage() {
         </DialogContent>
       </Dialog>
 
-      
+      {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1056,7 +1053,7 @@ export function PricingPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      
+      {/* Bulk Update Confirmation */}
       <AlertDialog open={bulkUpdateDialogOpen} onOpenChange={setBulkUpdateDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

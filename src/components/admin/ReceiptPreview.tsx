@@ -24,7 +24,7 @@ export function ReceiptPreview({ settings }: ReceiptPreviewProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const is80mm = settings.paperWidth === '80';
   
-  
+  // Sample data for preview
   const sampleItems = [
     { name: 'Indomie Goreng', qty: 2, price: 3500 },
     { name: 'Teh Botol', qty: 1, price: 5000 },
@@ -81,7 +81,7 @@ export function ReceiptPreview({ settings }: ReceiptPreviewProps) {
           style={{ fontFamily: "'Courier New', monospace" }}
         >
         <div className={`p-3 ${is80mm ? 'text-sm' : 'text-xs'}`}>
-          
+          {/* Header */}
           <div className="text-center border-b border-dashed border-gray-400 pb-2 mb-2">
             <h3 className={`font-bold ${is80mm ? 'text-base' : 'text-sm'}`}>
               {settings.storeName || 'Nama Toko'}
@@ -104,7 +104,7 @@ export function ReceiptPreview({ settings }: ReceiptPreviewProps) {
             </p>
           </div>
 
-          
+          {/* Items */}
           <div className="mb-2">
             {sampleItems.map((item, index) => (
               <div key={index} className="mb-1">
@@ -117,7 +117,7 @@ export function ReceiptPreview({ settings }: ReceiptPreviewProps) {
             ))}
           </div>
 
-          
+          {/* Totals */}
           <div className="border-t border-dashed border-gray-400 pt-2 mb-2">
             {settings.taxEnabled && (
               <>
@@ -145,7 +145,7 @@ export function ReceiptPreview({ settings }: ReceiptPreviewProps) {
             </div>
           </div>
 
-          
+          {/* Footer */}
           <div className="text-center border-t border-dashed border-gray-400 pt-2">
             <p className={is80mm ? 'text-xs' : 'text-[10px]'}>
               {settings.receiptFooter || 'Terima kasih!'}

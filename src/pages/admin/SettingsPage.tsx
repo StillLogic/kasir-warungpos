@@ -157,10 +157,10 @@ export function SettingsPage() {
 return (
     <div className="grid gap-6 lg:grid-cols-[1fr,auto]">
       <div className="space-y-6 max-w-2xl">
-      
+      {/* Backup & Restore - Top Priority */}
       <BackupRestore />
       
-      
+      {/* Store Info */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -209,7 +209,7 @@ return (
         </CardContent>
       </Card>
 
-      
+      {/* Receipt Settings */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -276,7 +276,7 @@ return (
         </CardContent>
       </Card>
 
-      
+      {/* Tax Settings */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -316,14 +316,14 @@ return (
         </CardContent>
       </Card>
 
-        
+        {/* Save Button */}
         <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
           <Save className="w-4 h-4 mr-2" />
           {saving ? 'Menyimpan...' : 'Simpan Pengaturan'}
         </Button>
       </div>
 
-      
+      {/* Receipt Preview */}
       <div className="lg:sticky lg:top-4 lg:self-start">
         <Card>
           <CardHeader className="pb-3">

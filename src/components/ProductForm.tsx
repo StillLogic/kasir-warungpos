@@ -52,12 +52,12 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
   const isEditing = !!product;
   const [markupInfo, setMarkupInfo] = useState<{ retail: number; wholesale: number; type?: 'percent' | 'fixed' } | null>(null);
   
-  
+  // Price state as strings for formatting
   const [costPriceStr, setCostPriceStr] = useState('');
   const [retailPriceStr, setRetailPriceStr] = useState('');
   const [wholesalePriceStr, setWholesalePriceStr] = useState('');
   
-  
+  // Get dynamic categories
   const categories = useMemo(() => getCategoryNames(), []);
   
   const {
@@ -85,7 +85,7 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
   const category = watch('category');
   const costPrice = watch('costPrice');
 
-  
+  // Initialize price strings when product changes or dialog opens
   useEffect(() => {
     if (open) {
       if (product) {
@@ -100,7 +100,7 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
     }
   }, [open, product]);
 
-  
+  // Sync price strings to form values
   useEffect(() => {
     setValue('costPrice', parseInt(costPriceStr) || 0);
   }, [costPriceStr, setValue]);
@@ -113,7 +113,7 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
     setValue('wholesalePrice', parseInt(wholesalePriceStr) || 0);
   }, [wholesalePriceStr, setValue]);
 
-  
+  // Auto-generate SKU when category changes (only for new products)
   useEffect(() => {
     if (!isEditing && open) {
       const newSku = generateSKU(category);
@@ -121,7 +121,7 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
     }
   }, [category, isEditing, open, setValue]);
 
-  
+  // Generate initial SKU when dialog opens for new product
   useEffect(() => {
     if (open && !isEditing) {
       const initialSku = generateSKU('Lainnya');
@@ -129,10 +129,10 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
     }
   }, [open, isEditing, setValue]);
 
-  
+  // Auto-calculate selling prices when cost price or category changes
   useEffect(() => {
     if (costPrice > 0 && category) {
-      
+      // Find category ID from category name
       const allCategories = getCategories();
       const catData = allCategories.find((c) => c.name === category);
       const categoryId = catData?.id || null;
@@ -242,7 +242,7 @@ export function ProductForm({ open, onClose, onSubmit, product }: ProductFormPro
               </div>
             </div>
 
-            
+            {/* Cost Price with Auto-Calculate Info */}
             <div className="space-y-2">
               <Label htmlFor="costPrice" className="flex items-center gap-2">
                 <Calculator className="h-4 w-4" />

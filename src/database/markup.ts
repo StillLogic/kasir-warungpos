@@ -3,12 +3,12 @@ import { roundToThousand } from '@/lib/format';
 
 const STORAGE_KEY = 'warungpos_markup_rules';
 
-
+// Get all markup rules
 export function getMarkupRules(): MarkupRule[] {
   const data = localStorage.getItem(STORAGE_KEY);
   if (!data) return [];
   
-  
+  // Migrate old rules without markupType
   const rules = JSON.parse(data) as MarkupRule[];
   return rules.map(rule => ({
     ...rule,
@@ -18,14 +18,14 @@ export function getMarkupRules(): MarkupRule[] {
   }));
 }
 
-
+// Save all markup rules
 export function saveMarkupRules(rules: MarkupRule[]): void {
-  
+  // Sort by minPrice ascending
   const sorted = [...rules].sort((a, b) => a.minPrice - b.minPrice);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sorted));
 }
 
-
+// Add a new markup rule
 export function addMarkupRule(data: Omit<MarkupRule, 'id' | 'createdAt' | 'updatedAt'>): MarkupRule {
   const rules = getMarkupRules();
   const now = new Date().toISOString();
@@ -42,7 +42,7 @@ export function addMarkupRule(data: Omit<MarkupRule, 'id' | 'createdAt' | 'updat
   return newRule;
 }
 
-
+// Update an existing markup rule
 export function updateMarkupRule(id: string, data: Partial<MarkupRule>): MarkupRule | null {
   const rules = getMarkupRules();
   const index = rules.findIndex(r => r.id === id);
@@ -59,7 +59,7 @@ export function updateMarkupRule(id: string, data: Partial<MarkupRule>): MarkupR
   return rules[index];
 }
 
-
+// Delete a markup rule
 export function deleteMarkupRule(id: string): boolean {
   const rules = getMarkupRules();
   const filtered = rules.filter(r => r.id !== id);
@@ -70,8 +70,8 @@ export function deleteMarkupRule(id: string): boolean {
   return true;
 }
 
-
-
+// Get applicable markup for a given cost price and optional category
+// Priority: category-specific rules > general rules (categoryId = null)
 export function getMarkupForPrice(costPrice: number, categoryId?: string | null): { 
   type: 'percent' | 'fixed';
   retailPercent: number; 
@@ -81,7 +81,7 @@ export function getMarkupForPrice(costPrice: number, categoryId?: string | null)
 } | null {
   const rules = getMarkupRules();
   
-  
+  // First, try to find category-specific rule
   if (categoryId) {
     for (const rule of rules) {
       if (rule.categoryId !== categoryId) continue;
@@ -101,7 +101,7 @@ export function getMarkupForPrice(costPrice: number, categoryId?: string | null)
     }
   }
   
-  
+  // Fallback to general rules (categoryId = null)
   for (const rule of rules) {
     if (rule.categoryId !== null) continue;
     
@@ -122,9 +122,9 @@ export function getMarkupForPrice(costPrice: number, categoryId?: string | null)
   return null;
 }
 
-
-
-
+// Calculate selling prices from cost price using markup rules
+// Priority: category-specific rules > general rules
+// Rounds to nearest thousand (e.g., 5800 → 6000, 5400 → 5000)
 export function calculateSellingPrices(costPrice: number, categoryId?: string | null): { retailPrice: number; wholesalePrice: number } | null {
   const markup = getMarkupForPrice(costPrice, categoryId);
   
@@ -134,11 +134,11 @@ export function calculateSellingPrices(costPrice: number, categoryId?: string | 
   let rawWholesale: number;
   
   if (markup.type === 'fixed') {
-    
+    // Markup dalam rupiah tetap
     rawRetail = costPrice + markup.retailFixed;
     rawWholesale = costPrice + markup.wholesaleFixed;
   } else {
-    
+    // Markup dalam persentase
     rawRetail = costPrice * (1 + markup.retailPercent / 100);
     rawWholesale = costPrice * (1 + markup.wholesalePercent / 100);
   }

@@ -28,8 +28,8 @@ export interface Transaction {
   change: number;
   createdAt: string;
   customerName?: string;
-  paymentType?: 'cash' | 'debt';  
-  customerId?: string;            
+  paymentType?: 'cash' | 'debt';  // cash = bayar langsung, debt = hutang
+  customerId?: string;            // ID pelanggan jika hutang
 }
 
 export type ProductFormData = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>;
