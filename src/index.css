@@ -138,9 +138,7 @@
 
   /* PWA Standalone Mode */
   @media all and (display-mode: standalone) {
-    body {
-      padding-top: var(--sat);
-    }
+    /* No extra padding needed - let content fill screen */
   }
 }
 
