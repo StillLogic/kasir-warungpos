@@ -101,7 +101,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="h-full flex bg-background overflow-hidden">
+    <div className="h-full min-h-0 flex bg-background">
       {/* Desktop Sidebar */}
       {!isMobile && (
         <aside className="w-64 bg-card border-r border-border shrink-0 flex flex-col">
@@ -123,7 +123,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 min-w-0">
         {/* Header */}
         <header className="bg-card border-b border-border shrink-0 h-14 flex items-center justify-between px-4">
           <div className="flex items-center gap-3">
@@ -140,7 +140,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide p-4 lg:p-6">
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-hide p-4 lg:p-6" data-scrollable>
           {children}
         </main>
       </div>
