@@ -1,36 +1,36 @@
-import { ReactNode, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Package,
-  History,
-  BarChart3,
-  Settings,
+import { ReactNode, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  Package, 
+  History, 
+  BarChart3, 
+  Settings, 
   Menu,
   X,
   ChevronLeft,
   Percent,
   Calculator,
-  CreditCard,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { ThemeToggle } from "../ThemeToggle";
-import { Button } from "../ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
+  CreditCard
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { ThemeToggle } from '../ThemeToggle';
+import { Button } from '../ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AdminLayoutProps {
   children: ReactNode;
 }
 
 const navItems = [
-  { path: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/admin/products", label: "Produk", icon: Package },
-  { path: "/admin/pricing", label: "Harga Jual", icon: Percent },
-  { path: "/admin/calculator", label: "Kalkulator", icon: Calculator },
-  { path: "/admin/debts", label: "Hutang", icon: CreditCard },
-  { path: "/admin/history", label: "Riwayat", icon: History },
-  { path: "/admin/reports", label: "Laporan", icon: BarChart3 },
-  { path: "/admin/settings", label: "Pengaturan", icon: Settings },
+  { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/admin/products', label: 'Produk', icon: Package },
+  { path: '/admin/pricing', label: 'Harga Jual', icon: Percent },
+  { path: '/admin/calculator', label: 'Kalkulator', icon: Calculator },
+  { path: '/admin/debts', label: 'Hutang', icon: CreditCard },
+  { path: '/admin/history', label: 'Riwayat', icon: History },
+  { path: '/admin/reports', label: 'Laporan', icon: BarChart3 },
+  { path: '/admin/settings', label: 'Pengaturan', icon: Settings },
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps) {
@@ -39,8 +39,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isActive = (path: string) => {
-    if (path === "/admin") {
-      return location.pathname === "/admin";
+    if (path === '/admin') {
+      return location.pathname === '/admin';
     }
     return location.pathname.startsWith(path);
   };
@@ -56,11 +56,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <span className="font-semibold">Admin Panel</span>
         </div>
         {isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(false)}
-          >
+          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
             <X className="w-5 h-5" />
           </Button>
         )}
@@ -77,10 +73,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               to={item.path}
               onClick={() => isMobile && setSidebarOpen(false)}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                 active
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               )}
             >
               <Icon className="w-5 h-5" />
@@ -105,7 +101,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="min-h-dvh bg-background flex overflow-y-auto">
+    <div className="h-dvh bg-background flex overflow-hidden">
       {/* Desktop Sidebar */}
       {!isMobile && (
         <aside className="w-64 bg-card border-r border-border shrink-0">
@@ -116,7 +112,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Mobile Sidebar Overlay */}
       {isMobile && sidebarOpen && (
         <>
-          <div
+          <div 
             className="fixed inset-0 bg-black/50 z-40"
             onClick={() => setSidebarOpen(false)}
           />
@@ -132,16 +128,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <header className="bg-card border-b border-border shrink-0 h-14 flex items-center justify-between px-4">
           <div className="flex items-center gap-3">
             {isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSidebarOpen(true)}
-              >
+              <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
                 <Menu className="w-5 h-5" />
               </Button>
             )}
             <h1 className="font-semibold text-lg truncate">
-              {navItems.find((item) => isActive(item.path))?.label || "Admin"}
+              {navItems.find(item => isActive(item.path))?.label || 'Admin'}
             </h1>
           </div>
           <ThemeToggle />
