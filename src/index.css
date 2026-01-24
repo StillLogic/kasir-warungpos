@@ -115,7 +115,7 @@
 
   body,
   #root {
-    height: 100%;
+    min-height: 100%;
     min-height: 100dvh;
     min-height: -webkit-fill-available;
     min-height: calc(var(--vh, 1vh) * 100);
