@@ -303,7 +303,7 @@ export function ReportsPage() {
   }
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div>
