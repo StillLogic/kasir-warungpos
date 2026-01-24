@@ -1,58 +1,48 @@
-import { useState, useEffect, forwardRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, X } from 'lucide-react';
 
-export const PWAUpdateNotification = forwardRef<HTMLDivElement>((_, ref) => {
+export function PWAUpdateNotification() {
   const [showUpdate, setShowUpdate] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
-    // Listen for service worker updates
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then((reg) => {
+    if (!('serviceWorker' in navigator)) return;
+
+    navigator.serviceWorker.ready.then((reg) => {
+      setRegistration(reg);
+      reg.update();
+      
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              setShowUpdate(true);
+            }
+          });
+        }
+      });
+    });
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+
+    navigator.serviceWorker.getRegistration().then((reg) => {
+      if (reg?.waiting) {
+        setShowUpdate(true);
         setRegistration(reg);
-        
-        // Check for updates on load
-        reg.update();
-        
-        // Listen for new service worker waiting
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New update available
-                setShowUpdate(true);
-              }
-            });
-          }
-        });
-      });
-
-      // Listen for controller change (when update is applied)
-      let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-          refreshing = true;
-          window.location.reload();
-        }
-      });
-    }
-
-    // Check for waiting service worker on mount
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistration().then((reg) => {
-        if (reg?.waiting) {
-          setShowUpdate(true);
-          setRegistration(reg);
-        }
-      });
-    }
+      }
+    });
   }, []);
 
   const handleUpdate = () => {
     if (registration?.waiting) {
-      // Tell the waiting service worker to take over
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
     }
   };
@@ -64,7 +54,7 @@ export const PWAUpdateNotification = forwardRef<HTMLDivElement>((_, ref) => {
   if (!showUpdate) return null;
 
   return (
-    <div ref={ref} className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 bg-primary text-primary-foreground rounded-lg shadow-lg p-4 z-50 animate-in slide-in-from-top-4">
+    <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 bg-primary text-primary-foreground rounded-lg shadow-lg p-4 z-[100] animate-in slide-in-from-top-4 safe-top">
       <button
         onClick={handleDismiss}
         className="absolute top-2 right-2 opacity-70 hover:opacity-100"
@@ -96,6 +86,4 @@ export const PWAUpdateNotification = forwardRef<HTMLDivElement>((_, ref) => {
       </div>
     </div>
   );
-});
-
-PWAUpdateNotification.displayName = 'PWAUpdateNotification';
+}
