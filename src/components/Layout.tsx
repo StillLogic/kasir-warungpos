@@ -19,7 +19,10 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div
       className="min-h-dvh bg-background flex flex-col overflow-x-hidden overflow-y-auto"
-      style={{ paddingBottom: "var(--safe-area-inset-bottom, 0px)" }}
+      style={{ 
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        minHeight: "calc(var(--vh, 1vh) * 100)"
+      }}
       data-scrollable
     >
       {/* Header */}

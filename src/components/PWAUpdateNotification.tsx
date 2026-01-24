@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, X } from 'lucide-react';
 
-export function PWAUpdateNotification() {
+export const PWAUpdateNotification = forwardRef<HTMLDivElement>((_, ref) => {
   const [showUpdate, setShowUpdate] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
@@ -64,7 +64,7 @@ export function PWAUpdateNotification() {
   if (!showUpdate) return null;
 
   return (
-    <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 bg-primary text-primary-foreground rounded-lg shadow-lg p-4 z-50 animate-in slide-in-from-top-4">
+    <div ref={ref} className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 bg-primary text-primary-foreground rounded-lg shadow-lg p-4 z-50 animate-in slide-in-from-top-4">
       <button
         onClick={handleDismiss}
         className="absolute top-2 right-2 opacity-70 hover:opacity-100"
@@ -96,4 +96,6 @@ export function PWAUpdateNotification() {
       </div>
     </div>
   );
-}
+});
+
+PWAUpdateNotification.displayName = 'PWAUpdateNotification';
