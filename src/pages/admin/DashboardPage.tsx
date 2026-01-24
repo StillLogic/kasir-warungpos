@@ -1,19 +1,19 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Product, Transaction } from '@/types/pos';
-import { DebtPayment } from '@/types/debt';
-import { waitForProducts, waitForTransactions } from '@/database';
-import { getAllPayments } from '@/database/debts';
-import { formatCurrency } from '@/lib/format';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  TrendingUp, 
-  ShoppingCart, 
-  Package, 
+import { useState, useEffect, useMemo } from "react";
+import { Product, Transaction } from "@/types/pos";
+import { DebtPayment } from "@/types/debt";
+import { waitForProducts, waitForTransactions } from "@/database";
+import { getAllPayments } from "@/database/debts";
+import { formatCurrency } from "@/lib/format";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  TrendingUp,
+  ShoppingCart,
+  Package,
   AlertTriangle,
   ArrowUpRight,
   ArrowDownRight,
-  Loader2
-} from 'lucide-react';
+  Loader2,
+} from "lucide-react";
 import {
   AreaChart,
   Area,
@@ -22,7 +22,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from 'recharts';
+} from "recharts";
 
 export function DashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -32,13 +32,13 @@ export function DashboardPage() {
 
   useEffect(() => {
     let mounted = true;
-    
+
     const loadData = async () => {
       try {
         const [productsData, transactionsData, payments] = await Promise.all([
           waitForProducts(),
           waitForTransactions(),
-          Promise.resolve(getAllPayments())
+          Promise.resolve(getAllPayments()),
         ]);
         if (mounted) {
           setProducts(productsData);
@@ -47,30 +47,32 @@ export function DashboardPage() {
           setLoading(false);
         }
       } catch (error) {
-        console.error('Failed to load dashboard data:', error);
         if (mounted) {
           setLoading(false);
         }
       }
     };
-    
+
     loadData();
-    
-    return () => { mounted = false; };
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Calculate actual revenue: cash transactions + debt payments (money actually received)
   const calculateDayRevenue = (dateStr: string) => {
-    // Cash transactions only
     const cashRevenue = transactions
-      .filter(t => new Date(t.createdAt).toDateString() === dateStr && t.paymentType !== 'debt')
+      .filter(
+        (t) =>
+          new Date(t.createdAt).toDateString() === dateStr &&
+          t.paymentType !== "debt",
+      )
       .reduce((sum, t) => sum + t.total, 0);
-    
-    // Debt payments received on this day
+
     const paymentRevenue = debtPayments
-      .filter(p => new Date(p.createdAt).toDateString() === dateStr)
+      .filter((p) => new Date(p.createdAt).toDateString() === dateStr)
       .reduce((sum, p) => sum + p.amount, 0);
-    
+
     return cashRevenue + paymentRevenue;
   };
 
@@ -78,22 +80,34 @@ export function DashboardPage() {
     const today = new Date().toDateString();
     const yesterday = new Date(Date.now() - 86400000).toDateString();
 
-    const todayTx = transactions.filter(t => new Date(t.createdAt).toDateString() === today);
-    const yesterdayTx = transactions.filter(t => new Date(t.createdAt).toDateString() === yesterday);
+    const todayTx = transactions.filter(
+      (t) => new Date(t.createdAt).toDateString() === today,
+    );
+    const yesterdayTx = transactions.filter(
+      (t) => new Date(t.createdAt).toDateString() === yesterday,
+    );
 
     const todayRevenue = calculateDayRevenue(today);
     const yesterdayRevenue = calculateDayRevenue(yesterday);
 
-    const revenueChange = yesterdayRevenue > 0 
-      ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100 
-      : todayRevenue > 0 ? 100 : 0;
+    const revenueChange =
+      yesterdayRevenue > 0
+        ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
+        : todayRevenue > 0
+          ? 100
+          : 0;
 
-    const txChange = yesterdayTx.length > 0
-      ? ((todayTx.length - yesterdayTx.length) / yesterdayTx.length) * 100
-      : todayTx.length > 0 ? 100 : 0;
+    const txChange =
+      yesterdayTx.length > 0
+        ? ((todayTx.length - yesterdayTx.length) / yesterdayTx.length) * 100
+        : todayTx.length > 0
+          ? 100
+          : 0;
 
-    const lowStockProducts = products.filter(p => p.stock <= 5 && p.stock > 0);
-    const outOfStockProducts = products.filter(p => p.stock === 0);
+    const lowStockProducts = products.filter(
+      (p) => p.stock <= 5 && p.stock > 0,
+    );
+    const outOfStockProducts = products.filter((p) => p.stock === 0);
 
     return {
       todayRevenue,
@@ -109,12 +123,19 @@ export function DashboardPage() {
   }, [products, transactions, debtPayments]);
 
   const topProducts = useMemo(() => {
-    const productSales: Record<string, { name: string; sold: number; revenue: number }> = {};
+    const productSales: Record<
+      string,
+      { name: string; sold: number; revenue: number }
+    > = {};
 
-    transactions.forEach(tx => {
-      tx.items.forEach(item => {
+    transactions.forEach((tx) => {
+      tx.items.forEach((item) => {
         if (!productSales[item.product.id]) {
-          productSales[item.product.id] = { name: item.product.name, sold: 0, revenue: 0 };
+          productSales[item.product.id] = {
+            name: item.product.name,
+            sold: 0,
+            revenue: 0,
+          };
         }
         productSales[item.product.id].sold += item.quantity;
         productSales[item.product.id].revenue += item.subtotal;
@@ -127,15 +148,21 @@ export function DashboardPage() {
   }, [transactions]);
 
   const chartData = useMemo(() => {
-    const last7Days: { date: string; revenue: number; transactions: number }[] = [];
-    
+    const last7Days: { date: string; revenue: number; transactions: number }[] =
+      [];
+
     for (let i = 6; i >= 0; i--) {
       const date = new Date(Date.now() - i * 86400000);
       const dateStr = date.toDateString();
-      const dayTx = transactions.filter(t => new Date(t.createdAt).toDateString() === dateStr);
-      
+      const dayTx = transactions.filter(
+        (t) => new Date(t.createdAt).toDateString() === dateStr,
+      );
+
       last7Days.push({
-        date: date.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' }),
+        date: date.toLocaleDateString("id-ID", {
+          weekday: "short",
+          day: "numeric",
+        }),
         revenue: calculateDayRevenue(dateStr),
         transactions: dayTx.length,
       });
@@ -167,9 +194,17 @@ export function DashboardPage() {
             <p className="text-lg sm:text-2xl font-bold text-primary">
               {formatCurrency(stats.todayRevenue)}
             </p>
-            <div className={`flex items-center text-xs mt-1 ${stats.revenueChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {stats.revenueChange >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-              <span>{Math.abs(stats.revenueChange).toFixed(0)}% dari kemarin</span>
+            <div
+              className={`flex items-center text-xs mt-1 ${stats.revenueChange >= 0 ? "text-green-600" : "text-red-600"}`}
+            >
+              {stats.revenueChange >= 0 ? (
+                <ArrowUpRight className="w-3 h-3" />
+              ) : (
+                <ArrowDownRight className="w-3 h-3" />
+              )}
+              <span>
+                {Math.abs(stats.revenueChange).toFixed(0)}% dari kemarin
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -182,9 +217,17 @@ export function DashboardPage() {
             <ShoppingCart className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-lg sm:text-2xl font-bold">{stats.todayTxCount}</p>
-            <div className={`flex items-center text-xs mt-1 ${stats.txChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {stats.txChange >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+            <p className="text-lg sm:text-2xl font-bold">
+              {stats.todayTxCount}
+            </p>
+            <div
+              className={`flex items-center text-xs mt-1 ${stats.txChange >= 0 ? "text-green-600" : "text-red-600"}`}
+            >
+              {stats.txChange >= 0 ? (
+                <ArrowUpRight className="w-3 h-3" />
+              ) : (
+                <ArrowDownRight className="w-3 h-3" />
+              )}
               <span>{Math.abs(stats.txChange).toFixed(0)}% dari kemarin</span>
             </div>
           </CardContent>
@@ -198,8 +241,12 @@ export function DashboardPage() {
             <Package className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-lg sm:text-2xl font-bold">{stats.totalProducts}</p>
-            <p className="text-xs text-muted-foreground mt-1">produk terdaftar</p>
+            <p className="text-lg sm:text-2xl font-bold">
+              {stats.totalProducts}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              produk terdaftar
+            </p>
           </CardContent>
         </Card>
 
@@ -211,7 +258,9 @@ export function DashboardPage() {
             <AlertTriangle className="w-4 h-4 text-warning" />
           </CardHeader>
           <CardContent>
-            <p className="text-lg sm:text-2xl font-bold text-warning">{stats.lowStockCount + stats.outOfStockCount}</p>
+            <p className="text-lg sm:text-2xl font-bold text-warning">
+              {stats.lowStockCount + stats.outOfStockCount}
+            </p>
             <p className="text-xs text-muted-foreground mt-1">
               {stats.outOfStockCount} habis, {stats.lowStockCount} menipis
             </p>
@@ -224,33 +273,42 @@ export function DashboardPage() {
         {/* Revenue Chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Pendapatan 7 Hari Terakhir</CardTitle>
+            <CardTitle className="text-base">
+              Pendapatan 7 Hari Terakhir
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="date" className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis 
-                    className="text-xs" 
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-muted"
+                  />
+                  <XAxis
+                    dataKey="date"
+                    className="text-xs"
+                    tick={{ fill: "hsl(var(--muted-foreground))" }}
+                  />
+                  <YAxis
+                    className="text-xs"
+                    tick={{ fill: "hsl(var(--muted-foreground))" }}
                     tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                   />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value: number) => formatCurrency(value)}
-                    labelStyle={{ color: 'hsl(var(--foreground))' }}
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                    labelStyle={{ color: "hsl(var(--foreground))" }}
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
                     }}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="hsl(var(--primary))" 
-                    fill="hsl(var(--primary) / 0.2)" 
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="hsl(var(--primary))"
+                    fill="hsl(var(--primary) / 0.2)"
                     name="Pendapatan"
                   />
                 </AreaChart>
@@ -277,10 +335,16 @@ export function DashboardPage() {
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{product.name}</p>
-                      <p className="text-xs text-muted-foreground">{product.sold} terjual</p>
+                      <p className="font-medium text-sm truncate">
+                        {product.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {product.sold} terjual
+                      </p>
                     </div>
-                    <p className="text-sm font-medium">{formatCurrency(product.revenue)}</p>
+                    <p className="text-sm font-medium">
+                      {formatCurrency(product.revenue)}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -290,7 +354,8 @@ export function DashboardPage() {
       </div>
 
       {/* Low Stock Alert */}
-      {(stats.lowStockProducts.length > 0 || stats.outOfStockProducts.length > 0) && (
+      {(stats.lowStockProducts.length > 0 ||
+        stats.outOfStockProducts.length > 0) && (
         <Card className="border-warning/50">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
@@ -300,21 +365,33 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {stats.outOfStockProducts.map(product => (
-                <div key={product.id} className="flex items-center gap-3 p-3 bg-destructive/10 rounded-lg">
+              {stats.outOfStockProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="flex items-center gap-3 p-3 bg-destructive/10 rounded-lg"
+                >
                   <div className="w-2 h-2 rounded-full bg-destructive" />
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{product.name}</p>
+                    <p className="font-medium text-sm truncate">
+                      {product.name}
+                    </p>
                     <p className="text-xs text-destructive">Stok Habis</p>
                   </div>
                 </div>
               ))}
-              {stats.lowStockProducts.map(product => (
-                <div key={product.id} className="flex items-center gap-3 p-3 bg-warning/10 rounded-lg">
+              {stats.lowStockProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="flex items-center gap-3 p-3 bg-warning/10 rounded-lg"
+                >
                   <div className="w-2 h-2 rounded-full bg-warning" />
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{product.name}</p>
-                    <p className="text-xs text-warning">Sisa {product.stock} {product.unit}</p>
+                    <p className="font-medium text-sm truncate">
+                      {product.name}
+                    </p>
+                    <p className="text-xs text-warning">
+                      Sisa {product.stock} {product.unit}
+                    </p>
                   </div>
                 </div>
               ))}

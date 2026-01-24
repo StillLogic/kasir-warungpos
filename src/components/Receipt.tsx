@@ -1,16 +1,16 @@
-import { useRef } from 'react';
-import html2canvas from 'html2canvas';
-import { Transaction } from '@/types/pos';
-import { formatCurrency, formatDate } from '@/lib/format';
-import { Button } from '@/components/ui/button';
+import { useRef } from "react";
+import html2canvas from "html2canvas";
+import { Transaction } from "@/types/pos";
+import { formatCurrency, formatDate } from "@/lib/format";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Printer, Download } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+} from "@/components/ui/dialog";
+import { Printer, Download } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface ReceiptProps {
   transaction: Transaction | null;
@@ -26,62 +26,67 @@ interface StoreSettings {
   showLogo: boolean;
   taxEnabled: boolean;
   taxRate: number;
-  paperWidth: '58' | '80';
+  paperWidth: "58" | "80";
 }
 
 const defaultSettings: StoreSettings = {
-  storeName: 'WarungPOS',
-  storeAddress: '',
-  storePhone: '',
-  receiptFooter: 'Terima kasih atas kunjungan Anda!',
+  storeName: "WarungPOS",
+  storeAddress: "",
+  storePhone: "",
+  receiptFooter: "Terima kasih atas kunjungan Anda!",
   showLogo: true,
   taxEnabled: false,
   taxRate: 11,
-  paperWidth: '58',
+  paperWidth: "58",
 };
 
 function getSettings(): StoreSettings {
   try {
-    const saved = localStorage.getItem('store-settings');
+    const saved = localStorage.getItem("store-settings");
     if (saved) {
       return { ...defaultSettings, ...JSON.parse(saved) };
     }
-  } catch {
-    // ignore
-  }
+  } catch {}
   return defaultSettings;
 }
 
 export function Receipt({ transaction, open, onClose }: ReceiptProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
-  
+
   if (!transaction) return null;
 
   const settings = getSettings();
-  const paperWidth = settings.paperWidth === '80' ? '80mm' : '58mm';
-  const fontSize = settings.paperWidth === '80' ? { base: 12, small: 10, title: 16 } : { base: 10, small: 8, title: 14 };
+  const paperWidth = settings.paperWidth === "80" ? "80mm" : "58mm";
+  const fontSize =
+    settings.paperWidth === "80"
+      ? { base: 12, small: 10, title: 16 }
+      : { base: 10, small: 8, title: 14 };
 
   const handlePrint = () => {
     const printContent = `
       <div style="font-family: 'Courier New', monospace; width: ${paperWidth}; margin: 0; padding: 3mm;">
         <div style="text-align: center; border-bottom: 1px dashed #333; padding-bottom: 8px; margin-bottom: 8px;">
           <h2 style="margin: 0; font-size: ${fontSize.title}px; font-weight: bold;">${settings.storeName}</h2>
-          ${settings.storeAddress ? `<p style="margin: 3px 0 0; font-size: ${fontSize.small}px;">${settings.storeAddress}</p>` : ''}
-          ${settings.storePhone ? `<p style="margin: 2px 0 0; font-size: ${fontSize.small}px;">Telp: ${settings.storePhone}</p>` : ''}
+          ${settings.storeAddress ? `<p style="margin: 3px 0 0; font-size: ${fontSize.small}px;">${settings.storeAddress}</p>` : ""}
+          ${settings.storePhone ? `<p style="margin: 2px 0 0; font-size: ${fontSize.small}px;">Telp: ${settings.storePhone}</p>` : ""}
           <p style="margin: 5px 0 0; font-size: ${fontSize.small}px;">${formatDate(transaction.createdAt)}</p>
           <p style="margin: 2px 0 0; font-size: ${fontSize.small}px;">No: ${transaction.id.slice(0, 8).toUpperCase()}</p>
         </div>
         
         <div style="margin-bottom: 8px;">
-          ${transaction.items.map(item => `
+          ${transaction.items
+            .map(
+              (item) => `
             <div style="margin-bottom: 5px;">
               <p style="margin: 0; font-size: ${fontSize.base}px; font-weight: bold;">${item.product.name}</p>
               <div style="display: flex; justify-content: space-between; font-size: ${fontSize.small}px;">
-                <span>${item.quantity} x ${formatCurrency(item.priceType === 'wholesale' ? item.product.wholesalePrice : item.product.retailPrice)}</span>
+                <span>${item.quantity} x ${formatCurrency(item.priceType === "wholesale" ? item.product.wholesalePrice : item.product.retailPrice)}</span>
                 <span style="font-weight: bold;">${formatCurrency(item.subtotal)}</span>
               </div>
             </div>
-          `).join('')}
+          `,
+            )
+            .join("")}
         </div>
         
         <div style="border-top: 1px dashed #333; padding-top: 8px; margin-bottom: 8px;">
@@ -105,7 +110,7 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
       </div>
     `;
 
-    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    const printWindow = window.open("", "_blank", "width=400,height=600");
     if (printWindow) {
       printWindow.document.write(`
         <!DOCTYPE html>
@@ -148,27 +153,27 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
 
   const handleSaveAsPng = async () => {
     if (!receiptRef.current) return;
-    
+
     try {
       const canvas = await html2canvas(receiptRef.current, {
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
         scale: 2,
       });
-      
-      const link = document.createElement('a');
+
+      const link = document.createElement("a");
       link.download = `struk-${transaction.id.slice(0, 8).toUpperCase()}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = canvas.toDataURL("image/png");
       link.click();
-      
+
       toast({
-        title: 'Struk Disimpan',
-        description: 'Struk berhasil disimpan sebagai gambar PNG',
+        title: "Struk Disimpan",
+        description: "Struk berhasil disimpan sebagai gambar PNG",
       });
     } catch (error) {
       toast({
-        title: 'Gagal Menyimpan',
-        description: 'Terjadi kesalahan saat menyimpan struk',
-        variant: 'destructive',
+        title: "Gagal Menyimpan",
+        description: "Terjadi kesalahan saat menyimpan struk",
+        variant: "destructive",
       });
     }
   };
@@ -183,12 +188,18 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
         <div ref={receiptRef} className="bg-white p-4 space-y-4">
           {/* Store Header */}
           <div className="text-center border-b border-dashed border-gray-300 pb-4">
-            <h2 className="text-xl font-bold text-black">{settings.storeName}</h2>
+            <h2 className="text-xl font-bold text-black">
+              {settings.storeName}
+            </h2>
             {settings.storeAddress && (
-              <p className="text-xs text-gray-600 mt-1">{settings.storeAddress}</p>
+              <p className="text-xs text-gray-600 mt-1">
+                {settings.storeAddress}
+              </p>
             )}
             {settings.storePhone && (
-              <p className="text-xs text-gray-600">Telp: {settings.storePhone}</p>
+              <p className="text-xs text-gray-600">
+                Telp: {settings.storePhone}
+              </p>
             )}
             <p className="text-xs text-gray-600 mt-2">
               {formatDate(transaction.createdAt)}
@@ -201,14 +212,18 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
           {/* Items */}
           <div className="space-y-2">
             {transaction.items.map((item, index) => (
-              <div key={index} className="flex justify-between text-sm text-black">
+              <div
+                key={index}
+                className="flex justify-between text-sm text-black"
+              >
                 <div className="flex-1">
                   <p className="font-medium">{item.product.name}</p>
                   <p className="text-xs text-gray-600">
-                    {item.quantity} x {formatCurrency(
-                      item.priceType === 'wholesale' 
-                        ? item.product.wholesalePrice 
-                        : item.product.retailPrice
+                    {item.quantity} x{" "}
+                    {formatCurrency(
+                      item.priceType === "wholesale"
+                        ? item.product.wholesalePrice
+                        : item.product.retailPrice,
                     )}
                   </p>
                 </div>
@@ -246,7 +261,11 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
             <Printer className="w-4 h-4 mr-2" />
             Cetak
           </Button>
-          <Button variant="outline" className="flex-1" onClick={handleSaveAsPng}>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={handleSaveAsPng}
+          >
             <Download className="w-4 h-4 mr-2" />
             Simpan PNG
           </Button>

@@ -1,64 +1,67 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Copy, Delete, RotateCcw, Info } from 'lucide-react';
-import { formatCurrency, roundToThousand } from '@/lib/format';
-import { useToast } from '@/hooks/use-toast';
-import { getMarkupForPrice, getMarkupRules } from '@/database/markup';
-import { getCategories } from '@/database/categories';
-import { cn } from '@/lib/utils';
+import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Copy, Delete, RotateCcw, Info } from "lucide-react";
+import { formatCurrency, roundToThousand } from "@/lib/format";
+import { useToast } from "@/hooks/use-toast";
+import { getMarkupForPrice, getMarkupRules } from "@/database/markup";
+import { getCategories } from "@/database/categories";
+import { cn } from "@/lib/utils";
 
 export function MobileCalculator() {
   const { toast } = useToast();
-  const [display, setDisplay] = useState<string>('0');
-  const [selectedCategory, setSelectedCategory] = useState<string>('__all__');
+  const [display, setDisplay] = useState<string>("0");
+  const [selectedCategory, setSelectedCategory] = useState<string>("__all__");
 
   const categories = useMemo(() => getCategories(), []);
   const markupRules = useMemo(() => getMarkupRules(), []);
 
   const cost = parseFloat(display) || 0;
 
-  // Get markup from rules
   const markup = useMemo(() => {
     if (cost <= 0) return null;
-    const categoryId = selectedCategory === '__all__' ? null : selectedCategory;
+    const categoryId = selectedCategory === "__all__" ? null : selectedCategory;
     return getMarkupForPrice(cost, categoryId);
   }, [cost, selectedCategory]);
 
-  const isFixedMarkup = markup?.type === 'fixed';
+  const isFixedMarkup = markup?.type === "fixed";
 
-  // Calculate prices based on markup type
   let rawRetailPrice: number;
   let rawWholesalePrice: number;
-  
+
   if (isFixedMarkup) {
     rawRetailPrice = cost + (markup?.retailFixed || 0);
     rawWholesalePrice = cost + (markup?.wholesaleFixed || 0);
   } else {
-    rawRetailPrice = cost + (cost * (markup?.retailPercent || 0) / 100);
-    rawWholesalePrice = cost + (cost * (markup?.wholesalePercent || 0) / 100);
+    rawRetailPrice = cost + (cost * (markup?.retailPercent || 0)) / 100;
+    rawWholesalePrice = cost + (cost * (markup?.wholesalePercent || 0)) / 100;
   }
-  
+
   const retailPrice = roundToThousand(rawRetailPrice);
   const wholesalePrice = roundToThousand(rawWholesalePrice);
 
-  // Find applied rule
   const appliedRule = useMemo(() => {
     if (!markup || cost <= 0) return null;
-    const categoryId = selectedCategory === '__all__' ? null : selectedCategory;
-    
+    const categoryId = selectedCategory === "__all__" ? null : selectedCategory;
+
     for (const rule of markupRules) {
       if (categoryId && rule.categoryId === categoryId) {
         const minMatch = cost >= rule.minPrice;
         const maxMatch = rule.maxPrice === null || cost <= rule.maxPrice;
         if (minMatch && maxMatch) {
-          const category = categories.find(c => c.id === rule.categoryId);
+          const category = categories.find((c) => c.id === rule.categoryId);
           return { ...rule, categoryName: category?.name };
         }
       }
     }
-    
+
     for (const rule of markupRules) {
       if (rule.categoryId !== null) continue;
       const minMatch = cost >= rule.minPrice;
@@ -67,67 +70,83 @@ export function MobileCalculator() {
         return { ...rule, categoryName: null };
       }
     }
-    
+
     return null;
   }, [cost, selectedCategory, markupRules, categories, markup]);
 
   const handleNumber = (num: string) => {
-    setDisplay(prev => {
-      if (prev === '0') return num;
+    setDisplay((prev) => {
+      if (prev === "0") return num;
       if (prev.length >= 15) return prev;
       return prev + num;
     });
   };
 
-  const handleClear = () => setDisplay('0');
+  const handleClear = () => setDisplay("0");
 
   const handleBackspace = () => {
-    setDisplay(prev => {
-      if (prev.length === 1) return '0';
+    setDisplay((prev) => {
+      if (prev.length === 1) return "0";
       return prev.slice(0, -1);
     });
   };
 
   const handleTripleZero = () => {
-    setDisplay(prev => {
-      if (prev === '0') return prev;
+    setDisplay((prev) => {
+      if (prev === "0") return prev;
       if (prev.length >= 12) return prev;
-      return prev + '000';
+      return prev + "000";
     });
   };
 
   const copyToClipboard = (value: number, label: string) => {
     navigator.clipboard.writeText(Math.round(value).toString());
     toast({
-      title: 'Disalin!',
+      title: "Disalin!",
       description: `${label}: ${formatCurrency(value)}`,
     });
   };
 
   const handleDoubleZero = () => {
-    setDisplay(prev => {
-      if (prev === '0') return prev;
+    setDisplay((prev) => {
+      if (prev === "0") return prev;
       if (prev.length >= 13) return prev;
-      return prev + '00';
+      return prev + "00";
     });
   };
 
   const numpadButtons = [
-    { label: '7', action: () => handleNumber('7') },
-    { label: '8', action: () => handleNumber('8') },
-    { label: '9', action: () => handleNumber('9') },
-    { label: <Delete className="w-5 h-5" />, action: handleBackspace, variant: 'secondary' as const },
-    { label: '4', action: () => handleNumber('4') },
-    { label: '5', action: () => handleNumber('5') },
-    { label: '6', action: () => handleNumber('6') },
-    { label: 'C', action: handleClear, variant: 'secondary' as const },
-    { label: '1', action: () => handleNumber('1') },
-    { label: '2', action: () => handleNumber('2') },
-    { label: '3', action: () => handleNumber('3') },
-    { label: <RotateCcw className="w-5 h-5" />, action: () => { handleClear(); setSelectedCategory('__all__'); }, variant: 'destructive' as const },
-    { label: '0', action: () => handleNumber('0') },
-    { label: '00', action: handleDoubleZero, variant: 'outline' as const },
-    { label: '000', action: handleTripleZero, variant: 'outline' as const, span: 2 },
+    { label: "7", action: () => handleNumber("7") },
+    { label: "8", action: () => handleNumber("8") },
+    { label: "9", action: () => handleNumber("9") },
+    {
+      label: <Delete className="w-5 h-5" />,
+      action: handleBackspace,
+      variant: "secondary" as const,
+    },
+    { label: "4", action: () => handleNumber("4") },
+    { label: "5", action: () => handleNumber("5") },
+    { label: "6", action: () => handleNumber("6") },
+    { label: "C", action: handleClear, variant: "secondary" as const },
+    { label: "1", action: () => handleNumber("1") },
+    { label: "2", action: () => handleNumber("2") },
+    { label: "3", action: () => handleNumber("3") },
+    {
+      label: <RotateCcw className="w-5 h-5" />,
+      action: () => {
+        handleClear();
+        setSelectedCategory("__all__");
+      },
+      variant: "destructive" as const,
+    },
+    { label: "0", action: () => handleNumber("0") },
+    { label: "00", action: handleDoubleZero, variant: "outline" as const },
+    {
+      label: "000",
+      action: handleTripleZero,
+      variant: "outline" as const,
+      span: 2,
+    },
   ];
 
   return (
@@ -163,7 +182,8 @@ export function MobileCalculator() {
             <Info className="w-3 h-3 shrink-0" />
             {appliedRule ? (
               <span className="truncate">
-                Markup: {appliedRule.retailMarkupPercent}% / {appliedRule.wholesaleMarkupPercent}%
+                Markup: {appliedRule.retailMarkupPercent}% /{" "}
+                {appliedRule.wholesaleMarkupPercent}%
                 {appliedRule.categoryName && ` (${appliedRule.categoryName})`}
               </span>
             ) : (
@@ -179,51 +199,53 @@ export function MobileCalculator() {
       <div className="grid grid-cols-2 gap-2 p-3 bg-background">
         {/* Retail */}
         <button
-          onClick={() => markup && copyToClipboard(retailPrice, 'Eceran')}
+          onClick={() => markup && copyToClipboard(retailPrice, "Eceran")}
           disabled={!markup || cost <= 0}
           className={cn(
             "p-3 rounded-lg text-left transition-colors",
             "bg-primary/10 hover:bg-primary/20 active:bg-primary/30",
-            (!markup || cost <= 0) && "opacity-50"
+            (!markup || cost <= 0) && "opacity-50",
           )}
         >
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-medium text-muted-foreground">Eceran</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              Eceran
+            </span>
             <Copy className="w-3 h-3 text-muted-foreground" />
           </div>
           <div className="text-lg font-bold text-primary truncate">
             {formatCurrency(retailPrice)}
           </div>
           <div className="text-xs text-muted-foreground">
-            {isFixedMarkup 
+            {isFixedMarkup
               ? `+${formatCurrency(markup?.retailFixed || 0)}`
-              : `+${markup?.retailPercent || 0}%`
-            }
+              : `+${markup?.retailPercent || 0}%`}
           </div>
         </button>
 
         {/* Wholesale */}
         <button
-          onClick={() => markup && copyToClipboard(wholesalePrice, 'Grosir')}
+          onClick={() => markup && copyToClipboard(wholesalePrice, "Grosir")}
           disabled={!markup || cost <= 0}
           className={cn(
             "p-3 rounded-lg text-left transition-colors",
             "bg-secondary/50 hover:bg-secondary/70 active:bg-secondary",
-            (!markup || cost <= 0) && "opacity-50"
+            (!markup || cost <= 0) && "opacity-50",
           )}
         >
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-medium text-muted-foreground">Grosir</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              Grosir
+            </span>
             <Copy className="w-3 h-3 text-muted-foreground" />
           </div>
           <div className="text-lg font-bold truncate">
             {formatCurrency(wholesalePrice)}
           </div>
           <div className="text-xs text-muted-foreground">
-            {isFixedMarkup 
+            {isFixedMarkup
               ? `+${formatCurrency(markup?.wholesaleFixed || 0)}`
-              : `+${markup?.wholesalePercent || 0}%`
-            }
+              : `+${markup?.wholesalePercent || 0}%`}
           </div>
         </button>
       </div>
@@ -234,11 +256,11 @@ export function MobileCalculator() {
           {numpadButtons.map((btn, idx) => (
             <Button
               key={idx}
-              variant={btn.variant || 'outline'}
+              variant={btn.variant || "outline"}
               onClick={btn.action}
               className={cn(
                 "text-xl font-semibold h-full min-h-[3.5rem]",
-                btn.span === 2 && "col-span-2"
+                btn.span === 2 && "col-span-2",
               )}
             >
               {btn.label}

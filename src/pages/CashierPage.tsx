@@ -1,43 +1,45 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Product, CartItem, Transaction } from '@/types/pos';
-import { Customer } from '@/types/debt';
-import { saveTransaction, waitForProducts } from '@/database';
-import { createDebt } from '@/database/debts';
-import { ProductCard } from '@/components/ProductCard';
-import { Cart } from '@/components/Cart';
-import { CheckoutDialog } from '@/components/CheckoutDialog';
-import { DebtDialog } from '@/components/DebtDialog';
-import { Receipt } from '@/components/Receipt';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search, Filter, ShoppingCart, Loader2 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { useState, useMemo, useEffect } from "react";
+import { Product, CartItem, Transaction } from "@/types/pos";
+import { Customer } from "@/types/debt";
+import { saveTransaction, waitForProducts } from "@/database";
+import { createDebt } from "@/database/debts";
+import { ProductCard } from "@/components/ProductCard";
+import { Cart } from "@/components/Cart";
+import { CheckoutDialog } from "@/components/CheckoutDialog";
+import { DebtDialog } from "@/components/DebtDialog";
+import { Receipt } from "@/components/Receipt";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, Filter, ShoppingCart, Loader2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet';
-import { Badge } from '@/components/ui/badge';
-import { useIsMobile } from '@/hooks/use-mobile';
+} from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function CashierPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState<string>('all');
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState<string>("all");
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [debtDialogOpen, setDebtDialogOpen] = useState(false);
-  const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
+  const [lastTransaction, setLastTransaction] = useState<Transaction | null>(
+    null,
+  );
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -57,15 +59,16 @@ export function CashierPage() {
   }, [cart]);
 
   const categories = useMemo(() => {
-    const cats = new Set(products.map(p => p.category));
-    return ['all', ...Array.from(cats)];
+    const cats = new Set(products.map((p) => p.category));
+    return ["all", ...Array.from(cats)];
   }, [products]);
 
   const filteredProducts = useMemo(() => {
-    return products.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-                           p.sku.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory = category === 'all' || p.category === category;
+    return products.filter((p) => {
+      const matchesSearch =
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.sku.toLowerCase().includes(search.toLowerCase());
+      const matchesCategory = category === "all" || p.category === category;
       return matchesSearch && matchesCategory;
     });
   }, [products, search, category]);
@@ -77,41 +80,47 @@ export function CashierPage() {
   const addToCart = (product: Product) => {
     if (product.stock === 0) {
       toast({
-        title: 'Stok Habis',
+        title: "Stok Habis",
         description: `${product.name} tidak tersedia`,
-        variant: 'destructive',
+        variant: "destructive",
       });
       return;
     }
 
-    setCart(prev => {
-      const existing = prev.find(item => item.product.id === product.id);
+    setCart((prev) => {
+      const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
-        return prev.map(item => {
+        return prev.map((item) => {
           if (item.product.id === product.id) {
             const newQty = item.quantity + 1;
-            const isWholesale = newQty >= product.wholesaleMinQty && product.wholesalePrice > 0;
-            const price = isWholesale ? product.wholesalePrice : product.retailPrice;
+            const isWholesale =
+              newQty >= product.wholesaleMinQty && product.wholesalePrice > 0;
+            const price = isWholesale
+              ? product.wholesalePrice
+              : product.retailPrice;
             return {
               ...item,
               quantity: newQty,
-              priceType: isWholesale ? 'wholesale' : 'retail',
+              priceType: isWholesale ? "wholesale" : "retail",
               subtotal: newQty * price,
             };
           }
           return item;
         });
       }
-      return [...prev, {
-        product,
-        quantity: 1,
-        priceType: 'retail' as const,
-        subtotal: product.retailPrice,
-      }];
+      return [
+        ...prev,
+        {
+          product,
+          quantity: 1,
+          priceType: "retail" as const,
+          subtotal: product.retailPrice,
+        },
+      ];
     });
 
     toast({
-      title: 'Ditambahkan',
+      title: "Ditambahkan",
       description: `${product.name} ditambahkan ke keranjang`,
     });
   };
@@ -122,23 +131,29 @@ export function CashierPage() {
       return;
     }
 
-    setCart(prev => prev.map(item => {
-      if (item.product.id === productId) {
-        const isWholesale = quantity >= item.product.wholesaleMinQty && item.product.wholesalePrice > 0;
-        const price = isWholesale ? item.product.wholesalePrice : item.product.retailPrice;
-        return {
-          ...item,
-          quantity,
-          priceType: isWholesale ? 'wholesale' : 'retail',
-          subtotal: quantity * price,
-        };
-      }
-      return item;
-    }));
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.product.id === productId) {
+          const isWholesale =
+            quantity >= item.product.wholesaleMinQty &&
+            item.product.wholesalePrice > 0;
+          const price = isWholesale
+            ? item.product.wholesalePrice
+            : item.product.retailPrice;
+          return {
+            ...item,
+            quantity,
+            priceType: isWholesale ? "wholesale" : "retail",
+            subtotal: quantity * price,
+          };
+        }
+        return item;
+      }),
+    );
   };
 
   const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(item => item.product.id !== productId));
+    setCart((prev) => prev.filter((item) => item.product.id !== productId));
   };
 
   const handleCheckout = () => {
@@ -152,7 +167,7 @@ export function CashierPage() {
       total: cartTotal,
       payment,
       change: payment - cartTotal,
-      paymentType: 'cash',
+      paymentType: "cash",
     });
 
     setLastTransaction(transaction);
@@ -161,11 +176,10 @@ export function CashierPage() {
     setReceiptOpen(true);
 
     toast({
-      title: 'Transaksi Berhasil',
-      description: `Pembayaran sebesar ${payment.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })} diterima`,
+      title: "Transaksi Berhasil",
+      description: `Pembayaran sebesar ${payment.toLocaleString("id-ID", { style: "currency", currency: "IDR" })} diterima`,
     });
 
-    // Refresh products to update stock
     waitForProducts().then(setProducts);
   };
 
@@ -175,16 +189,14 @@ export function CashierPage() {
   };
 
   const handleConfirmDebt = async (customer: Customer) => {
-    // Create debt record
     await createDebt(customer.id, customer.name, cart, cartTotal);
-    
-    // Also save as transaction for history/reports
+
     saveTransaction({
       items: cart,
       total: cartTotal,
       payment: 0,
       change: 0,
-      paymentType: 'debt',
+      paymentType: "debt",
       customerId: customer.id,
       customerName: customer.name,
     });
@@ -193,11 +205,10 @@ export function CashierPage() {
     setDebtDialogOpen(false);
 
     toast({
-      title: 'Hutang Dicatat',
-      description: `Hutang atas nama ${customer.name} sebesar ${cartTotal.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })} telah dicatat`,
+      title: "Hutang Dicatat",
+      description: `Hutang atas nama ${customer.name} sebesar ${cartTotal.toLocaleString("id-ID", { style: "currency", currency: "IDR" })} telah dicatat`,
     });
 
-    // Refresh products to update stock
     waitForProducts().then(setProducts);
   };
 
@@ -219,9 +230,9 @@ export function CashierPage() {
   );
 
   return (
-    <div className="h-full flex gap-4 lg:gap-6">
+    <div className="flex gap-4 lg:gap-6 h-[calc(100vh-7rem)]">
       {/* Product Grid */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Search and Filter */}
         <div className="flex gap-2 sm:gap-3 mb-4">
           <div className="flex-1 relative">
@@ -241,21 +252,25 @@ export function CashierPage() {
             <SelectContent>
               {categories.map((cat) => (
                 <SelectItem key={cat} value={cat}>
-                  {cat === 'all' ? 'Semua' : cat}
+                  {cat === "all" ? "Semua" : cat}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          
+
           {/* Mobile Cart Button */}
           {isMobile && (
             <Sheet open={cartOpen} onOpenChange={setCartOpen}>
               <SheetTrigger asChild>
-                <Button variant="default" size="icon" className="shrink-0 relative">
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="shrink-0 relative"
+                >
                   <ShoppingCart className="w-5 h-5" />
                   {cartItemsCount > 0 && (
-                    <Badge 
-                      variant="destructive" 
+                    <Badge
+                      variant="destructive"
                       className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
                     >
                       {cartItemsCount}
@@ -263,7 +278,10 @@ export function CashierPage() {
                   )}
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-full sm:w-96 p-0 flex flex-col">
+              <SheetContent
+                side="right"
+                className="w-full sm:w-96 p-0 flex flex-col"
+              >
                 <SheetHeader className="p-4 border-b border-border">
                   <SheetTitle>Keranjang Belanja</SheetTitle>
                 </SheetHeader>
@@ -276,7 +294,10 @@ export function CashierPage() {
         </div>
 
         {/* Products */}
-        <div className="flex-1 overflow-auto scrollbar-thin" data-scrollable>
+        <div
+          className="flex-1 overflow-auto scrollbar-thin min-h-0"
+          data-scrollable
+        >
           {loading ? (
             <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
               <Loader2 className="w-8 h-8 animate-spin mb-4" />
@@ -288,7 +309,7 @@ export function CashierPage() {
               <p className="text-sm">Tambahkan produk di menu Produk</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pb-4">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}

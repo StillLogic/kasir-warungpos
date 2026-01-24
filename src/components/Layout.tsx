@@ -17,12 +17,7 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
 
   return (
-    <div
-      className="min-h-dvh bg-background flex flex-col overflow-x-hidden overflow-y-auto"
-      style={{ paddingBottom: "var(--safe-area-inset-bottom, 0px)" }}
-      data-scrollable
-    >
-      {/* Header */}
+    <div className="min-h-screen flex flex-col bg-background">
       <header className="bg-card border-b border-border shrink-0 z-50">
         <div className="w-full flex items-center justify-between h-14 px-4 lg:px-6">
           <div className="flex items-center gap-2">
@@ -58,8 +53,7 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 w-full px-4 lg:px-6 py-4 overflow-x-hidden overflow-y-auto" data-scrollable>
+      <main className="flex-1 w-full px-4 lg:px-6 py-4 overflow-auto">
         {children}
       </main>
     </div>

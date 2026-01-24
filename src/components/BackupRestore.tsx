@@ -1,26 +1,48 @@
-import { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
-} from '@/components/ui/alert-dialog';
-import { Database, Download, Upload, AlertTriangle, Package, Users, ShoppingCart, Tag, CreditCard } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
-import { downloadBackup, importBackup, getStorageStats } from '@/lib/backup';
+import { useState, useRef, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Database,
+  Download,
+  Upload,
+  AlertTriangle,
+  Package,
+  Users,
+  ShoppingCart,
+  Tag,
+  CreditCard,
+} from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { downloadBackup, importBackup, getStorageStats } from "@/lib/backup";
 
 export function BackupRestore() {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [confirmImport, setConfirmImport] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [stats, setStats] = useState<{ products: number; transactions: number; categories: number; customers: number; debts: number } | null>(null);
+  const [stats, setStats] = useState<{
+    products: number;
+    transactions: number;
+    categories: number;
+    customers: number;
+    debts: number;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -37,15 +59,14 @@ export function BackupRestore() {
     try {
       await downloadBackup();
       toast({
-        title: 'Backup Berhasil',
-        description: 'File backup telah diunduh. Simpan di tempat yang aman.',
+        title: "Backup Berhasil",
+        description: "File backup telah diunduh. Simpan di tempat yang aman.",
       });
     } catch (error) {
-      console.error('Export error:', error);
       toast({
-        title: 'Backup Gagal',
-        description: 'Terjadi kesalahan saat membuat backup',
-        variant: 'destructive',
+        title: "Backup Gagal",
+        description: "Terjadi kesalahan saat membuat backup",
+        variant: "destructive",
       });
     } finally {
       setIsExporting(false);
@@ -55,51 +76,49 @@ export function BackupRestore() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.name.endsWith('.json')) {
+      if (!file.name.endsWith(".json")) {
         toast({
-          title: 'Format File Salah',
-          description: 'Pilih file backup dengan format .json',
-          variant: 'destructive',
+          title: "Format File Salah",
+          description: "Pilih file backup dengan format .json",
+          variant: "destructive",
         });
         return;
       }
       setSelectedFile(file);
       setConfirmImport(true);
     }
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const handleImport = async () => {
     if (!selectedFile) return;
-    
+
     setIsImporting(true);
     setConfirmImport(false);
-    
+
     try {
       const result = await importBackup(selectedFile);
-      
+
       if (result.success) {
         toast({
-          title: 'Data Dipulihkan',
+          title: "Data Dipulihkan",
           description: `${result.itemCounts?.products || 0} produk, ${result.itemCounts?.transactions || 0} transaksi berhasil dipulihkan`,
         });
-        // Reload to refresh all cached data
         setTimeout(() => {
           window.location.reload();
         }, 1500);
       } else {
         toast({
-          title: 'Pemulihan Gagal',
+          title: "Pemulihan Gagal",
           description: result.message,
-          variant: 'destructive',
+          variant: "destructive",
         });
       }
     } catch (error) {
-      console.error('Import error:', error);
       toast({
-        title: 'Pemulihan Gagal',
-        description: 'Terjadi kesalahan saat memulihkan data',
-        variant: 'destructive',
+        title: "Pemulihan Gagal",
+        description: "Terjadi kesalahan saat memulihkan data",
+        variant: "destructive",
       });
     } finally {
       setIsImporting(false);
@@ -116,8 +135,8 @@ export function BackupRestore() {
             Backup & Restore Data
           </CardTitle>
           <CardDescription>
-            Backup data secara rutin untuk mencegah kehilangan data. 
-            Disarankan backup setiap hari atau setelah transaksi penting.
+            Backup data secara rutin untuk mencegah kehilangan data. Disarankan
+            backup setiap hari atau setelah transaksi penting.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -154,25 +173,25 @@ export function BackupRestore() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button 
-              onClick={handleExport} 
+            <Button
+              onClick={handleExport}
               disabled={isExporting}
               className="flex-1"
             >
               <Download className="w-4 h-4 mr-2" />
-              {isExporting ? 'Mengunduh...' : 'Backup Data'}
+              {isExporting ? "Mengunduh..." : "Backup Data"}
             </Button>
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               onClick={() => fileInputRef.current?.click()}
               disabled={isImporting}
               className="flex-1"
             >
               <Upload className="w-4 h-4 mr-2" />
-              {isImporting ? 'Memulihkan...' : 'Restore Data'}
+              {isImporting ? "Memulihkan..." : "Restore Data"}
             </Button>
-            
+
             <input
               ref={fileInputRef}
               type="file"
@@ -187,9 +206,13 @@ export function BackupRestore() {
             <div className="flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium text-amber-800 dark:text-amber-200">Tips Penting:</p>
+                <p className="font-medium text-amber-800 dark:text-amber-200">
+                  Tips Penting:
+                </p>
                 <ul className="text-amber-700 dark:text-amber-300 list-disc list-inside mt-1 space-y-1">
-                  <li>Backup data secara rutin ke Google Drive atau lokasi aman</li>
+                  <li>
+                    Backup data secara rutin ke Google Drive atau lokasi aman
+                  </li>
                   <li>Jangan hapus cache browser jika belum backup data</li>
                   <li>Simpan file backup di beberapa tempat berbeda</li>
                 </ul>
@@ -209,18 +232,25 @@ export function BackupRestore() {
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>Anda akan memulihkan data dari file backup:</p>
-              <p className="font-medium text-foreground">{selectedFile?.name}</p>
+              <p className="font-medium text-foreground">
+                {selectedFile?.name}
+              </p>
               <p className="text-amber-600 font-medium">
                 ⚠️ Semua data saat ini akan diganti dengan data dari backup.
               </p>
-              <p>Pastikan Anda sudah backup data saat ini sebelum melanjutkan.</p>
+              <p>
+                Pastikan Anda sudah backup data saat ini sebelum melanjutkan.
+              </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setSelectedFile(null)}>
               Batal
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleImport} className="bg-amber-600 hover:bg-amber-700">
+            <AlertDialogAction
+              onClick={handleImport}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
               Ya, Restore Data
             </AlertDialogAction>
           </AlertDialogFooter>

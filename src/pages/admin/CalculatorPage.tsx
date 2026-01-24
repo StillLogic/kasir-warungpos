@@ -1,23 +1,34 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calculator, Copy, RotateCcw, AlertCircle, Info } from 'lucide-react';
-import { formatCurrency, roundToThousand } from '@/lib/format';
-import { useToast } from '@/hooks/use-toast';
-import { getMarkupForPrice, getMarkupRules } from '@/database/markup';
-import { getCategories } from '@/database/categories';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { MobileCalculator } from '@/components/admin/MobileCalculator';
+import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calculator, Copy, RotateCcw, AlertCircle, Info } from "lucide-react";
+import { formatCurrency, roundToThousand } from "@/lib/format";
+import { useToast } from "@/hooks/use-toast";
+import { getMarkupForPrice, getMarkupRules } from "@/database/markup";
+import { getCategories } from "@/database/categories";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileCalculator } from "@/components/admin/MobileCalculator";
 
 export function CalculatorPage() {
   const isMobile = useIsMobile();
-  
-  // Show mobile calculator on mobile devices
+
   if (isMobile) {
     return <MobileCalculator />;
   }
@@ -27,59 +38,53 @@ export function CalculatorPage() {
 
 function DesktopCalculator() {
   const { toast } = useToast();
-  const [costPrice, setCostPrice] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('__all__');
+  const [costPrice, setCostPrice] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("__all__");
 
   const categories = useMemo(() => getCategories(), []);
   const markupRules = useMemo(() => getMarkupRules(), []);
 
   const cost = parseFloat(costPrice) || 0;
-  
-  // Get markup from rules based on cost price and category
+
   const markup = useMemo(() => {
     if (cost <= 0) return null;
-    const categoryId = selectedCategory === '__all__' ? null : selectedCategory;
+    const categoryId = selectedCategory === "__all__" ? null : selectedCategory;
     return getMarkupForPrice(cost, categoryId);
   }, [cost, selectedCategory]);
 
-  // Calculate prices based on markup type
-  const isFixedMarkup = markup?.type === 'fixed';
-  
+  const isFixedMarkup = markup?.type === "fixed";
+
   let rawRetailPrice: number;
   let rawWholesalePrice: number;
-  
+
   if (isFixedMarkup) {
     rawRetailPrice = cost + (markup?.retailFixed || 0);
     rawWholesalePrice = cost + (markup?.wholesaleFixed || 0);
   } else {
-    rawRetailPrice = cost + (cost * (markup?.retailPercent || 0) / 100);
-    rawWholesalePrice = cost + (cost * (markup?.wholesalePercent || 0) / 100);
+    rawRetailPrice = cost + (cost * (markup?.retailPercent || 0)) / 100;
+    rawWholesalePrice = cost + (cost * (markup?.wholesalePercent || 0)) / 100;
   }
-  
+
   const retailPrice = roundToThousand(rawRetailPrice);
   const wholesalePrice = roundToThousand(rawWholesalePrice);
   const retailProfit = retailPrice - cost;
   const wholesaleProfit = wholesalePrice - cost;
 
-  // Find which rule is being applied
   const appliedRule = useMemo(() => {
     if (!markup || cost <= 0) return null;
-    const categoryId = selectedCategory === '__all__' ? null : selectedCategory;
-    
-    // Find matching rule
+    const categoryId = selectedCategory === "__all__" ? null : selectedCategory;
+
     for (const rule of markupRules) {
-      // Check category-specific first
       if (categoryId && rule.categoryId === categoryId) {
         const minMatch = cost >= rule.minPrice;
         const maxMatch = rule.maxPrice === null || cost <= rule.maxPrice;
         if (minMatch && maxMatch) {
-          const category = categories.find(c => c.id === rule.categoryId);
+          const category = categories.find((c) => c.id === rule.categoryId);
           return { ...rule, categoryName: category?.name };
         }
       }
     }
-    
-    // Fallback to general rules
+
     for (const rule of markupRules) {
       if (rule.categoryId !== null) continue;
       const minMatch = cost >= rule.minPrice;
@@ -88,19 +93,19 @@ function DesktopCalculator() {
         return { ...rule, categoryName: null };
       }
     }
-    
+
     return null;
   }, [cost, selectedCategory, markupRules, categories, markup]);
 
   const handleReset = () => {
-    setCostPrice('');
-    setSelectedCategory('__all__');
+    setCostPrice("");
+    setSelectedCategory("__all__");
   };
 
   const copyToClipboard = (value: number, label: string) => {
     navigator.clipboard.writeText(Math.round(value).toString());
     toast({
-      title: 'Disalin!',
+      title: "Disalin!",
       description: `${label}: ${formatCurrency(value)} telah disalin ke clipboard`,
     });
   };
@@ -108,7 +113,9 @@ function DesktopCalculator() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Kalkulator Harga Jual</h2>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Kalkulator Harga Jual
+        </h2>
         <p className="text-muted-foreground">
           Hitung harga jual otomatis berdasarkan aturan markup yang sudah dibuat
         </p>
@@ -128,7 +135,7 @@ function DesktopCalculator() {
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Tidak ada aturan markup yang cocok.{' '}
+                  Tidak ada aturan markup yang cocok.{" "}
                   <Link to="/admin/pricing" className="underline font-medium">
                     Tambah aturan markup
                   </Link>
@@ -139,11 +146,13 @@ function DesktopCalculator() {
             {/* Retail Price */}
             <div className="p-4 rounded-lg bg-primary/10 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Harga Jual Eceran</span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  Harga Jual Eceran
+                </span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => copyToClipboard(retailPrice, 'Harga Eceran')}
+                  onClick={() => copyToClipboard(retailPrice, "Harga Eceran")}
                   disabled={!cost || !markup}
                 >
                   <Copy className="w-4 h-4" />
@@ -153,22 +162,25 @@ function DesktopCalculator() {
                 {formatCurrency(retailPrice)}
               </p>
               <p className="text-sm text-muted-foreground">
-                Profit: {formatCurrency(retailProfit)} 
-                {isFixedMarkup 
-                  ? `(+${formatCurrency(markup?.retailFixed || 0)})` 
-                  : `(${markup?.retailPercent || 0}%)`
-                }
+                Profit: {formatCurrency(retailProfit)}
+                {isFixedMarkup
+                  ? `(+${formatCurrency(markup?.retailFixed || 0)})`
+                  : `(${markup?.retailPercent || 0}%)`}
               </p>
             </div>
 
             {/* Wholesale Price */}
             <div className="p-4 rounded-lg bg-secondary/50 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Harga Jual Grosir</span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  Harga Jual Grosir
+                </span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => copyToClipboard(wholesalePrice, 'Harga Grosir')}
+                  onClick={() =>
+                    copyToClipboard(wholesalePrice, "Harga Grosir")
+                  }
                   disabled={!cost || !markup}
                 >
                   <Copy className="w-4 h-4" />
@@ -178,11 +190,10 @@ function DesktopCalculator() {
                 {formatCurrency(wholesalePrice)}
               </p>
               <p className="text-sm text-muted-foreground">
-                Profit: {formatCurrency(wholesaleProfit)} 
-                {isFixedMarkup 
-                  ? `(+${formatCurrency(markup?.wholesaleFixed || 0)})` 
-                  : `(${markup?.wholesalePercent || 0}%)`
-                }
+                Profit: {formatCurrency(wholesaleProfit)}
+                {isFixedMarkup
+                  ? `(+${formatCurrency(markup?.wholesaleFixed || 0)})`
+                  : `(${markup?.wholesalePercent || 0}%)`}
               </p>
             </div>
 
@@ -192,10 +203,16 @@ function DesktopCalculator() {
                 <h4 className="font-medium">Ringkasan</h4>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <span className="text-muted-foreground">Harga Modal:</span>
-                  <span className="font-medium text-right">{formatCurrency(cost)}</span>
-                  
-                  <span className="text-muted-foreground">Selisih Eceran-Grosir:</span>
-                  <span className="font-medium text-right">{formatCurrency(retailPrice - wholesalePrice)}</span>
+                  <span className="font-medium text-right">
+                    {formatCurrency(cost)}
+                  </span>
+
+                  <span className="text-muted-foreground">
+                    Selisih Eceran-Grosir:
+                  </span>
+                  <span className="font-medium text-right">
+                    {formatCurrency(retailPrice - wholesalePrice)}
+                  </span>
                 </div>
               </div>
             )}
@@ -228,7 +245,10 @@ function DesktopCalculator() {
 
             <div className="space-y-2">
               <Label htmlFor="category">Kategori (Opsional)</Label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select
+                value={selectedCategory}
+                onValueChange={setSelectedCategory}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Semua Kategori" />
                 </SelectTrigger>
@@ -256,16 +276,20 @@ function DesktopCalculator() {
                 {appliedRule ? (
                   <div className="text-sm text-muted-foreground">
                     <p>
-                      Rentang: {formatCurrency(appliedRule.minPrice)} - {appliedRule.maxPrice ? formatCurrency(appliedRule.maxPrice) : '∞'}
+                      Rentang: {formatCurrency(appliedRule.minPrice)} -{" "}
+                      {appliedRule.maxPrice
+                        ? formatCurrency(appliedRule.maxPrice)
+                        : "∞"}
                     </p>
                     <p>
-                      {appliedRule.markupType === 'fixed' 
+                      {appliedRule.markupType === "fixed"
                         ? `Eceran: +${formatCurrency(appliedRule.retailMarkupFixed || 0)} | Grosir: +${formatCurrency(appliedRule.wholesaleMarkupFixed || 0)}`
-                        : `Eceran: ${appliedRule.retailMarkupPercent}% | Grosir: ${appliedRule.wholesaleMarkupPercent}%`
-                      }
+                        : `Eceran: ${appliedRule.retailMarkupPercent}% | Grosir: ${appliedRule.wholesaleMarkupPercent}%`}
                     </p>
                     {appliedRule.categoryName && (
-                      <p className="text-primary">Kategori: {appliedRule.categoryName}</p>
+                      <p className="text-primary">
+                        Kategori: {appliedRule.categoryName}
+                      </p>
                     )}
                   </div>
                 ) : (
@@ -296,7 +320,9 @@ function DesktopCalculator() {
           {markupRules.length > 0 ? (
             <div className="space-y-2">
               {markupRules.map((rule) => {
-                const category = categories.find(c => c.id === rule.categoryId);
+                const category = categories.find(
+                  (c) => c.id === rule.categoryId,
+                );
                 return (
                   <div
                     key={rule.id}
@@ -304,7 +330,8 @@ function DesktopCalculator() {
                   >
                     <div>
                       <p className="font-medium">
-                        {formatCurrency(rule.minPrice)} - {rule.maxPrice ? formatCurrency(rule.maxPrice) : '∞'}
+                        {formatCurrency(rule.minPrice)} -{" "}
+                        {rule.maxPrice ? formatCurrency(rule.maxPrice) : "∞"}
                       </p>
                       {category && (
                         <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
@@ -318,15 +345,35 @@ function DesktopCalculator() {
                       )}
                     </div>
                     <div className="text-right text-sm">
-                      {rule.markupType === 'fixed' ? (
+                      {rule.markupType === "fixed" ? (
                         <>
-                          <p>Eceran: <span className="font-medium">+{formatCurrency(rule.retailMarkupFixed || 0)}</span></p>
-                          <p>Grosir: <span className="font-medium">+{formatCurrency(rule.wholesaleMarkupFixed || 0)}</span></p>
+                          <p>
+                            Eceran:{" "}
+                            <span className="font-medium">
+                              +{formatCurrency(rule.retailMarkupFixed || 0)}
+                            </span>
+                          </p>
+                          <p>
+                            Grosir:{" "}
+                            <span className="font-medium">
+                              +{formatCurrency(rule.wholesaleMarkupFixed || 0)}
+                            </span>
+                          </p>
                         </>
                       ) : (
                         <>
-                          <p>Eceran: <span className="font-medium">{rule.retailMarkupPercent}%</span></p>
-                          <p>Grosir: <span className="font-medium">{rule.wholesaleMarkupPercent}%</span></p>
+                          <p>
+                            Eceran:{" "}
+                            <span className="font-medium">
+                              {rule.retailMarkupPercent}%
+                            </span>
+                          </p>
+                          <p>
+                            Grosir:{" "}
+                            <span className="font-medium">
+                              {rule.wholesaleMarkupPercent}%
+                            </span>
+                          </p>
                         </>
                       )}
                     </div>
@@ -336,7 +383,9 @@ function DesktopCalculator() {
             </div>
           ) : (
             <div className="text-center py-6">
-              <p className="text-muted-foreground mb-2">Belum ada aturan markup</p>
+              <p className="text-muted-foreground mb-2">
+                Belum ada aturan markup
+              </p>
               <Button asChild variant="outline">
                 <Link to="/admin/pricing">Buat Aturan Markup</Link>
               </Button>

@@ -1,27 +1,27 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { RefreshCw, X } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, X } from "lucide-react";
 
 export function PWAUpdateNotification() {
   const [showUpdate, setShowUpdate] = useState(false);
-  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [registration, setRegistration] =
+    useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
-    // Listen for service worker updates
-    if ('serviceWorker' in navigator) {
+    if ("serviceWorker" in navigator) {
       navigator.serviceWorker.ready.then((reg) => {
         setRegistration(reg);
-        
-        // Check for updates on load
+
         reg.update();
-        
-        // Listen for new service worker waiting
-        reg.addEventListener('updatefound', () => {
+
+        reg.addEventListener("updatefound", () => {
           const newWorker = reg.installing;
           if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New update available
+            newWorker.addEventListener("statechange", () => {
+              if (
+                newWorker.state === "installed" &&
+                navigator.serviceWorker.controller
+              ) {
                 setShowUpdate(true);
               }
             });
@@ -29,9 +29,8 @@ export function PWAUpdateNotification() {
         });
       });
 
-      // Listen for controller change (when update is applied)
       let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
         if (!refreshing) {
           refreshing = true;
           window.location.reload();
@@ -39,8 +38,7 @@ export function PWAUpdateNotification() {
       });
     }
 
-    // Check for waiting service worker on mount
-    if ('serviceWorker' in navigator) {
+    if ("serviceWorker" in navigator) {
       navigator.serviceWorker.getRegistration().then((reg) => {
         if (reg?.waiting) {
           setShowUpdate(true);
@@ -52,8 +50,7 @@ export function PWAUpdateNotification() {
 
   const handleUpdate = () => {
     if (registration?.waiting) {
-      // Tell the waiting service worker to take over
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      registration.waiting.postMessage({ type: "SKIP_WAITING" });
     }
   };
 
@@ -83,10 +80,10 @@ export function PWAUpdateNotification() {
           <p className="text-xs opacity-75 mt-1">
             💡 Data Anda aman, tidak akan hilang saat update.
           </p>
-          <Button 
-            size="sm" 
-            variant="secondary" 
-            className="mt-3 w-full" 
+          <Button
+            size="sm"
+            variant="secondary"
+            className="mt-3 w-full"
             onClick={handleUpdate}
           >
             <RefreshCw className="w-4 h-4 mr-2" />

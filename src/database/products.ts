@@ -1,9 +1,8 @@
-import { Product } from '@/types/pos';
-import { ProductRecord } from './types';
-import { generateId, toUnix, fromUnix } from './utils';
-import { getDB } from './db';
+import { Product } from "@/types/pos";
+import { ProductRecord } from "./types";
+import { generateId, toUnix, fromUnix } from "./utils";
+import { getDB } from "./db";
 
-// Konversi Product ke format ringan
 function toRecord(p: Product): ProductRecord {
   return {
     i: p.id,
@@ -16,12 +15,17 @@ function toRecord(p: Product): ProductRecord {
     wq: p.wholesaleMinQty,
     st: p.stock,
     u: p.unit,
-    ca: typeof p.createdAt === 'string' ? toUnix(p.createdAt) : p.createdAt as unknown as number,
-    ua: typeof p.updatedAt === 'string' ? toUnix(p.updatedAt) : p.updatedAt as unknown as number,
+    ca:
+      typeof p.createdAt === "string"
+        ? toUnix(p.createdAt)
+        : (p.createdAt as unknown as number),
+    ua:
+      typeof p.updatedAt === "string"
+        ? toUnix(p.updatedAt)
+        : (p.updatedAt as unknown as number),
   };
 }
 
-// Konversi format ringan ke Product
 function fromRecord(r: ProductRecord): Product {
   return {
     id: r.i,
@@ -39,14 +43,15 @@ function fromRecord(r: ProductRecord): Product {
   };
 }
 
-// Public API - Async functions for IndexedDB
 export async function getProductsAsync(): Promise<Product[]> {
   const db = await getDB();
-  const records = await db.getAll('products');
+  const records = await db.getAll("products");
   return records.map(fromRecord);
 }
 
-export async function addProductAsync(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
+export async function addProductAsync(
+  product: Omit<Product, "id" | "createdAt" | "updatedAt">,
+): Promise<Product> {
   const db = await getDB();
   const now = toUnix(new Date());
   const newRecord: ProductRecord = {
@@ -63,13 +68,16 @@ export async function addProductAsync(product: Omit<Product, 'id' | 'createdAt' 
     ca: now,
     ua: now,
   };
-  await db.put('products', newRecord);
+  await db.put("products", newRecord);
   return fromRecord(newRecord);
 }
 
-export async function updateProductAsync(id: string, data: Partial<Product>): Promise<Product | null> {
+export async function updateProductAsync(
+  id: string,
+  data: Partial<Product>,
+): Promise<Product | null> {
   const db = await getDB();
-  const record = await db.get('products', id);
+  const record = await db.get("products", id);
   if (!record) return null;
 
   const updated: ProductRecord = {
@@ -86,36 +94,40 @@ export async function updateProductAsync(id: string, data: Partial<Product>): Pr
     ua: toUnix(new Date()),
   };
 
-  await db.put('products', updated);
+  await db.put("products", updated);
   return fromRecord(updated);
 }
 
 export async function deleteProductAsync(id: string): Promise<boolean> {
   const db = await getDB();
-  const record = await db.get('products', id);
+  const record = await db.get("products", id);
   if (!record) return false;
-  await db.delete('products', id);
+  await db.delete("products", id);
   return true;
 }
 
-export async function updateStockAsync(id: string, quantity: number): Promise<boolean> {
+export async function updateStockAsync(
+  id: string,
+  quantity: number,
+): Promise<boolean> {
   const db = await getDB();
-  const record = await db.get('products', id);
+  const record = await db.get("products", id);
   if (!record) return false;
 
   record.st += quantity;
   record.ua = toUnix(new Date());
-  await db.put('products', record);
+  await db.put("products", record);
   return true;
 }
 
-export async function getProductBySkuAsync(sku: string): Promise<Product | null> {
+export async function getProductBySkuAsync(
+  sku: string,
+): Promise<Product | null> {
   const db = await getDB();
-  const record = await db.getFromIndex('products', 'by-sku', sku);
+  const record = await db.getFromIndex("products", "by-sku", sku);
   return record ? fromRecord(record) : null;
 }
 
-// Synchronous wrappers for backward compatibility (using cached data)
 let cachedProducts: Product[] = [];
 let cacheInitialized = false;
 let cachePromise: Promise<void> | null = null;
@@ -123,38 +135,33 @@ let cachePromise: Promise<void> | null = null;
 async function ensureCache(): Promise<void> {
   if (cacheInitialized) return;
   if (cachePromise) return cachePromise;
-  
+
   cachePromise = (async () => {
     try {
-      // Add timeout to prevent infinite loading in certain environments
-      const timeoutPromise = new Promise<Product[]>((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout')), 5000)
+      const timeoutPromise = new Promise<Product[]>((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout")), 5000),
       );
-      
+
       cachedProducts = await Promise.race([getProductsAsync(), timeoutPromise]);
-    } catch (error) {
-      console.warn('Failed to load products from IndexedDB, using empty array:', error);
+    } catch {
       cachedProducts = [];
     }
     cacheInitialized = true;
   })();
-  
+
   return cachePromise;
 }
 
-// Wait for cache to be ready with timeout
 export async function waitForProducts(): Promise<Product[]> {
   try {
     await ensureCache();
   } catch {
-    // Ensure we always return, even on error
     cacheInitialized = true;
   }
   return cachedProducts;
 }
 
 export function getProducts(): Product[] {
-  // If not initialized, return empty and let caller handle async loading
   return cachedProducts;
 }
 
@@ -164,10 +171,9 @@ export function isProductsCacheReady(): boolean {
 
 export function saveProducts(products: Product[]): void {
   cachedProducts = products;
-  // Async save
   (async () => {
     const db = await getDB();
-    const tx = db.transaction('products', 'readwrite');
+    const tx = db.transaction("products", "readwrite");
     await tx.store.clear();
     for (const product of products) {
       await tx.store.put(toRecord(product));
@@ -176,7 +182,9 @@ export function saveProducts(products: Product[]): void {
   })();
 }
 
-export function addProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Product {
+export function addProduct(
+  product: Omit<Product, "id" | "createdAt" | "updatedAt">,
+): Product {
   const now = new Date().toISOString();
   const id = generateId();
   const newProduct: Product = {
@@ -185,65 +193,62 @@ export function addProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedA
     createdAt: now,
     updatedAt: now,
   };
-  
-  // Add to cache
+
   cachedProducts = [...cachedProducts, newProduct];
-  
-  // Async save to IndexedDB
+
   (async () => {
     const db = await getDB();
-    await db.put('products', toRecord(newProduct));
+    await db.put("products", toRecord(newProduct));
   })();
-  
+
   return newProduct;
 }
 
-export function updateProduct(id: string, data: Partial<Product>): Product | null {
-  const index = cachedProducts.findIndex(p => p.id === id);
+export function updateProduct(
+  id: string,
+  data: Partial<Product>,
+): Product | null {
+  const index = cachedProducts.findIndex((p) => p.id === id);
   if (index === -1) return null;
-  
+
   const updated = {
     ...cachedProducts[index],
     ...data,
     updatedAt: new Date().toISOString(),
   };
-  
-  cachedProducts = cachedProducts.map(p => p.id === id ? updated : p);
-  
-  // Async save
+
+  cachedProducts = cachedProducts.map((p) => (p.id === id ? updated : p));
+
   updateProductAsync(id, data);
   return updated;
 }
 
 export function deleteProduct(id: string): boolean {
-  const exists = cachedProducts.some(p => p.id === id);
+  const exists = cachedProducts.some((p) => p.id === id);
   if (!exists) return false;
-  
-  cachedProducts = cachedProducts.filter(p => p.id !== id);
-  
-  // Async delete
+
+  cachedProducts = cachedProducts.filter((p) => p.id !== id);
+
   deleteProductAsync(id);
   return true;
 }
 
 export function updateStock(id: string, quantity: number): boolean {
-  const index = cachedProducts.findIndex(p => p.id === id);
+  const index = cachedProducts.findIndex((p) => p.id === id);
   if (index === -1) return false;
-  
-  cachedProducts = cachedProducts.map(p => 
-    p.id === id 
+
+  cachedProducts = cachedProducts.map((p) =>
+    p.id === id
       ? { ...p, stock: p.stock + quantity, updatedAt: new Date().toISOString() }
-      : p
+      : p,
   );
-  
-  // Async save
+
   updateStockAsync(id, quantity);
   return true;
 }
 
 export function getProductBySku(sku: string): Product | null {
-  return cachedProducts.find(p => p.sku === sku) || null;
+  return cachedProducts.find((p) => p.sku === sku) || null;
 }
 
-// Initialize cache on module load
 ensureCache();

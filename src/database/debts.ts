@@ -1,46 +1,49 @@
-import { Debt, DebtItem, DebtPayment } from '@/types/debt';
-import { CartItem } from '@/types/pos';
-import { generateId, toUnix, fromUnix } from './utils';
-import { updateStockAsync } from './products';
+import { Debt, DebtItem, DebtPayment } from "@/types/debt";
+import { CartItem } from "@/types/pos";
+import { generateId, toUnix, fromUnix } from "./utils";
+import { updateStockAsync } from "./products";
 
-const DEBTS_KEY = 'db_debts';
-const PAYMENTS_KEY = 'db_debt_payments';
+const DEBTS_KEY = "db_debts";
+const PAYMENTS_KEY = "db_debt_payments";
 
 interface DebtItemRecord {
-  pi: string;     // productId
-  pn: string;     // productName
-  pp: number;     // price
-  q: number;      // quantity
-  sb: number;     // subtotal
+  pi: string; // productId
+  pn: string; // productName
+  pp: number; // price
+  q: number; // quantity
+  sb: number; // subtotal
 }
 
 interface DebtRecord {
-  i: string;      // id
-  ci: string;     // customerId
-  cn: string;     // customerName
+  i: string; // id
+  ci: string; // customerId
+  cn: string; // customerName
   it: DebtItemRecord[]; // items
-  t: number;      // total
-  pa: number;     // paidAmount
-  ra: number;     // remainingAmount
-  st: 0 | 1 | 2;  // status (0=unpaid, 1=partial, 2=paid)
-  ca: number;     // createdAt
-  ua: number;     // updatedAt
-  pat?: number;   // paidAt
+  t: number; // total
+  pa: number; // paidAmount
+  ra: number; // remainingAmount
+  st: 0 | 1 | 2; // status (0=unpaid, 1=partial, 2=paid)
+  ca: number; // createdAt
+  ua: number; // updatedAt
+  pat?: number; // paidAt
 }
 
 interface PaymentRecord {
-  i: string;      // id
-  di: string;     // debtId (legacy) or 'customer-{customerId}'
-  ci?: string;    // customerId (new)
-  a: number;      // amount
-  ca: number;     // createdAt
+  i: string; // id
+  di: string; // debtId (legacy) or 'customer-{customerId}'
+  ci?: string; // customerId (new)
+  a: number; // amount
+  ca: number; // createdAt
 }
 
 function itemToRecord(item: CartItem): DebtItemRecord {
   return {
     pi: item.product.id,
     pn: item.product.name,
-    pp: item.priceType === 'wholesale' ? item.product.wholesalePrice : item.product.retailPrice,
+    pp:
+      item.priceType === "wholesale"
+        ? item.product.wholesalePrice
+        : item.product.retailPrice,
     q: item.quantity,
     sb: item.subtotal,
   };
@@ -56,19 +59,25 @@ function itemFromRecord(r: DebtItemRecord): DebtItem {
   };
 }
 
-function statusToNumber(status: Debt['status']): 0 | 1 | 2 {
+function statusToNumber(status: Debt["status"]): 0 | 1 | 2 {
   switch (status) {
-    case 'unpaid': return 0;
-    case 'partial': return 1;
-    case 'paid': return 2;
+    case "unpaid":
+      return 0;
+    case "partial":
+      return 1;
+    case "paid":
+      return 2;
   }
 }
 
-function statusFromNumber(n: 0 | 1 | 2): Debt['status'] {
+function statusFromNumber(n: 0 | 1 | 2): Debt["status"] {
   switch (n) {
-    case 0: return 'unpaid';
-    case 1: return 'partial';
-    case 2: return 'paid';
+    case 0:
+      return "unpaid";
+    case 1:
+      return "partial";
+    case 2:
+      return "paid";
   }
 }
 
@@ -77,7 +86,7 @@ function toRecord(debt: Debt): DebtRecord {
     i: debt.id,
     ci: debt.customerId,
     cn: debt.customerName,
-    it: debt.items.map(item => ({
+    it: debt.items.map((item) => ({
       pi: item.productId,
       pn: item.productName,
       pp: item.price,
@@ -137,33 +146,36 @@ function savePayments(payments: PaymentRecord[]) {
 }
 
 export function getDebts(): Debt[] {
-  return loadDebts().map(fromRecord).sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  return loadDebts()
+    .map(fromRecord)
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 }
 
 export function getDebtById(id: string): Debt | undefined {
   const debts = loadDebts();
-  const record = debts.find(d => d.i === id);
+  const record = debts.find((d) => d.i === id);
   return record ? fromRecord(record) : undefined;
 }
 
 export function getDebtsByCustomerId(customerId: string): Debt[] {
-  return getDebts().filter(d => d.customerId === customerId);
+  return getDebts().filter((d) => d.customerId === customerId);
 }
 
 export function getUnpaidDebts(): Debt[] {
-  return getDebts().filter(d => d.status !== 'paid');
+  return getDebts().filter((d) => d.status !== "paid");
 }
 
 export async function createDebt(
   customerId: string,
   customerName: string,
   items: CartItem[],
-  total: number
+  total: number,
 ): Promise<Debt> {
   const now = toUnix(new Date());
-  
+
   const newDebt: DebtRecord = {
     i: generateId(),
     ci: customerId,
@@ -181,7 +193,6 @@ export async function createDebt(
   debts.push(newDebt);
   saveDebts(debts);
 
-  // Update stock for each item
   for (const item of items) {
     await updateStockAsync(item.product.id, -item.quantity);
   }
@@ -189,48 +200,50 @@ export async function createDebt(
   return fromRecord(newDebt);
 }
 
-// Pay a single debt (internal use)
 function payDebtInternal(debtId: string, amount: number): Debt | undefined {
   const debts = loadDebts();
-  const index = debts.findIndex(d => d.i === debtId);
-  
+  const index = debts.findIndex((d) => d.i === debtId);
+
   if (index === -1) return undefined;
 
   const debt = debts[index];
   const now = toUnix(new Date());
 
-  // Update debt
   debt.pa += amount;
   debt.ra = Math.max(0, debt.t - debt.pa);
   debt.ua = now;
-  
+
   if (debt.ra === 0) {
-    debt.st = 2; // paid
+    debt.st = 2;
     debt.pat = now;
   } else if (debt.pa > 0) {
-    debt.st = 1; // partial
+    debt.st = 1;
   }
 
   saveDebts(debts);
   return fromRecord(debt);
 }
 
-// Pay customer debt (single payment record for all debts)
-export function payCustomerDebt(customerId: string, amount: number): { payment: DebtPayment; updatedDebts: Debt[] } | undefined {
+export function payCustomerDebt(
+  customerId: string,
+  amount: number,
+): { payment: DebtPayment; updatedDebts: Debt[] } | undefined {
   if (amount <= 0) return undefined;
 
   const customerDebts = getDebtsByCustomerId(customerId)
-    .filter(d => d.status !== 'paid')
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    .filter((d) => d.status !== "paid")
+    .sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
 
   if (customerDebts.length === 0) return undefined;
 
   const now = toUnix(new Date());
-  
-  // Create single payment record for customer
+
   const paymentRecord: PaymentRecord = {
     i: generateId(),
-    di: `customer-${customerId}`, // Special marker for customer-level payment
+    di: `customer-${customerId}`,
     ci: customerId,
     a: amount,
     ca: now,
@@ -240,7 +253,6 @@ export function payCustomerDebt(customerId: string, amount: number): { payment: 
   payments.push(paymentRecord);
   savePayments(payments);
 
-  // Distribute payment across debts (oldest first)
   let remainingPayment = amount;
   const updatedDebts: Debt[] = [];
 
@@ -267,21 +279,22 @@ export function payCustomerDebt(customerId: string, amount: number): { payment: 
   };
 }
 
-// Legacy: Pay a single debt directly (keep for backward compatibility)
-export function payDebt(debtId: string, amount: number): { debt: Debt; payment: DebtPayment } | undefined {
+export function payDebt(
+  debtId: string,
+  amount: number,
+): { debt: Debt; payment: DebtPayment } | undefined {
   const debts = loadDebts();
-  const index = debts.findIndex(d => d.i === debtId);
-  
+  const index = debts.findIndex((d) => d.i === debtId);
+
   if (index === -1) return undefined;
 
   const debt = debts[index];
   const now = toUnix(new Date());
-  
-  // Create payment record
+
   const paymentRecord: PaymentRecord = {
     i: generateId(),
     di: debtId,
-    ci: debt.ci, // Include customer ID
+    ci: debt.ci,
     a: amount,
     ca: now,
   };
@@ -305,55 +318,70 @@ export function payDebt(debtId: string, amount: number): { debt: Debt; payment: 
   };
 }
 
-// Get payments by customer (consolidated view)
 export function getCustomerPayments(customerId: string): DebtPayment[] {
   return loadPayments()
-    .filter(p => p.ci === customerId || p.di === `customer-${customerId}`)
-    .map(p => ({
+    .filter((p) => p.ci === customerId || p.di === `customer-${customerId}`)
+    .map((p) => ({
       id: p.i,
       debtId: p.di,
       customerId: p.ci,
       amount: p.a,
       createdAt: fromUnix(p.ca),
     }))
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 }
 
 export function getDebtPayments(debtId: string): DebtPayment[] {
   return loadPayments()
-    .filter(p => p.di === debtId)
-    .map(p => ({
+    .filter((p) => p.di === debtId)
+    .map((p) => ({
       id: p.i,
       debtId: p.di,
       customerId: p.ci,
       amount: p.a,
       createdAt: fromUnix(p.ca),
     }))
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 }
 
-// Get all payments (for profit calculation)
 export function getAllPayments(): DebtPayment[] {
   return loadPayments()
-    .map(p => ({
+    .map((p) => ({
       id: p.i,
       debtId: p.di,
       customerId: p.ci,
       amount: p.a,
       createdAt: fromUnix(p.ca),
     }))
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 }
 
 export function getCustomerTotalDebt(customerId: string): number {
   return getDebtsByCustomerId(customerId)
-    .filter(d => d.status !== 'paid')
+    .filter((d) => d.status !== "paid")
     .reduce((sum, d) => sum + d.remainingAmount, 0);
 }
 
-export function getCustomersWithDebt(): { customerId: string; customerName: string; totalDebt: number; debtCount: number }[] {
+export function getCustomersWithDebt(): {
+  customerId: string;
+  customerName: string;
+  totalDebt: number;
+  debtCount: number;
+}[] {
   const debts = getUnpaidDebts();
-  const customerMap = new Map<string, { customerName: string; totalDebt: number; debtCount: number }>();
+  const customerMap = new Map<
+    string,
+    { customerName: string; totalDebt: number; debtCount: number }
+  >();
 
   for (const debt of debts) {
     const existing = customerMap.get(debt.customerId);
@@ -369,8 +397,10 @@ export function getCustomersWithDebt(): { customerId: string; customerName: stri
     }
   }
 
-  return Array.from(customerMap.entries()).map(([customerId, data]) => ({
-    customerId,
-    ...data,
-  })).sort((a, b) => b.totalDebt - a.totalDebt);
+  return Array.from(customerMap.entries())
+    .map(([customerId, data]) => ({
+      customerId,
+      ...data,
+    }))
+    .sort((a, b) => b.totalDebt - a.totalDebt);
 }

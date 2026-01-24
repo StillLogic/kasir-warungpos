@@ -1,5 +1,3 @@
-// Tipe data untuk fitur hutang
-
 export interface Customer {
   id: string;
   name: string;
@@ -25,7 +23,7 @@ export interface Debt {
   total: number;
   paidAmount: number;
   remainingAmount: number;
-  status: 'unpaid' | 'partial' | 'paid';
+  status: "unpaid" | "partial" | "paid";
   createdAt: string;
   updatedAt: string;
   paidAt?: string;

@@ -16,7 +16,6 @@ import {
   CalculatorPage,
   DebtsPage,
 } from "./pages/admin";
-import { Layout } from "./components/Layout";
 import { AdminLayout } from "./components/admin";
 import { InstallPWA } from "./components/InstallPWA";
 import { PWAUpdateNotification } from "./components/PWAUpdateNotification";
@@ -27,35 +26,7 @@ const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
-    // Migrate data from localStorage to IndexedDB on first load
     migrateFromLocalStorage();
-
-    // Prevent pull-to-refresh and overscroll on PWA
-    const preventDefault = (e: TouchEvent) => {
-      if (e.touches.length > 1) return;
-
-      const target = e.target as HTMLElement;
-      const scrollableParent = target.closest("[data-scrollable]");
-
-      if (!scrollableParent && window.scrollY === 0) {
-        e.preventDefault();
-      }
-    };
-
-    // Lock viewport height for iOS PWA
-    const setViewportHeight = () => {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty("--vh", `${vh}px`);
-    };
-
-    setViewportHeight();
-    window.addEventListener("resize", setViewportHeight);
-    document.addEventListener("touchmove", preventDefault, { passive: false });
-
-    return () => {
-      window.removeEventListener("resize", setViewportHeight);
-      document.removeEventListener("touchmove", preventDefault);
-    };
   }, []);
 
   return (
@@ -66,10 +37,7 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Main Cashier */}
               <Route path="/" element={<Index />} />
-
-              {/* Admin Routes */}
               <Route
                 path="/admin"
                 element={
@@ -134,7 +102,6 @@ const App = () => {
                   </AdminLayout>
                 }
               />
-
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

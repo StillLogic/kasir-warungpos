@@ -1,10 +1,25 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Plus, Pencil, Trash2, Percent, AlertCircle, RefreshCw, ChevronRight, Layers } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { PriceInput } from '@/components/ui/price-input';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect, useMemo } from "react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Percent,
+  AlertCircle,
+  RefreshCw,
+  ChevronRight,
+  Layers,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { PriceInput } from "@/components/ui/price-input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +27,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +37,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -30,34 +45,34 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { MarkupRule, MarkupType } from '@/types/markup';
-import { 
-  getMarkupRules, 
-  addMarkupRule, 
-  updateMarkupRule, 
+} from "@/components/ui/collapsible";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { MarkupRule, MarkupType } from "@/types/markup";
+import {
+  getMarkupRules,
+  addMarkupRule,
+  updateMarkupRule,
   deleteMarkupRule,
   calculateSellingPrices,
-} from '@/database/markup';
-import { getProducts, updateProduct, waitForProducts } from '@/database';
-import { getCategories, Category } from '@/database/categories';
-import { formatCurrency, roundToThousand } from '@/lib/format';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+} from "@/database/markup";
+import { getProducts, updateProduct, waitForProducts } from "@/database";
+import { getCategories, Category } from "@/database/categories";
+import { formatCurrency, roundToThousand } from "@/lib/format";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface TierInput {
   id: string;
@@ -81,21 +96,19 @@ export function PricingPage() {
   const [editingRule, setEditingRule] = useState<MarkupRule | null>(null);
   const [deletingRuleId, setDeletingRuleId] = useState<string | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-  
-  // Form state for single rule
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
-  const [markupType, setMarkupType] = useState<MarkupType>('percent');
-  const [retailMarkup, setRetailMarkup] = useState('');
-  const [wholesaleMarkup, setWholesaleMarkup] = useState('');
-  const [retailMarkupFixed, setRetailMarkupFixed] = useState('');
-  const [wholesaleMarkupFixed, setWholesaleMarkupFixed] = useState('');
-  const [noMaxLimit, setNoMaxLimit] = useState(false);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
 
-  // Batch creation state
-  const [batchCategoryId, setBatchCategoryId] = useState<string>('all');
-  const [batchMarkupType, setBatchMarkupType] = useState<MarkupType>('percent');
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [markupType, setMarkupType] = useState<MarkupType>("percent");
+  const [retailMarkup, setRetailMarkup] = useState("");
+  const [wholesaleMarkup, setWholesaleMarkup] = useState("");
+  const [retailMarkupFixed, setRetailMarkupFixed] = useState("");
+  const [wholesaleMarkupFixed, setWholesaleMarkupFixed] = useState("");
+  const [noMaxLimit, setNoMaxLimit] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
+
+  const [batchCategoryId, setBatchCategoryId] = useState<string>("all");
+  const [batchMarkupType, setBatchMarkupType] = useState<MarkupType>("percent");
   const [tiers, setTiers] = useState<TierInput[]>([]);
 
   useEffect(() => {
@@ -108,26 +121,31 @@ export function PricingPage() {
   };
 
   const getCategoryName = (categoryId: string | null): string => {
-    if (!categoryId) return 'Semua Produk';
-    const category = categories.find(c => c.id === categoryId);
-    return category?.name || 'Kategori tidak ditemukan';
+    if (!categoryId) return "Semua Produk";
+    const category = categories.find((c) => c.id === categoryId);
+    return category?.name || "Kategori tidak ditemukan";
   };
 
-  // Group rules by category
   const groupedRules = useMemo(() => {
-    const groups: { [key: string]: { categoryId: string | null; categoryName: string; rules: MarkupRule[] } } = {};
-    
-    // First add "Semua Produk" group
-    const generalRules = rules.filter(r => r.categoryId === null).sort((a, b) => a.minPrice - b.minPrice);
+    const groups: {
+      [key: string]: {
+        categoryId: string | null;
+        categoryName: string;
+        rules: MarkupRule[];
+      };
+    } = {};
+
+    const generalRules = rules
+      .filter((r) => r.categoryId === null)
+      .sort((a, b) => a.minPrice - b.minPrice);
     if (generalRules.length > 0) {
-      groups['__all__'] = {
+      groups["__all__"] = {
         categoryId: null,
-        categoryName: 'Semua Produk',
+        categoryName: "Semua Produk",
         rules: generalRules,
       };
     }
-    
-    // Then add category-specific groups
+
     for (const rule of rules) {
       if (rule.categoryId) {
         if (!groups[rule.categoryId]) {
@@ -140,30 +158,29 @@ export function PricingPage() {
         groups[rule.categoryId].rules.push(rule);
       }
     }
-    
-    // Sort rules within each group by minPrice
+
     for (const key in groups) {
       groups[key].rules.sort((a, b) => a.minPrice - b.minPrice);
     }
-    
+
     return groups;
   }, [rules, categories]);
 
-  // Get categories that don't have markup rules yet
   const categoriesWithoutRules = useMemo(() => {
-    const categoriesWithRules = new Set(rules.filter(r => r.categoryId).map(r => r.categoryId));
-    return categories.filter(c => !categoriesWithRules.has(c.id));
+    const categoriesWithRules = new Set(
+      rules.filter((r) => r.categoryId).map((r) => r.categoryId),
+    );
+    return categories.filter((c) => !categoriesWithRules.has(c.id));
   }, [categories, rules]);
 
-  // Get next min price for a category (auto-increment logic)
   const getNextMinPrice = (categoryId: string | null): number => {
-    const catKey = categoryId || '__all__';
+    const catKey = categoryId || "__all__";
     const categoryRules = groupedRules[catKey]?.rules || [];
-    
+
     if (categoryRules.length === 0) {
       return 0;
     }
-    
+
     const lastRule = categoryRules[categoryRules.length - 1];
     if (lastRule.maxPrice === null) {
       return lastRule.minPrice + 100000;
@@ -172,15 +189,15 @@ export function PricingPage() {
   };
 
   const resetForm = () => {
-    setMinPrice('');
-    setMaxPrice('');
-    setMarkupType('percent');
-    setRetailMarkup('');
-    setWholesaleMarkup('');
-    setRetailMarkupFixed('');
-    setWholesaleMarkupFixed('');
+    setMinPrice("");
+    setMaxPrice("");
+    setMarkupType("percent");
+    setRetailMarkup("");
+    setWholesaleMarkup("");
+    setRetailMarkupFixed("");
+    setWholesaleMarkupFixed("");
     setNoMaxLimit(false);
-    setSelectedCategoryId('all');
+    setSelectedCategoryId("all");
     setEditingRule(null);
   };
 
@@ -188,21 +205,19 @@ export function PricingPage() {
     if (rule) {
       setEditingRule(rule);
       setMinPrice(rule.minPrice.toString());
-      setMaxPrice(rule.maxPrice?.toString() || '');
-      setMarkupType(rule.markupType || 'percent');
+      setMaxPrice(rule.maxPrice?.toString() || "");
+      setMarkupType(rule.markupType || "percent");
       setRetailMarkup(rule.retailMarkupPercent.toString());
       setWholesaleMarkup(rule.wholesaleMarkupPercent.toString());
       setRetailMarkupFixed((rule.retailMarkupFixed || 0).toString());
       setWholesaleMarkupFixed((rule.wholesaleMarkupFixed || 0).toString());
       setNoMaxLimit(rule.maxPrice === null);
-      setSelectedCategoryId(rule.categoryId || 'all');
+      setSelectedCategoryId(rule.categoryId || "all");
     } else {
       resetForm();
-      // Set category from context
       if (categoryId !== undefined) {
-        setSelectedCategoryId(categoryId || 'all');
+        setSelectedCategoryId(categoryId || "all");
       }
-      // Auto-set minPrice for new rules
       const catId = categoryId !== undefined ? categoryId : null;
       const nextMin = getNextMinPrice(catId);
       setMinPrice(nextMin.toString());
@@ -210,16 +225,41 @@ export function PricingPage() {
     setDialogOpen(true);
   };
 
-  // Initialize batch creation with default tiers
   const handleOpenBatchDialog = (categoryId?: string | null) => {
-    setBatchCategoryId(categoryId || 'all');
-    setBatchMarkupType('percent');
-    
-    // Create initial tiers with sequential ranges
+    setBatchCategoryId(categoryId || "all");
+    setBatchMarkupType("percent");
+
     const initialTiers: TierInput[] = [
-      { id: crypto.randomUUID(), minPrice: '0', maxPrice: '50000', noMaxLimit: false, retailMarkup: '', wholesaleMarkup: '', retailMarkupFixed: '', wholesaleMarkupFixed: '' },
-      { id: crypto.randomUUID(), minPrice: '50001', maxPrice: '100000', noMaxLimit: false, retailMarkup: '', wholesaleMarkup: '', retailMarkupFixed: '', wholesaleMarkupFixed: '' },
-      { id: crypto.randomUUID(), minPrice: '100001', maxPrice: '', noMaxLimit: true, retailMarkup: '', wholesaleMarkup: '', retailMarkupFixed: '', wholesaleMarkupFixed: '' },
+      {
+        id: crypto.randomUUID(),
+        minPrice: "0",
+        maxPrice: "50000",
+        noMaxLimit: false,
+        retailMarkup: "",
+        wholesaleMarkup: "",
+        retailMarkupFixed: "",
+        wholesaleMarkupFixed: "",
+      },
+      {
+        id: crypto.randomUUID(),
+        minPrice: "50001",
+        maxPrice: "100000",
+        noMaxLimit: false,
+        retailMarkup: "",
+        wholesaleMarkup: "",
+        retailMarkupFixed: "",
+        wholesaleMarkupFixed: "",
+      },
+      {
+        id: crypto.randomUUID(),
+        minPrice: "100001",
+        maxPrice: "",
+        noMaxLimit: true,
+        retailMarkup: "",
+        wholesaleMarkup: "",
+        retailMarkupFixed: "",
+        wholesaleMarkupFixed: "",
+      },
     ];
     setTiers(initialTiers);
     setBatchDialogOpen(true);
@@ -227,89 +267,99 @@ export function PricingPage() {
 
   const addTier = () => {
     const lastTier = tiers[tiers.length - 1];
-    let nextMin = '0';
-    
+    let nextMin = "0";
+
     if (lastTier) {
       if (lastTier.noMaxLimit) {
-        // Can't add after unlimited tier, update it first
-        toast.error('Hapus batas "tidak terbatas" pada tier terakhir untuk menambah tier baru');
+        toast.error(
+          'Hapus batas "tidak terbatas" pada tier terakhir untuk menambah tier baru',
+        );
         return;
       }
       const lastMax = parseInt(lastTier.maxPrice) || 0;
       nextMin = (lastMax + 1).toString();
     }
-    
-    setTiers([...tiers, {
-      id: crypto.randomUUID(),
-      minPrice: nextMin,
-      maxPrice: '',
-      noMaxLimit: true,
-      retailMarkup: '',
-      wholesaleMarkup: '',
-      retailMarkupFixed: '',
-      wholesaleMarkupFixed: '',
-    }]);
+
+    setTiers([
+      ...tiers,
+      {
+        id: crypto.randomUUID(),
+        minPrice: nextMin,
+        maxPrice: "",
+        noMaxLimit: true,
+        retailMarkup: "",
+        wholesaleMarkup: "",
+        retailMarkupFixed: "",
+        wholesaleMarkupFixed: "",
+      },
+    ]);
   };
 
   const removeTier = (id: string) => {
     if (tiers.length <= 1) {
-      toast.error('Minimal harus ada 1 tier');
+      toast.error("Minimal harus ada 1 tier");
       return;
     }
-    setTiers(tiers.filter(t => t.id !== id));
+    setTiers(tiers.filter((t) => t.id !== id));
   };
 
-  const updateTier = (id: string, field: keyof TierInput, value: string | boolean) => {
-    setTiers(tiers.map(t => {
-      if (t.id !== id) return t;
-      
-      const updated = { ...t, [field]: value };
-      
-      // Auto-update next tier's minPrice when maxPrice changes
-      if (field === 'maxPrice' && typeof value === 'string') {
-        const tierIndex = tiers.findIndex(tier => tier.id === id);
-        if (tierIndex < tiers.length - 1 && value) {
-          const nextMin = (parseInt(value) || 0) + 1;
-          // Update next tier
-          setTimeout(() => {
-            setTiers(prev => prev.map((tier, idx) => {
-              if (idx === tierIndex + 1) {
-                return { ...tier, minPrice: nextMin.toString() };
-              }
-              return tier;
-            }));
-          }, 0);
+  const updateTier = (
+    id: string,
+    field: keyof TierInput,
+    value: string | boolean,
+  ) => {
+    setTiers(
+      tiers.map((t) => {
+        if (t.id !== id) return t;
+
+        const updated = { ...t, [field]: value };
+
+        if (field === "maxPrice" && typeof value === "string") {
+          const tierIndex = tiers.findIndex((tier) => tier.id === id);
+          if (tierIndex < tiers.length - 1 && value) {
+            const nextMin = (parseInt(value) || 0) + 1;
+            setTimeout(() => {
+              setTiers((prev) =>
+                prev.map((tier, idx) => {
+                  if (idx === tierIndex + 1) {
+                    return { ...tier, minPrice: nextMin.toString() };
+                  }
+                  return tier;
+                }),
+              );
+            }, 0);
+          }
         }
-      }
-      
-      // Clear maxPrice when noMaxLimit is set
-      if (field === 'noMaxLimit' && value === true) {
-        updated.maxPrice = '';
-      }
-      
-      return updated;
-    }));
+
+        if (field === "noMaxLimit" && value === true) {
+          updated.maxPrice = "";
+        }
+
+        return updated;
+      }),
+    );
   };
 
   const handleBatchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate all tiers
+
     for (let i = 0; i < tiers.length; i++) {
       const tier = tiers[i];
       const min = parseInt(tier.minPrice) || 0;
-      const max = tier.noMaxLimit ? null : (parseInt(tier.maxPrice) || null);
-      
+      const max = tier.noMaxLimit ? null : parseInt(tier.maxPrice) || null;
+
       if (min < 0) {
         toast.error(`Tier ${i + 1}: Harga minimum tidak boleh negatif`);
         return;
       }
       if (max !== null && max <= min) {
-        toast.error(`Tier ${i + 1}: Harga maksimum harus lebih besar dari minimum`);
+        toast.error(
+          `Tier ${i + 1}: Harga maksimum harus lebih besar dari minimum`,
+        );
         return;
       }
-      
-      if (batchMarkupType === 'percent') {
+
+      if (batchMarkupType === "percent") {
         const retail = parseFloat(tier.retailMarkup) || 0;
         const wholesale = parseFloat(tier.wholesaleMarkup) || 0;
         if (retail < 0 || wholesale < 0) {
@@ -325,14 +375,13 @@ export function PricingPage() {
         }
       }
     }
-    
-    // Create all rules
-    const categoryId = batchCategoryId === 'all' ? null : batchCategoryId;
-    
+
+    const categoryId = batchCategoryId === "all" ? null : batchCategoryId;
+
     for (const tier of tiers) {
       const min = parseInt(tier.minPrice) || 0;
-      const max = tier.noMaxLimit ? null : (parseInt(tier.maxPrice) || null);
-      
+      const max = tier.noMaxLimit ? null : parseInt(tier.maxPrice) || null;
+
       addMarkupRule({
         minPrice: min,
         maxPrice: max,
@@ -344,13 +393,12 @@ export function PricingPage() {
         categoryId,
       });
     }
-    
+
     toast.success(`Berhasil menambahkan ${tiers.length} aturan markup`);
     loadRules();
     setBatchDialogOpen(false);
-    
-    // Expand the category to show new rules
-    setExpandedCategory(categoryId || '__all__');
+
+    setExpandedCategory(categoryId || "__all__");
   };
 
   const handleCloseDialog = () => {
@@ -360,28 +408,28 @@ export function PricingPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const min = parseInt(minPrice) || 0;
-    const max = noMaxLimit ? null : (parseInt(maxPrice) || null);
+    const max = noMaxLimit ? null : parseInt(maxPrice) || null;
     const retail = parseFloat(retailMarkup) || 0;
     const wholesale = parseFloat(wholesaleMarkup) || 0;
     const retailFixed = parseInt(retailMarkupFixed) || 0;
     const wholesaleFixed = parseInt(wholesaleMarkupFixed) || 0;
 
     if (min < 0) {
-      toast.error('Harga minimum tidak boleh negatif');
+      toast.error("Harga minimum tidak boleh negatif");
       return;
     }
     if (max !== null && max <= min) {
-      toast.error('Harga maksimum harus lebih besar dari harga minimum');
+      toast.error("Harga maksimum harus lebih besar dari harga minimum");
       return;
     }
-    if (markupType === 'percent' && (retail < 0 || wholesale < 0)) {
-      toast.error('Persentase markup tidak boleh negatif');
+    if (markupType === "percent" && (retail < 0 || wholesale < 0)) {
+      toast.error("Persentase markup tidak boleh negatif");
       return;
     }
-    if (markupType === 'fixed' && (retailFixed < 0 || wholesaleFixed < 0)) {
-      toast.error('Markup rupiah tidak boleh negatif');
+    if (markupType === "fixed" && (retailFixed < 0 || wholesaleFixed < 0)) {
+      toast.error("Markup rupiah tidak boleh negatif");
       return;
     }
 
@@ -393,15 +441,15 @@ export function PricingPage() {
       wholesaleMarkupPercent: wholesale,
       retailMarkupFixed: retailFixed,
       wholesaleMarkupFixed: wholesaleFixed,
-      categoryId: selectedCategoryId === 'all' ? null : selectedCategoryId,
+      categoryId: selectedCategoryId === "all" ? null : selectedCategoryId,
     };
 
     if (editingRule) {
       updateMarkupRule(editingRule.id, data);
-      toast.success('Aturan markup berhasil diperbarui');
+      toast.success("Aturan markup berhasil diperbarui");
     } else {
       addMarkupRule(data);
-      toast.success('Aturan markup berhasil ditambahkan');
+      toast.success("Aturan markup berhasil ditambahkan");
     }
 
     loadRules();
@@ -411,7 +459,7 @@ export function PricingPage() {
   const handleDelete = () => {
     if (deletingRuleId) {
       deleteMarkupRule(deletingRuleId);
-      toast.success('Aturan markup berhasil dihapus');
+      toast.success("Aturan markup berhasil dihapus");
       loadRules();
     }
     setDeleteDialogOpen(false);
@@ -434,9 +482,11 @@ export function PricingPage() {
 
       for (const product of products) {
         if (product.costPrice > 0) {
-          const category = allCategories.find(c => c.name === product.category);
+          const category = allCategories.find(
+            (c) => c.name === product.category,
+          );
           const categoryId = category?.id || null;
-          
+
           const prices = calculateSellingPrices(product.costPrice, categoryId);
           if (prices) {
             updateProduct(product.id, {
@@ -456,10 +506,12 @@ export function PricingPage() {
         toast.success(`Berhasil update harga ${updatedCount} produk`);
       }
       if (skippedCount > 0) {
-        toast.info(`${skippedCount} produk dilewati (tidak ada harga modal atau aturan markup)`);
+        toast.info(
+          `${skippedCount} produk dilewati (tidak ada harga modal atau aturan markup)`,
+        );
       }
     } catch (error) {
-      toast.error('Gagal update harga massal');
+      toast.error("Gagal update harga massal");
     } finally {
       setIsUpdating(false);
       setBulkUpdateDialogOpen(false);
@@ -474,7 +526,7 @@ export function PricingPage() {
   };
 
   const formatMarkupDisplay = (rule: MarkupRule) => {
-    if (rule.markupType === 'fixed') {
+    if (rule.markupType === "fixed") {
       return {
         retail: formatCurrency(rule.retailMarkupFixed || 0),
         wholesale: formatCurrency(rule.wholesaleMarkupFixed || 0),
@@ -491,8 +543,8 @@ export function PricingPage() {
   const calculatePreview = () => {
     const costPrice = parseInt(minPrice) || 0;
     if (costPrice === 0) return null;
-    
-    if (markupType === 'fixed') {
+
+    if (markupType === "fixed") {
       const retailFixed = parseInt(retailMarkupFixed) || 0;
       const wholesaleFixed = parseInt(wholesaleMarkupFixed) || 0;
       return {
@@ -500,7 +552,7 @@ export function PricingPage() {
         wholesale: roundToThousand(costPrice + wholesaleFixed),
       };
     }
-    
+
     const retail = parseFloat(retailMarkup) || 0;
     const wholesale = parseFloat(wholesaleMarkup) || 0;
     return {
@@ -522,9 +574,9 @@ export function PricingPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => setBulkUpdateDialogOpen(true)} 
+          <Button
+            variant="outline"
+            onClick={() => setBulkUpdateDialogOpen(true)}
             className="gap-2"
             disabled={rules.length === 0}
           >
@@ -538,12 +590,14 @@ export function PricingPage() {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Pilih kategori untuk mengatur aturan markup. <strong>Aturan per kategori memiliki prioritas lebih tinggi</strong> dari aturan "Semua Produk".
+          Pilih kategori untuk mengatur aturan markup.{" "}
+          <strong>Aturan per kategori memiliki prioritas lebih tinggi</strong>{" "}
+          dari aturan "Semua Produk".
         </AlertDescription>
       </Alert>
 
       {/* Add Markup Rules Section - Now at Top */}
-      {(categoriesWithoutRules.length > 0 || !groupedRules['__all__']) && (
+      {(categoriesWithoutRules.length > 0 || !groupedRules["__all__"]) && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
@@ -557,17 +611,19 @@ export function PricingPage() {
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {/* General rules option */}
-              {!groupedRules['__all__'] && (
+              {!groupedRules["__all__"] && (
                 <button
                   onClick={() => handleOpenBatchDialog(null)}
                   className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-primary/5 transition-colors text-center group"
                 >
                   <Layers className="w-6 h-6 mx-auto mb-2 text-muted-foreground group-hover:text-primary" />
                   <p className="font-medium text-sm">Semua Produk</p>
-                  <p className="text-xs text-muted-foreground mt-1">Aturan default</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Aturan default
+                  </p>
                 </button>
               )}
-              
+
               {/* Categories without rules */}
               {categoriesWithoutRules.map((cat) => (
                 <button
@@ -577,7 +633,9 @@ export function PricingPage() {
                 >
                   <Percent className="w-6 h-6 mx-auto mb-2 text-muted-foreground group-hover:text-primary" />
                   <p className="font-medium text-sm">{cat.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Belum ada aturan</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Belum ada aturan
+                  </p>
                 </button>
               ))}
             </div>
@@ -586,17 +644,21 @@ export function PricingPage() {
       )}
 
       {/* Empty state - when no categories exist */}
-      {Object.keys(groupedRules).length === 0 && categoriesWithoutRules.length === 0 && !categories.length && (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center text-muted-foreground">
-              <Percent className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>Belum ada kategori produk</p>
-              <p className="text-sm mt-1">Buat kategori terlebih dahulu di menu Produk</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {Object.keys(groupedRules).length === 0 &&
+        categoriesWithoutRules.length === 0 &&
+        !categories.length && (
+          <Card>
+            <CardContent className="py-12">
+              <div className="text-center text-muted-foreground">
+                <Percent className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>Belum ada kategori produk</p>
+                <p className="text-sm mt-1">
+                  Buat kategori terlebih dahulu di menu Produk
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
       {/* Categories with Markup Rules */}
       {Object.keys(groupedRules).length > 0 && (
@@ -613,11 +675,16 @@ export function PricingPage() {
                   <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <ChevronRight className={cn(
-                          "w-5 h-5 transition-transform",
-                          expandedCategory === key && "rotate-90"
-                        )} />
-                        <Badge variant={group.categoryId ? "default" : "secondary"} className="text-sm">
+                        <ChevronRight
+                          className={cn(
+                            "w-5 h-5 transition-transform",
+                            expandedCategory === key && "rotate-90",
+                          )}
+                        />
+                        <Badge
+                          variant={group.categoryId ? "default" : "secondary"}
+                          className="text-sm"
+                        >
                           {group.categoryName}
                         </Badge>
                         <span className="text-sm text-muted-foreground">
@@ -635,8 +702,12 @@ export function PricingPage() {
                           <TableRow>
                             <TableHead>Rentang Harga Modal</TableHead>
                             <TableHead className="text-center">Tipe</TableHead>
-                            <TableHead className="text-center">Markup Satuan</TableHead>
-                            <TableHead className="text-center">Markup Grosir</TableHead>
+                            <TableHead className="text-center">
+                              Markup Satuan
+                            </TableHead>
+                            <TableHead className="text-center">
+                              Markup Grosir
+                            </TableHead>
                             <TableHead className="text-right">Aksi</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -646,42 +717,53 @@ export function PricingPage() {
                             return (
                               <TableRow key={rule.id}>
                                 <TableCell className="font-medium">
-                                  {formatPriceRange(rule.minPrice, rule.maxPrice)}
+                                  {formatPriceRange(
+                                    rule.minPrice,
+                                    rule.maxPrice,
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-center">
                                   <Badge variant="outline">
-                                    {rule.markupType === 'fixed' ? 'Rupiah' : 'Persen'}
+                                    {rule.markupType === "fixed"
+                                      ? "Rupiah"
+                                      : "Persen"}
                                   </Badge>
                                 </TableCell>
                                 <TableCell className="text-center">
-                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium ${
-                                    markup.isFixed 
-                                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
-                                      : 'bg-primary/10 text-primary'
-                                  }`}>
-                                    {markup.isFixed ? '+' : ''}{markup.retail}
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium ${
+                                      markup.isFixed
+                                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                                        : "bg-primary/10 text-primary"
+                                    }`}
+                                  >
+                                    {markup.isFixed ? "+" : ""}
+                                    {markup.retail}
                                   </span>
                                 </TableCell>
                                 <TableCell className="text-center">
-                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium ${
-                                    markup.isFixed 
-                                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
-                                      : 'bg-secondary text-secondary-foreground'
-                                  }`}>
-                                    {markup.isFixed ? '+' : ''}{markup.wholesale}
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium ${
+                                      markup.isFixed
+                                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                                        : "bg-secondary text-secondary-foreground"
+                                    }`}
+                                  >
+                                    {markup.isFixed ? "+" : ""}
+                                    {markup.wholesale}
                                   </span>
                                 </TableCell>
                                 <TableCell className="text-right">
                                   <div className="flex items-center justify-end gap-1">
-                                    <Button 
-                                      variant="ghost" 
+                                    <Button
+                                      variant="ghost"
                                       size="icon"
                                       onClick={() => handleOpenDialog(rule)}
                                     >
                                       <Pencil className="w-4 h-4" />
                                     </Button>
-                                    <Button 
-                                      variant="ghost" 
+                                    <Button
+                                      variant="ghost"
                                       size="icon"
                                       onClick={() => confirmDelete(rule.id)}
                                       className="text-destructive hover:text-destructive"
@@ -697,10 +779,12 @@ export function PricingPage() {
                       </Table>
                     </div>
                     <div className="mt-4 flex gap-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
-                        onClick={() => handleOpenDialog(undefined, group.categoryId)}
+                        onClick={() =>
+                          handleOpenDialog(undefined, group.categoryId)
+                        }
                         className="gap-1"
                       >
                         <Plus className="w-4 h-4" />
@@ -720,7 +804,7 @@ export function PricingPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {editingRule ? 'Edit Aturan Markup' : 'Tambah Aturan Markup'}
+              {editingRule ? "Edit Aturan Markup" : "Tambah Aturan Markup"}
             </DialogTitle>
             <DialogDescription>
               Tentukan rentang harga modal dan markup (persen atau rupiah)
@@ -731,7 +815,10 @@ export function PricingPage() {
               {/* Category Selection */}
               <div className="space-y-2">
                 <Label htmlFor="category">Berlaku Untuk</Label>
-                <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                <Select
+                  value={selectedCategoryId}
+                  onValueChange={setSelectedCategoryId}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih kategori" />
                   </SelectTrigger>
@@ -768,7 +855,7 @@ export function PricingPage() {
                   />
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -776,11 +863,14 @@ export function PricingPage() {
                   checked={noMaxLimit}
                   onChange={(e) => {
                     setNoMaxLimit(e.target.checked);
-                    if (e.target.checked) setMaxPrice('');
+                    if (e.target.checked) setMaxPrice("");
                   }}
                   className="rounded border-input"
                 />
-                <Label htmlFor="noMaxLimit" className="text-sm font-normal cursor-pointer">
+                <Label
+                  htmlFor="noMaxLimit"
+                  className="text-sm font-normal cursor-pointer"
+                >
                   Tidak ada batas maksimum (ke atas)
                 </Label>
               </div>
@@ -788,7 +878,10 @@ export function PricingPage() {
               {/* Markup Type Selection */}
               <div className="space-y-2">
                 <Label>Tipe Markup</Label>
-                <Select value={markupType} onValueChange={(v) => setMarkupType(v as MarkupType)}>
+                <Select
+                  value={markupType}
+                  onValueChange={(v) => setMarkupType(v as MarkupType)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -800,7 +893,7 @@ export function PricingPage() {
               </div>
 
               {/* Markup Values */}
-              {markupType === 'percent' ? (
+              {markupType === "percent" ? (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="retailMarkup">Markup Satuan (%)</Label>
@@ -832,7 +925,9 @@ export function PricingPage() {
               ) : (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="retailMarkupFixed">Markup Satuan (Rp)</Label>
+                    <Label htmlFor="retailMarkupFixed">
+                      Markup Satuan (Rp)
+                    </Label>
                     <PriceInput
                       id="retailMarkupFixed"
                       value={retailMarkupFixed}
@@ -841,7 +936,9 @@ export function PricingPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="wholesaleMarkupFixed">Markup Grosir (Rp)</Label>
+                    <Label htmlFor="wholesaleMarkupFixed">
+                      Markup Grosir (Rp)
+                    </Label>
                     <PriceInput
                       id="wholesaleMarkupFixed"
                       value={wholesaleMarkupFixed}
@@ -857,19 +954,23 @@ export function PricingPage() {
                 <div className="p-3 rounded-lg bg-muted/50 text-sm">
                   <p className="font-medium mb-1">Contoh Kalkulasi:</p>
                   <p className="text-muted-foreground">
-                    Harga modal {formatCurrency(parseInt(minPrice) || 0)} → 
-                    Harga satuan {formatCurrency(preview.retail)} | 
-                    Harga grosir {formatCurrency(preview.wholesale)}
+                    Harga modal {formatCurrency(parseInt(minPrice) || 0)} →
+                    Harga satuan {formatCurrency(preview.retail)} | Harga grosir{" "}
+                    {formatCurrency(preview.wholesale)}
                   </p>
                 </div>
               )}
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleCloseDialog}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCloseDialog}
+              >
                 Batal
               </Button>
               <Button type="submit">
-                {editingRule ? 'Simpan Perubahan' : 'Tambah Aturan'}
+                {editingRule ? "Simpan Perubahan" : "Tambah Aturan"}
               </Button>
             </DialogFooter>
           </form>
@@ -885,9 +986,13 @@ export function PricingPage() {
               Buat Aturan Markup Bertingkat
             </DialogTitle>
             <DialogDescription>
-              Buat beberapa aturan markup sekaligus untuk{' '}
-              <Badge variant={batchCategoryId === 'all' ? 'secondary' : 'default'}>
-                {batchCategoryId === 'all' ? 'Semua Produk' : getCategoryName(batchCategoryId)}
+              Buat beberapa aturan markup sekaligus untuk{" "}
+              <Badge
+                variant={batchCategoryId === "all" ? "secondary" : "default"}
+              >
+                {batchCategoryId === "all"
+                  ? "Semua Produk"
+                  : getCategoryName(batchCategoryId)}
               </Badge>
             </DialogDescription>
           </DialogHeader>
@@ -896,7 +1001,10 @@ export function PricingPage() {
               {/* Markup Type Selection */}
               <div className="space-y-2">
                 <Label>Tipe Markup</Label>
-                <Select value={batchMarkupType} onValueChange={(v) => setBatchMarkupType(v as MarkupType)}>
+                <Select
+                  value={batchMarkupType}
+                  onValueChange={(v) => setBatchMarkupType(v as MarkupType)}
+                >
                   <SelectTrigger className="w-48">
                     <SelectValue />
                   </SelectTrigger>
@@ -923,7 +1031,9 @@ export function PricingPage() {
                             <Label className="text-xs">Harga Min</Label>
                             <PriceInput
                               value={tier.minPrice}
-                              onChange={(v) => updateTier(tier.id, 'minPrice', v)}
+                              onChange={(v) =>
+                                updateTier(tier.id, "minPrice", v)
+                              }
                               placeholder="0"
                             />
                           </div>
@@ -931,68 +1041,107 @@ export function PricingPage() {
                             <Label className="text-xs">Harga Max</Label>
                             <PriceInput
                               value={tier.maxPrice}
-                              onChange={(v) => updateTier(tier.id, 'maxPrice', v)}
+                              onChange={(v) =>
+                                updateTier(tier.id, "maxPrice", v)
+                              }
                               placeholder="Tidak terbatas"
                               disabled={tier.noMaxLimit}
                             />
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-2">
                           <input
                             type="checkbox"
                             id={`noLimit-${tier.id}`}
                             checked={tier.noMaxLimit}
-                            onChange={(e) => updateTier(tier.id, 'noMaxLimit', e.target.checked)}
+                            onChange={(e) =>
+                              updateTier(
+                                tier.id,
+                                "noMaxLimit",
+                                e.target.checked,
+                              )
+                            }
                             className="rounded border-input"
                           />
-                          <Label htmlFor={`noLimit-${tier.id}`} className="text-xs font-normal cursor-pointer">
+                          <Label
+                            htmlFor={`noLimit-${tier.id}`}
+                            className="text-xs font-normal cursor-pointer"
+                          >
                             Tidak terbatas
                           </Label>
                         </div>
 
                         {/* Markup Values */}
                         <div className="grid grid-cols-2 gap-3">
-                          {batchMarkupType === 'percent' ? (
+                          {batchMarkupType === "percent" ? (
                             <>
                               <div className="space-y-1">
-                                <Label className="text-xs">Markup Satuan (%)</Label>
+                                <Label className="text-xs">
+                                  Markup Satuan (%)
+                                </Label>
                                 <Input
                                   type="number"
                                   min="0"
                                   step="0.1"
                                   placeholder="100"
                                   value={tier.retailMarkup}
-                                  onChange={(e) => updateTier(tier.id, 'retailMarkup', e.target.value)}
+                                  onChange={(e) =>
+                                    updateTier(
+                                      tier.id,
+                                      "retailMarkup",
+                                      e.target.value,
+                                    )
+                                  }
                                 />
                               </div>
                               <div className="space-y-1">
-                                <Label className="text-xs">Markup Grosir (%)</Label>
+                                <Label className="text-xs">
+                                  Markup Grosir (%)
+                                </Label>
                                 <Input
                                   type="number"
                                   min="0"
                                   step="0.1"
                                   placeholder="50"
                                   value={tier.wholesaleMarkup}
-                                  onChange={(e) => updateTier(tier.id, 'wholesaleMarkup', e.target.value)}
+                                  onChange={(e) =>
+                                    updateTier(
+                                      tier.id,
+                                      "wholesaleMarkup",
+                                      e.target.value,
+                                    )
+                                  }
                                 />
                               </div>
                             </>
                           ) : (
                             <>
                               <div className="space-y-1">
-                                <Label className="text-xs">Markup Satuan (Rp)</Label>
+                                <Label className="text-xs">
+                                  Markup Satuan (Rp)
+                                </Label>
                                 <PriceInput
                                   value={tier.retailMarkupFixed}
-                                  onChange={(v) => updateTier(tier.id, 'retailMarkupFixed', v)}
+                                  onChange={(v) =>
+                                    updateTier(tier.id, "retailMarkupFixed", v)
+                                  }
                                   placeholder="5.000"
                                 />
                               </div>
                               <div className="space-y-1">
-                                <Label className="text-xs">Markup Grosir (Rp)</Label>
+                                <Label className="text-xs">
+                                  Markup Grosir (Rp)
+                                </Label>
                                 <PriceInput
                                   value={tier.wholesaleMarkupFixed}
-                                  onChange={(v) => updateTier(tier.id, 'wholesaleMarkupFixed', v)}
+                                  onChange={(v) =>
+                                    updateTier(
+                                      tier.id,
+                                      "wholesaleMarkupFixed",
+                                      v,
+                                    )
+                                  }
                                   placeholder="3.000"
                                 />
                               </div>
@@ -1000,7 +1149,7 @@ export function PricingPage() {
                           )}
                         </div>
                       </div>
-                      
+
                       {/* Remove button */}
                       <Button
                         type="button"
@@ -1014,7 +1163,7 @@ export function PricingPage() {
                     </div>
                   </Card>
                 ))}
-                
+
                 <Button
                   type="button"
                   variant="outline"
@@ -1027,12 +1176,14 @@ export function PricingPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setBatchDialogOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setBatchDialogOpen(false)}
+              >
                 Batal
               </Button>
-              <Button type="submit">
-                Simpan {tiers.length} Aturan
-              </Button>
+              <Button type="submit">Simpan {tiers.length} Aturan</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -1044,12 +1195,16 @@ export function PricingPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Aturan Markup?</AlertDialogTitle>
             <AlertDialogDescription>
-              Aturan ini akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.
+              Aturan ini akan dihapus secara permanen. Tindakan ini tidak dapat
+              dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Hapus
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1057,14 +1212,20 @@ export function PricingPage() {
       </AlertDialog>
 
       {/* Bulk Update Confirmation */}
-      <AlertDialog open={bulkUpdateDialogOpen} onOpenChange={setBulkUpdateDialogOpen}>
+      <AlertDialog
+        open={bulkUpdateDialogOpen}
+        onOpenChange={setBulkUpdateDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Update Harga Jual Massal?</AlertDialogTitle>
             <AlertDialogDescription>
-              Semua produk yang memiliki harga modal akan diupdate harga jualnya berdasarkan aturan markup yang berlaku.
-              <br /><br />
-              <strong>Catatan:</strong> Harga jual yang sudah ada akan ditimpa dengan perhitungan baru.
+              Semua produk yang memiliki harga modal akan diupdate harga jualnya
+              berdasarkan aturan markup yang berlaku.
+              <br />
+              <br />
+              <strong>Catatan:</strong> Harga jual yang sudah ada akan ditimpa
+              dengan perhitungan baru.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1076,7 +1237,7 @@ export function PricingPage() {
                   Memproses...
                 </>
               ) : (
-                'Update Semua'
+                "Update Semua"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

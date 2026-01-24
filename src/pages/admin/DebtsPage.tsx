@@ -1,23 +1,23 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { Debt, DebtPayment } from '@/types/debt';
-import { formatCurrency } from '@/lib/format';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Debt, DebtPayment } from "@/types/debt";
+import { formatCurrency } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -25,17 +25,37 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Search, User, CreditCard, ArrowLeft, Banknote, Plus, Printer, Download, CalendarIcon, X } from 'lucide-react';
-import { getCustomersWithDebt, getDebtsByCustomerId, payCustomerDebt, getCustomerPayments } from '@/database/debts';
-import { toast } from '@/hooks/use-toast';
-import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
-import { id as localeId } from 'date-fns/locale';
-import { useIsMobile } from '@/hooks/use-mobile';
-import html2canvas from 'html2canvas';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/table";
+import {
+  Search,
+  User,
+  CreditCard,
+  ArrowLeft,
+  Banknote,
+  Plus,
+  Printer,
+  Download,
+  CalendarIcon,
+  X,
+} from "lucide-react";
+import {
+  getCustomersWithDebt,
+  getDebtsByCustomerId,
+  payCustomerDebt,
+  getCustomerPayments,
+} from "@/database/debts";
+import { toast } from "@/hooks/use-toast";
+import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { id as localeId } from "date-fns/locale";
+import { useIsMobile } from "@/hooks/use-mobile";
+import html2canvas from "html2canvas";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 interface CustomerDebtSummary {
   customerId: string;
@@ -47,7 +67,7 @@ interface CustomerDebtSummary {
 interface DebtTableRow {
   id: string;
   timestamp: string;
-  type: 'debt' | 'payment';
+  type: "debt" | "payment";
   productName?: string;
   quantity?: number;
   unitPrice?: number;
@@ -57,8 +77,9 @@ interface DebtTableRow {
 
 export function DebtsPage() {
   const [customers, setCustomers] = useState<CustomerDebtSummary[]>([]);
-  const [search, setSearch] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerDebtSummary | null>(null);
+  const [search, setSearch] = useState("");
+  const [selectedCustomer, setSelectedCustomer] =
+    useState<CustomerDebtSummary | null>(null);
   const [customerDebts, setCustomerDebts] = useState<Debt[]>([]);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [payDialogOpen, setPayDialogOpen] = useState(false);
@@ -100,44 +121,42 @@ export function DebtsPage() {
   const handlePayDebt = () => {
     if (!selectedCustomer || paymentAmount <= 0) return;
 
-    // Use new consolidated payment function
     const result = payCustomerDebt(selectedCustomer.customerId, paymentAmount);
-    
+
     if (!result) {
       toast({
-        title: 'Pembayaran Gagal',
-        description: 'Tidak ada hutang yang dapat dibayar',
-        variant: 'destructive',
+        title: "Pembayaran Gagal",
+        description: "Tidak ada hutang yang dapat dibayar",
+        variant: "destructive",
       });
       return;
     }
 
     toast({
-      title: 'Pembayaran Berhasil',
+      title: "Pembayaran Berhasil",
       description: `Pembayaran ${formatCurrency(paymentAmount)} telah dicatat`,
     });
 
     setPayDialogOpen(false);
     setPaymentAmount(0);
 
-    // Refresh data
     loadCustomerDebts(selectedCustomer.customerId);
     loadCustomers();
 
-    // Update selected customer total
     const updatedCustomers = getCustomersWithDebt();
-    const updated = updatedCustomers.find(c => c.customerId === selectedCustomer.customerId);
+    const updated = updatedCustomers.find(
+      (c) => c.customerId === selectedCustomer.customerId,
+    );
     if (updated) {
       setSelectedCustomer(updated);
     } else {
-      // Customer has no more debt, go back
       handleBack();
     }
   };
 
   const handlePrint = () => {
     if (!selectedCustomer) return;
-    
+
     const printContent = `
       <!DOCTYPE html>
       <html>
@@ -161,7 +180,7 @@ export function DebtsPage() {
       </head>
       <body>
         <h1>${selectedCustomer.customerName}</h1>
-        <div class="subtitle">Rincian Hutang - Dicetak: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: localeId })}</div>
+        <div class="subtitle">Rincian Hutang - Dicetak: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: localeId })}</div>
         
         <div class="total-box">
           <span class="total-label">Total Hutang</span>
@@ -180,15 +199,19 @@ export function DebtsPage() {
             </tr>
           </thead>
           <tbody>
-            ${tableRows.map(row => `
+            ${tableRows
+              .map(
+                (row) => `
               <tr>
-                <td>${format(new Date(row.timestamp), 'dd/MM/yy HH:mm', { locale: localeId })}</td>
-                <td${row.type === 'payment' ? ' class="payment"' : ''}>${row.type === 'debt' ? row.productName : '+ Pembayaran'}</td>
-                <td class="text-center">${row.type === 'debt' ? row.quantity : '-'}</td>
-                <td class="text-right">${row.type === 'debt' ? formatCurrency(row.unitPrice || 0) : '-'}</td>
-                <td class="text-right${row.type === 'payment' ? ' payment' : ''}">${row.type === 'payment' ? formatCurrency(Math.abs(row.totalPrice)) + ' (-)' : formatCurrency(row.totalPrice)}</td>
+                <td>${format(new Date(row.timestamp), "dd/MM/yy HH:mm", { locale: localeId })}</td>
+                <td${row.type === "payment" ? ' class="payment"' : ""}>${row.type === "debt" ? row.productName : "+ Pembayaran"}</td>
+                <td class="text-center">${row.type === "debt" ? row.quantity : "-"}</td>
+                <td class="text-right">${row.type === "debt" ? formatCurrency(row.unitPrice || 0) : "-"}</td>
+                <td class="text-right${row.type === "payment" ? " payment" : ""}">${row.type === "payment" ? formatCurrency(Math.abs(row.totalPrice)) + " (-)" : formatCurrency(row.totalPrice)}</td>
               </tr>
-            `).join('')}
+            `,
+              )
+              .join("")}
           </tbody>
         </table>
         
@@ -196,8 +219,8 @@ export function DebtsPage() {
       </body>
       </html>
     `;
-    
-    const printWindow = window.open('', '_blank');
+
+    const printWindow = window.open("", "_blank");
     if (printWindow) {
       printWindow.document.write(printContent);
       printWindow.document.close();
@@ -210,44 +233,42 @@ export function DebtsPage() {
 
   const handleSaveImage = async () => {
     if (!printRef.current || !selectedCustomer) return;
-    
+
     try {
       const canvas = await html2canvas(printRef.current, {
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
         scale: 2,
       });
-      
-      const link = document.createElement('a');
-      link.download = `hutang-${selectedCustomer.customerName.replace(/\s+/g, '-')}-${format(new Date(), 'yyyyMMdd')}.png`;
-      link.href = canvas.toDataURL('image/png');
+
+      const link = document.createElement("a");
+      link.download = `hutang-${selectedCustomer.customerName.replace(/\s+/g, "-")}-${format(new Date(), "yyyyMMdd")}.png`;
+      link.href = canvas.toDataURL("image/png");
       link.click();
-      
+
       toast({
-        title: 'Berhasil',
-        description: 'Rincian hutang berhasil disimpan sebagai gambar',
+        title: "Berhasil",
+        description: "Rincian hutang berhasil disimpan sebagai gambar",
       });
     } catch (error) {
       toast({
-        title: 'Gagal',
-        description: 'Gagal menyimpan gambar',
-        variant: 'destructive',
+        title: "Gagal",
+        description: "Gagal menyimpan gambar",
+        variant: "destructive",
       });
     }
   };
 
-  // Build table rows from debts and customer payments (consolidated)
   const tableRows = useMemo((): DebtTableRow[] => {
     if (!selectedCustomer) return [];
-    
+
     const rows: DebtTableRow[] = [];
 
-    // Add all debt items
     for (const debt of customerDebts) {
       for (const item of debt.items) {
         rows.push({
           id: `${debt.id}-${item.productId}`,
           timestamp: debt.createdAt,
-          type: 'debt',
+          type: "debt",
           productName: item.productName,
           quantity: item.quantity,
           unitPrice: item.price,
@@ -257,26 +278,29 @@ export function DebtsPage() {
       }
     }
 
-    // Add customer payments (consolidated - one entry per payment)
     const customerPayments = getCustomerPayments(selectedCustomer.customerId);
     for (const payment of customerPayments) {
       rows.push({
         id: payment.id,
         timestamp: payment.createdAt,
-        type: 'payment',
+        type: "payment",
         totalPrice: -payment.amount,
       });
     }
 
-    // Sort by timestamp descending
-    const sortedRows = rows.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    
-    // Apply date filter
+    const sortedRows = rows.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
+
     if (dateFrom || dateTo) {
-      return sortedRows.filter(row => {
+      return sortedRows.filter((row) => {
         const rowDate = new Date(row.timestamp);
         if (dateFrom && dateTo) {
-          return isWithinInterval(rowDate, { start: startOfDay(dateFrom), end: endOfDay(dateTo) });
+          return isWithinInterval(rowDate, {
+            start: startOfDay(dateFrom),
+            end: endOfDay(dateTo),
+          });
         } else if (dateFrom) {
           return rowDate >= startOfDay(dateFrom);
         } else if (dateTo) {
@@ -285,21 +309,22 @@ export function DebtsPage() {
         return true;
       });
     }
-    
+
     return sortedRows;
   }, [customerDebts, selectedCustomer, dateFrom, dateTo]);
 
   const filteredCustomers = useMemo(() => {
     if (!search.trim()) return customers;
     const lowerSearch = search.toLowerCase();
-    return customers.filter(c => c.customerName.toLowerCase().includes(lowerSearch));
+    return customers.filter((c) =>
+      c.customerName.toLowerCase().includes(lowerSearch),
+    );
   }, [search, customers]);
 
   const totalAllDebts = useMemo(() => {
     return customers.reduce((sum, c) => sum + c.totalDebt, 0);
   }, [customers]);
 
-  // Customer List View
   if (!selectedCustomer) {
     return (
       <div className="space-y-6">
@@ -308,13 +333,17 @@ export function DebtsPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total Piutang</CardDescription>
-              <CardTitle className="text-2xl text-destructive">{formatCurrency(totalAllDebts)}</CardTitle>
+              <CardTitle className="text-2xl text-destructive">
+                {formatCurrency(totalAllDebts)}
+              </CardTitle>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Pelanggan Berhutang</CardDescription>
-              <CardTitle className="text-2xl">{customers.length} orang</CardTitle>
+              <CardTitle className="text-2xl">
+                {customers.length} orang
+              </CardTitle>
             </CardHeader>
           </Card>
         </div>
@@ -353,13 +382,17 @@ export function DebtsPage() {
                       <User className="w-6 h-6 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{customer.customerName}</p>
+                      <p className="font-medium truncate">
+                        {customer.customerName}
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         {customer.debtCount} transaksi
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-destructive">{formatCurrency(customer.totalDebt)}</p>
+                      <p className="font-bold text-destructive">
+                        {formatCurrency(customer.totalDebt)}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -388,11 +421,15 @@ export function DebtsPage() {
                         <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                           <User className="w-5 h-5 text-primary" />
                         </div>
-                        <span className="font-medium">{customer.customerName}</span>
+                        <span className="font-medium">
+                          {customer.customerName}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="outline">{customer.debtCount} transaksi</Badge>
+                      <Badge variant="outline">
+                        {customer.debtCount} transaksi
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right font-bold text-destructive">
                       {formatCurrency(customer.totalDebt)}
@@ -407,7 +444,6 @@ export function DebtsPage() {
     );
   }
 
-  // Customer Detail View - Simple Table
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -416,15 +452,27 @@ export function DebtsPage() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex-1">
-          <h2 className="text-xl font-semibold">{selectedCustomer.customerName}</h2>
+          <h2 className="text-xl font-semibold">
+            {selectedCustomer.customerName}
+          </h2>
           <p className="text-sm text-muted-foreground">Rincian Hutang</p>
         </div>
         {selectedCustomer.totalDebt > 0 && (
           <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={handlePrint} title="Cetak">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handlePrint}
+              title="Cetak"
+            >
               <Printer className="w-4 h-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={handleSaveImage} title="Simpan Gambar">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleSaveImage}
+              title="Simpan Gambar"
+            >
               <Download className="w-4 h-4" />
             </Button>
             <Button onClick={handleOpenPayDialog}>
@@ -444,7 +492,7 @@ export function DebtsPage() {
               size="sm"
               className={cn(
                 "justify-start text-left font-normal",
-                !dateFrom && "text-muted-foreground"
+                !dateFrom && "text-muted-foreground",
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
@@ -471,7 +519,7 @@ export function DebtsPage() {
               size="sm"
               className={cn(
                 "justify-start text-left font-normal",
-                !dateTo && "text-muted-foreground"
+                !dateTo && "text-muted-foreground",
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
@@ -510,7 +558,9 @@ export function DebtsPage() {
           <CardContent className="py-4">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-muted-foreground">{selectedCustomer.customerName}</p>
+                <p className="text-sm text-muted-foreground">
+                  {selectedCustomer.customerName}
+                </p>
                 <span className="text-lg font-semibold">Total Hutang</span>
               </div>
               <span className="text-2xl font-bold text-destructive">
@@ -520,51 +570,61 @@ export function DebtsPage() {
           </CardContent>
         </Card>
 
-      {/* Debt Table */}
-      <Card>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Waktu</TableHead>
-                <TableHead>Keterangan</TableHead>
-                <TableHead className="text-center">Qty</TableHead>
-                <TableHead className="text-right">Harga Satuan</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tableRows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                    {format(new Date(row.timestamp), 'dd/MM/yy HH:mm', { locale: localeId })}
-                  </TableCell>
-                  <TableCell>
-                    {row.type === 'debt' ? (
-                      <span>{row.productName}</span>
-                    ) : (
-                      <span className="text-green-600 font-medium flex items-center gap-1">
-                        <Plus className="w-3 h-3" />
-                        Pembayaran
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {row.type === 'debt' ? row.quantity : '-'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {row.type === 'debt' ? formatCurrency(row.unitPrice || 0) : '-'}
-                  </TableCell>
-                  <TableCell className={`text-right font-medium ${row.type === 'payment' ? 'text-green-600' : ''}`}>
-                    {row.type === 'payment' ? formatCurrency(Math.abs(row.totalPrice)) : formatCurrency(row.totalPrice)}
-                    {row.type === 'payment' && <span className="ml-1">(-)</span>}
-                  </TableCell>
+        {/* Debt Table */}
+        <Card>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Waktu</TableHead>
+                  <TableHead>Keterangan</TableHead>
+                  <TableHead className="text-center">Qty</TableHead>
+                  <TableHead className="text-right">Harga Satuan</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {tableRows.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                      {format(new Date(row.timestamp), "dd/MM/yy HH:mm", {
+                        locale: localeId,
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      {row.type === "debt" ? (
+                        <span>{row.productName}</span>
+                      ) : (
+                        <span className="text-green-600 font-medium flex items-center gap-1">
+                          <Plus className="w-3 h-3" />
+                          Pembayaran
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {row.type === "debt" ? row.quantity : "-"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {row.type === "debt"
+                        ? formatCurrency(row.unitPrice || 0)
+                        : "-"}
+                    </TableCell>
+                    <TableCell
+                      className={`text-right font-medium ${row.type === "payment" ? "text-green-600" : ""}`}
+                    >
+                      {row.type === "payment"
+                        ? formatCurrency(Math.abs(row.totalPrice))
+                        : formatCurrency(row.totalPrice)}
+                      {row.type === "payment" && (
+                        <span className="ml-1">(-)</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
       </div>
 
       {/* Pay Dialog */}
@@ -589,7 +649,7 @@ export function DebtsPage() {
               <Input
                 id="payAmount"
                 type="number"
-                value={paymentAmount || ''}
+                value={paymentAmount || ""}
                 onChange={(e) => setPaymentAmount(Number(e.target.value))}
                 className="text-xl h-14 font-semibold"
                 autoFocus
@@ -607,7 +667,9 @@ export function DebtsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPaymentAmount(Math.round(selectedCustomer.totalDebt / 2))}
+                onClick={() =>
+                  setPaymentAmount(Math.round(selectedCustomer.totalDebt / 2))
+                }
               >
                 50%
               </Button>
@@ -624,7 +686,10 @@ export function DebtsPage() {
               <Button
                 className="flex-1"
                 onClick={handlePayDebt}
-                disabled={paymentAmount <= 0 || paymentAmount > selectedCustomer.totalDebt}
+                disabled={
+                  paymentAmount <= 0 ||
+                  paymentAmount > selectedCustomer.totalDebt
+                }
               >
                 Konfirmasi
               </Button>

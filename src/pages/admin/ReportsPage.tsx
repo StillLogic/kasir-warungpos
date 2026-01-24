@@ -1,22 +1,22 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Transaction } from '@/types/pos';
-import { DebtPayment } from '@/types/debt';
-import { waitForTransactions } from '@/database';
-import { getAllPayments, getDebts } from '@/database/debts';
-import { formatCurrency } from '@/lib/format';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  BarChart3, 
-  Download, 
-  TrendingUp, 
+import { useState, useEffect, useMemo } from "react";
+import { Transaction } from "@/types/pos";
+import { DebtPayment } from "@/types/debt";
+import { waitForTransactions } from "@/database";
+import { getAllPayments, getDebts } from "@/database/debts";
+import { formatCurrency } from "@/lib/format";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  BarChart3,
+  Download,
+  TrendingUp,
   Calendar,
   Loader2,
   Wallet,
   PiggyBank,
-  Percent
-} from 'lucide-react';
+  Percent,
+} from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -29,26 +29,26 @@ import {
   Line,
   AreaChart,
   Area,
-} from 'recharts';
+} from "recharts";
 
-type Period = 'daily' | 'weekly' | 'monthly';
-type ReportType = 'sales' | 'profit';
+type Period = "daily" | "weekly" | "monthly";
+type ReportType = "sales" | "profit";
 
 export function ReportsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [debtPayments, setDebtPayments] = useState<DebtPayment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<Period>('daily');
-  const [reportType, setReportType] = useState<ReportType>('sales');
+  const [period, setPeriod] = useState<Period>("daily");
+  const [reportType, setReportType] = useState<ReportType>("sales");
 
   useEffect(() => {
     let mounted = true;
-    
+
     const loadData = async () => {
       try {
         const [txData, payments] = await Promise.all([
           waitForTransactions(),
-          Promise.resolve(getAllPayments())
+          Promise.resolve(getAllPayments()),
         ]);
         if (mounted) {
           setTransactions(txData);
@@ -56,89 +56,96 @@ export function ReportsPage() {
           setLoading(false);
         }
       } catch (error) {
-        console.error('Failed to load reports data:', error);
         if (mounted) {
           setLoading(false);
         }
       }
     };
-    
+
     loadData();
-    
-    return () => { mounted = false; };
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Calculate profit from a cash transaction only
   const calculateProfit = (tx: Transaction) => {
-    // Debt transactions don't contribute to profit until paid
-    if (tx.paymentType === 'debt') return 0;
-    
+    if (tx.paymentType === "debt") return 0;
+
     return tx.items.reduce((sum, item) => {
       const costPrice = item.product.costPrice || 0;
-      const sellingPrice = item.priceType === 'wholesale' 
-        ? item.product.wholesalePrice 
-        : item.product.retailPrice;
+      const sellingPrice =
+        item.priceType === "wholesale"
+          ? item.product.wholesalePrice
+          : item.product.retailPrice;
       const profit = (sellingPrice - costPrice) * item.quantity;
       return sum + profit;
     }, 0);
   };
 
-  // Calculate profit from debt payments
-  // When a debt is paid, we recognize the profit proportionally
   const calculatePaymentProfit = useMemo(() => {
     const debts = getDebts();
-    const debtProfitMap = new Map<string, { totalProfit: number; total: number }>();
-    
-    // Find related transactions for each debt (by customerId match)
-    const debtTransactions = transactions.filter(tx => tx.paymentType === 'debt');
-    
-    // Calculate profit margin for each debt transaction
-    debtTransactions.forEach(tx => {
+    const debtProfitMap = new Map<
+      string,
+      { totalProfit: number; total: number }
+    >();
+
+    const debtTransactions = transactions.filter(
+      (tx) => tx.paymentType === "debt",
+    );
+
+    debtTransactions.forEach((tx) => {
       if (!tx.customerId) return;
-      
+
       const profit = tx.items.reduce((sum, item) => {
         const costPrice = item.product.costPrice || 0;
-        const sellingPrice = item.priceType === 'wholesale' 
-          ? item.product.wholesalePrice 
-          : item.product.retailPrice;
+        const sellingPrice =
+          item.priceType === "wholesale"
+            ? item.product.wholesalePrice
+            : item.product.retailPrice;
         return sum + (sellingPrice - costPrice) * item.quantity;
       }, 0);
-      
-      const existing = debtProfitMap.get(tx.customerId) || { totalProfit: 0, total: 0 };
+
+      const existing = debtProfitMap.get(tx.customerId) || {
+        totalProfit: 0,
+        total: 0,
+      };
       existing.totalProfit += profit;
       existing.total += tx.total;
       debtProfitMap.set(tx.customerId, existing);
     });
 
-    // Also check debt records for margin calculation
-    debts.forEach(debt => {
-      if (debtProfitMap.has(debt.customerId)) return; // Already from transaction
-      
-      // For older debts without transaction records, estimate margin from debt items
-      // We don't have costPrice in debt items, so we skip these
+    debts.forEach((debt) => {
+      if (debtProfitMap.has(debt.customerId)) return;
     });
 
     return (payment: DebtPayment): number => {
-      const customerId = payment.customerId || 
-        (payment.debtId.startsWith('customer-') ? payment.debtId.replace('customer-', '') : null);
-      
+      const customerId =
+        payment.customerId ||
+        (payment.debtId.startsWith("customer-")
+          ? payment.debtId.replace("customer-", "")
+          : null);
+
       if (!customerId) {
-        // Legacy single debt payment - find the debt and calculate
-        const debt = debts.find(d => d.id === payment.debtId);
+        const debt = debts.find((d) => d.id === payment.debtId);
         if (!debt) return 0;
-        
-        // Find matching transaction
-        const tx = debtTransactions.find(t => 
-          t.customerId === debt.customerId && 
-          Math.abs(new Date(t.createdAt).getTime() - new Date(debt.createdAt).getTime()) < 60000
+
+        const tx = debtTransactions.find(
+          (t) =>
+            t.customerId === debt.customerId &&
+            Math.abs(
+              new Date(t.createdAt).getTime() -
+                new Date(debt.createdAt).getTime(),
+            ) < 60000,
         );
-        
+
         if (tx) {
           const txProfit = tx.items.reduce((sum, item) => {
             const costPrice = item.product.costPrice || 0;
-            const sellingPrice = item.priceType === 'wholesale' 
-              ? item.product.wholesalePrice 
-              : item.product.retailPrice;
+            const sellingPrice =
+              item.priceType === "wholesale"
+                ? item.product.wholesalePrice
+                : item.product.retailPrice;
             return sum + (sellingPrice - costPrice) * item.quantity;
           }, 0);
           const margin = tx.total > 0 ? txProfit / tx.total : 0;
@@ -149,70 +156,93 @@ export function ReportsPage() {
 
       const profitData = debtProfitMap.get(customerId);
       if (!profitData || profitData.total === 0) return 0;
-      
-      // Proportional profit based on payment amount
+
       const margin = profitData.totalProfit / profitData.total;
       return payment.amount * margin;
     };
   }, [transactions]);
 
   const reportData = useMemo(() => {
-    const processTransactions = (txList: Transaction[], paymentList: DebtPayment[]) => {
-      // Revenue: only cash transactions (debt is not revenue until paid)
+    const processTransactions = (
+      txList: Transaction[],
+      paymentList: DebtPayment[],
+    ) => {
       const cashRevenue = txList
-        .filter(t => t.paymentType !== 'debt')
+        .filter((t) => t.paymentType !== "debt")
         .reduce((sum, t) => sum + t.total, 0);
-      
-      // Add debt payments as revenue (money received)
+
       const paymentRevenue = paymentList.reduce((sum, p) => sum + p.amount, 0);
       const revenue = cashRevenue + paymentRevenue;
-      
-      // Profit: cash transactions profit + debt payment profit
+
       const cashProfit = txList.reduce((sum, t) => sum + calculateProfit(t), 0);
-      const paymentProfit = paymentList.reduce((sum, p) => sum + calculatePaymentProfit(p), 0);
+      const paymentProfit = paymentList.reduce(
+        (sum, p) => sum + calculatePaymentProfit(p),
+        0,
+      );
       const profit = cashProfit + paymentProfit;
-      
+
       const cost = revenue - profit;
       return { revenue, profit, cost, transactions: txList.length };
     };
 
-    if (period === 'daily') {
-      const last30Days: { date: string; revenue: number; profit: number; cost: number; transactions: number; margin: number }[] = [];
-      
+    if (period === "daily") {
+      const last30Days: {
+        date: string;
+        revenue: number;
+        profit: number;
+        cost: number;
+        transactions: number;
+        margin: number;
+      }[] = [];
+
       for (let i = 29; i >= 0; i--) {
         const date = new Date(Date.now() - i * 86400000);
         const dateStr = date.toDateString();
-        const dayTx = transactions.filter(t => new Date(t.createdAt).toDateString() === dateStr);
-        const dayPayments = debtPayments.filter(p => new Date(p.createdAt).toDateString() === dateStr);
+        const dayTx = transactions.filter(
+          (t) => new Date(t.createdAt).toDateString() === dateStr,
+        );
+        const dayPayments = debtPayments.filter(
+          (p) => new Date(p.createdAt).toDateString() === dateStr,
+        );
         const data = processTransactions(dayTx, dayPayments);
-        
+
         last30Days.push({
-          date: date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
+          date: date.toLocaleDateString("id-ID", {
+            day: "2-digit",
+            month: "short",
+          }),
           ...data,
           margin: data.revenue > 0 ? (data.profit / data.revenue) * 100 : 0,
         });
       }
 
       return last30Days;
-    } else if (period === 'weekly') {
-      const weeks: { date: string; revenue: number; profit: number; cost: number; transactions: number; margin: number }[] = [];
-      
+    } else if (period === "weekly") {
+      const weeks: {
+        date: string;
+        revenue: number;
+        profit: number;
+        cost: number;
+        transactions: number;
+        margin: number;
+      }[] = [];
+
       for (let i = 11; i >= 0; i--) {
         const weekStart = new Date(Date.now() - (i * 7 + 6) * 86400000);
         const weekEnd = new Date(Date.now() - i * 7 * 86400000);
-        
-        const weekTx = transactions.filter(t => {
+
+        const weekTx = transactions.filter((t) => {
           const txDate = new Date(t.createdAt);
           return txDate >= weekStart && txDate <= weekEnd;
         });
-        const weekPayments = debtPayments.filter(p => {
+        const weekPayments = debtPayments.filter((p) => {
           const pDate = new Date(p.createdAt);
           return pDate >= weekStart && pDate <= weekEnd;
         });
-        
+
         const data = processTransactions(weekTx, weekPayments);
         weeks.push({
-          date: `${weekStart.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}`,
+          date: `${weekStart.toLocaleDateString("id-ID", { day: "2-digit", month: "short" })}`,
           ...data,
           margin: data.revenue > 0 ? (data.profit / data.revenue) * 100 : 0,
         });
@@ -220,26 +250,36 @@ export function ReportsPage() {
 
       return weeks;
     } else {
-      const months: { date: string; revenue: number; profit: number; cost: number; transactions: number; margin: number }[] = [];
-      
+      const months: {
+        date: string;
+        revenue: number;
+        profit: number;
+        cost: number;
+        transactions: number;
+        margin: number;
+      }[] = [];
+
       for (let i = 11; i >= 0; i--) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
         const month = date.getMonth();
         const year = date.getFullYear();
-        
-        const monthTx = transactions.filter(t => {
+
+        const monthTx = transactions.filter((t) => {
           const txDate = new Date(t.createdAt);
           return txDate.getMonth() === month && txDate.getFullYear() === year;
         });
-        const monthPayments = debtPayments.filter(p => {
+        const monthPayments = debtPayments.filter((p) => {
           const pDate = new Date(p.createdAt);
           return pDate.getMonth() === month && pDate.getFullYear() === year;
         });
-        
+
         const data = processTransactions(monthTx, monthPayments);
         months.push({
-          date: date.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }),
+          date: date.toLocaleDateString("id-ID", {
+            month: "short",
+            year: "2-digit",
+          }),
           ...data,
           margin: data.revenue > 0 ? (data.profit / data.revenue) * 100 : 0,
         });
@@ -253,11 +293,18 @@ export function ReportsPage() {
     const totalRevenue = reportData.reduce((sum, d) => sum + d.revenue, 0);
     const totalProfit = reportData.reduce((sum, d) => sum + d.profit, 0);
     const totalCost = reportData.reduce((sum, d) => sum + d.cost, 0);
-    const totalTransactions = reportData.reduce((sum, d) => sum + d.transactions, 0);
-    const avgRevenue = reportData.length > 0 ? totalRevenue / reportData.length : 0;
-    const avgProfit = reportData.length > 0 ? totalProfit / reportData.length : 0;
-    const avgTransactions = reportData.length > 0 ? totalTransactions / reportData.length : 0;
-    const overallMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    const totalTransactions = reportData.reduce(
+      (sum, d) => sum + d.transactions,
+      0,
+    );
+    const avgRevenue =
+      reportData.length > 0 ? totalRevenue / reportData.length : 0;
+    const avgProfit =
+      reportData.length > 0 ? totalProfit / reportData.length : 0;
+    const avgTransactions =
+      reportData.length > 0 ? totalTransactions / reportData.length : 0;
+    const overallMargin =
+      totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
     return {
       totalRevenue,
@@ -272,25 +319,26 @@ export function ReportsPage() {
   }, [reportData]);
 
   const handleExportCSV = () => {
-    const headers = reportType === 'sales' 
-      ? ['Tanggal', 'Pendapatan', 'Transaksi']
-      : ['Tanggal', 'Pendapatan', 'Modal', 'Profit', 'Margin (%)'];
-    
-    const rows = reportData.map(d => 
-      reportType === 'sales'
-        ? [d.date, d.revenue, d.transactions]
-        : [d.date, d.revenue, d.cost, d.profit, d.margin.toFixed(1)]
-    );
-    
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
+    const headers =
+      reportType === "sales"
+        ? ["Tanggal", "Pendapatan", "Transaksi"]
+        : ["Tanggal", "Pendapatan", "Modal", "Profit", "Margin (%)"];
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const rows = reportData.map((d) =>
+      reportType === "sales"
+        ? [d.date, d.revenue, d.transactions]
+        : [d.date, d.revenue, d.cost, d.profit, d.margin.toFixed(1)],
+    );
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `laporan-${reportType}-${period}-${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `laporan-${reportType}-${period}-${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
   };
 
@@ -308,7 +356,9 @@ export function ReportsPage() {
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold">Laporan</h1>
-          <p className="text-sm text-muted-foreground">Analisis penjualan dan profit warung</p>
+          <p className="text-sm text-muted-foreground">
+            Analisis penjualan dan profit warung
+          </p>
         </div>
         <Button onClick={handleExportCSV} variant="outline">
           <Download className="w-4 h-4 mr-2" />
@@ -317,7 +367,10 @@ export function ReportsPage() {
       </div>
 
       {/* Report Type Tabs */}
-      <Tabs value={reportType} onValueChange={(v) => setReportType(v as ReportType)}>
+      <Tabs
+        value={reportType}
+        onValueChange={(v) => setReportType(v as ReportType)}
+      >
         <TabsList>
           <TabsTrigger value="sales" className="gap-2">
             <TrendingUp className="w-4 h-4" />
@@ -364,7 +417,9 @@ export function ReportsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg sm:text-2xl font-bold">{summary.totalTransactions}</p>
+                <p className="text-lg sm:text-2xl font-bold">
+                  {summary.totalTransactions}
+                </p>
               </CardContent>
             </Card>
 
@@ -375,7 +430,9 @@ export function ReportsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg sm:text-2xl font-bold">{formatCurrency(summary.avgRevenue)}</p>
+                <p className="text-lg sm:text-2xl font-bold">
+                  {formatCurrency(summary.avgRevenue)}
+                </p>
               </CardContent>
             </Card>
 
@@ -386,7 +443,9 @@ export function ReportsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg sm:text-2xl font-bold">{summary.avgTransactions.toFixed(1)}</p>
+                <p className="text-lg sm:text-2xl font-bold">
+                  {summary.avgTransactions.toFixed(1)}
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -403,30 +462,36 @@ export function ReportsPage() {
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={reportData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis 
-                      dataKey="date" 
-                      className="text-xs" 
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                      interval={period === 'daily' ? 4 : 0}
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted"
                     />
-                    <YAxis 
-                      className="text-xs" 
-                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    <XAxis
+                      dataKey="date"
+                      className="text-xs"
+                      tick={{
+                        fill: "hsl(var(--muted-foreground))",
+                        fontSize: 10,
+                      }}
+                      interval={period === "daily" ? 4 : 0}
+                    />
+                    <YAxis
+                      className="text-xs"
+                      tick={{ fill: "hsl(var(--muted-foreground))" }}
                       tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number) => formatCurrency(value)}
-                      labelStyle={{ color: 'hsl(var(--foreground))' }}
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
+                      labelStyle={{ color: "hsl(var(--foreground))" }}
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
                       }}
                     />
-                    <Bar 
-                      dataKey="revenue" 
-                      fill="hsl(var(--primary))" 
+                    <Bar
+                      dataKey="revenue"
+                      fill="hsl(var(--primary))"
                       radius={[4, 4, 0, 0]}
                       name="Pendapatan"
                     />
@@ -448,31 +513,37 @@ export function ReportsPage() {
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={reportData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis 
-                      dataKey="date" 
-                      className="text-xs" 
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                      interval={period === 'daily' ? 4 : 0}
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted"
                     />
-                    <YAxis 
-                      className="text-xs" 
-                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    <XAxis
+                      dataKey="date"
+                      className="text-xs"
+                      tick={{
+                        fill: "hsl(var(--muted-foreground))",
+                        fontSize: 10,
+                      }}
+                      interval={period === "daily" ? 4 : 0}
                     />
-                    <Tooltip 
-                      labelStyle={{ color: 'hsl(var(--foreground))' }}
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
+                    <YAxis
+                      className="text-xs"
+                      tick={{ fill: "hsl(var(--muted-foreground))" }}
+                    />
+                    <Tooltip
+                      labelStyle={{ color: "hsl(var(--foreground))" }}
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
                       }}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="transactions" 
-                      stroke="hsl(var(--primary))" 
+                    <Line
+                      type="monotone"
+                      dataKey="transactions"
+                      stroke="hsl(var(--primary))"
                       strokeWidth={2}
-                      dot={{ fill: 'hsl(var(--primary))' }}
+                      dot={{ fill: "hsl(var(--primary))" }}
                       name="Transaksi"
                     />
                   </LineChart>
@@ -536,7 +607,9 @@ export function ReportsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg sm:text-2xl font-bold">{summary.overallMargin.toFixed(1)}%</p>
+                <p className="text-lg sm:text-2xl font-bold">
+                  {summary.overallMargin.toFixed(1)}%
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -553,43 +626,53 @@ export function ReportsPage() {
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={reportData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis 
-                      dataKey="date" 
-                      className="text-xs" 
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                      interval={period === 'daily' ? 4 : 0}
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted"
                     />
-                    <YAxis 
-                      className="text-xs" 
-                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    <XAxis
+                      dataKey="date"
+                      className="text-xs"
+                      tick={{
+                        fill: "hsl(var(--muted-foreground))",
+                        fontSize: 10,
+                      }}
+                      interval={period === "daily" ? 4 : 0}
+                    />
+                    <YAxis
+                      className="text-xs"
+                      tick={{ fill: "hsl(var(--muted-foreground))" }}
                       tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number, name: string) => [
                         formatCurrency(value),
-                        name === 'profit' ? 'Profit' : name === 'cost' ? 'Modal' : name
+                        name === "profit"
+                          ? "Profit"
+                          : name === "cost"
+                            ? "Modal"
+                            : name,
                       ]}
-                      labelStyle={{ color: 'hsl(var(--foreground))' }}
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
+                      labelStyle={{ color: "hsl(var(--foreground))" }}
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
                       }}
                     />
-                    <Area 
+                    <Area
                       type="monotone"
-                      dataKey="cost" 
+                      dataKey="cost"
                       stackId="1"
-                      fill="hsl(var(--muted))" 
+                      fill="hsl(var(--muted))"
                       stroke="hsl(var(--muted-foreground))"
                       name="Modal"
                     />
-                    <Area 
+                    <Area
                       type="monotone"
-                      dataKey="profit" 
+                      dataKey="profit"
                       stackId="1"
-                      fill="hsl(142 76% 36%)" 
+                      fill="hsl(142 76% 36%)"
                       stroke="hsl(142 76% 36%)"
                       name="Profit"
                     />
@@ -611,34 +694,43 @@ export function ReportsPage() {
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={reportData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis 
-                      dataKey="date" 
-                      className="text-xs" 
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                      interval={period === 'daily' ? 4 : 0}
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted"
                     />
-                    <YAxis 
-                      className="text-xs" 
-                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    <XAxis
+                      dataKey="date"
+                      className="text-xs"
+                      tick={{
+                        fill: "hsl(var(--muted-foreground))",
+                        fontSize: 10,
+                      }}
+                      interval={period === "daily" ? 4 : 0}
+                    />
+                    <YAxis
+                      className="text-xs"
+                      tick={{ fill: "hsl(var(--muted-foreground))" }}
                       tickFormatter={(v) => `${v.toFixed(0)}%`}
-                      domain={[0, 'auto']}
+                      domain={[0, "auto"]}
                     />
-                    <Tooltip 
-                      formatter={(value: number) => [`${value.toFixed(1)}%`, 'Margin']}
-                      labelStyle={{ color: 'hsl(var(--foreground))' }}
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
+                    <Tooltip
+                      formatter={(value: number) => [
+                        `${value.toFixed(1)}%`,
+                        "Margin",
+                      ]}
+                      labelStyle={{ color: "hsl(var(--foreground))" }}
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
                       }}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="margin" 
-                      stroke="hsl(142 76% 36%)" 
+                    <Line
+                      type="monotone"
+                      dataKey="margin"
+                      stroke="hsl(142 76% 36%)"
                       strokeWidth={2}
-                      dot={{ fill: 'hsl(142 76% 36%)' }}
+                      dot={{ fill: "hsl(142 76% 36%)" }}
                       name="Margin"
                     />
                   </LineChart>

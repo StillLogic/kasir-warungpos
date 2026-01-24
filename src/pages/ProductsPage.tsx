@@ -1,13 +1,20 @@
-import { useState, useEffect } from 'react';
-import { Product, ProductFormData } from '@/types/pos';
-import { getProducts, addProduct, updateProduct, deleteProduct, updateStock, waitForProducts } from '@/database';
-import { formatCurrency } from '@/lib/format';
-import { ProductForm } from '@/components/ProductForm';
-import { ImportProductDialog } from '@/components/ImportProductDialog';
-import { CategoryManager } from '@/components/CategoryManager';
-import { CSVProduct } from '@/lib/csv';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from "react";
+import { Product, ProductFormData } from "@/types/pos";
+import {
+  getProducts,
+  addProduct,
+  updateProduct,
+  deleteProduct,
+  updateStock,
+  waitForProducts,
+} from "@/database";
+import { formatCurrency } from "@/lib/format";
+import { ProductForm } from "@/components/ProductForm";
+import { ImportProductDialog } from "@/components/ImportProductDialog";
+import { CategoryManager } from "@/components/CategoryManager";
+import { CSVProduct } from "@/lib/csv";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -15,13 +22,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,21 +38,36 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { toast } from '@/hooks/use-toast';
-import { Plus, Search, MoreVertical, Pencil, Trash2, PackagePlus, PackageMinus, AlertCircle, Loader2, Upload, Tag } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
+import {
+  Plus,
+  Search,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  PackagePlus,
+  PackageMinus,
+  AlertCircle,
+  Loader2,
+  Upload,
+  Tag,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
-  const [stockAdjust, setStockAdjust] = useState<{ product: Product; type: 'add' | 'subtract' } | null>(null);
-  const [stockAmount, setStockAmount] = useState('');
+  const [stockAdjust, setStockAdjust] = useState<{
+    product: Product;
+    type: "add" | "subtract";
+  } | null>(null);
+  const [stockAmount, setStockAmount] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -53,7 +75,7 @@ export function ProductsPage() {
 
   useEffect(() => {
     let mounted = true;
-    
+
     const loadProducts = async () => {
       try {
         const data = await waitForProducts();
@@ -62,40 +84,43 @@ export function ProductsPage() {
           setLoading(false);
         }
       } catch (error) {
-        console.error('Failed to load products:', error);
         if (mounted) {
           setLoading(false);
         }
       }
     };
-    
+
     loadProducts();
-    
-    return () => { mounted = false; };
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Sort by stock (lowest first) then filter
   const filteredProducts = products
-    .filter(p =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku.toLowerCase().includes(search.toLowerCase()) ||
-      p.category.toLowerCase().includes(search.toLowerCase())
+    .filter(
+      (p) =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.sku.toLowerCase().includes(search.toLowerCase()) ||
+        p.category.toLowerCase().includes(search.toLowerCase()),
     )
     .sort((a, b) => a.stock - b.stock);
 
-  const allSelected = filteredProducts.length > 0 && filteredProducts.every(p => selectedIds.has(p.id));
-  const someSelected = filteredProducts.some(p => selectedIds.has(p.id));
+  const allSelected =
+    filteredProducts.length > 0 &&
+    filteredProducts.every((p) => selectedIds.has(p.id));
+  const someSelected = filteredProducts.some((p) => selectedIds.has(p.id));
 
   const toggleSelectAll = () => {
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredProducts.map(p => p.id)));
+      setSelectedIds(new Set(filteredProducts.map((p) => p.id)));
     }
   };
 
   const toggleSelect = (id: string) => {
-    setSelectedIds(prev => {
+    setSelectedIds((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
         newSet.delete(id);
@@ -108,18 +133,18 @@ export function ProductsPage() {
 
   const handleAddProduct = (data: ProductFormData) => {
     const newProduct = addProduct(data);
-    setProducts(prev => [...prev, newProduct]);
+    setProducts((prev) => [...prev, newProduct]);
     toast({
-      title: 'Produk Ditambahkan',
+      title: "Produk Ditambahkan",
       description: `${data.name} berhasil ditambahkan`,
     });
   };
 
   const handleImportProducts = (csvProducts: CSVProduct[]) => {
-    const newProducts = csvProducts.map(p => addProduct(p));
-    setProducts(prev => [...prev, ...newProducts]);
+    const newProducts = csvProducts.map((p) => addProduct(p));
+    setProducts((prev) => [...prev, ...newProducts]);
     toast({
-      title: 'Import Berhasil',
+      title: "Import Berhasil",
       description: `${newProducts.length} produk berhasil ditambahkan`,
     });
   };
@@ -128,9 +153,11 @@ export function ProductsPage() {
     if (!editingProduct) return;
     const updated = updateProduct(editingProduct.id, data);
     if (updated) {
-      setProducts(prev => prev.map(p => p.id === editingProduct.id ? updated : p));
+      setProducts((prev) =>
+        prev.map((p) => (p.id === editingProduct.id ? updated : p)),
+      );
       toast({
-        title: 'Produk Diperbarui',
+        title: "Produk Diperbarui",
         description: `${data.name} berhasil diperbarui`,
       });
     }
@@ -140,14 +167,14 @@ export function ProductsPage() {
   const handleDeleteProduct = () => {
     if (!deleteTarget) return;
     deleteProduct(deleteTarget.id);
-    setProducts(prev => prev.filter(p => p.id !== deleteTarget.id));
-    setSelectedIds(prev => {
+    setProducts((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+    setSelectedIds((prev) => {
       const newSet = new Set(prev);
       newSet.delete(deleteTarget.id);
       return newSet;
     });
     toast({
-      title: 'Produk Dihapus',
+      title: "Produk Dihapus",
       description: `${deleteTarget.name} berhasil dihapus`,
     });
     setDeleteTarget(null);
@@ -155,12 +182,12 @@ export function ProductsPage() {
 
   const handleBulkDelete = () => {
     const count = selectedIds.size;
-    selectedIds.forEach(id => deleteProduct(id));
-    setProducts(prev => prev.filter(p => !selectedIds.has(p.id)));
+    selectedIds.forEach((id) => deleteProduct(id));
+    setProducts((prev) => prev.filter((p) => !selectedIds.has(p.id)));
     setSelectedIds(new Set());
     setBulkDeleteOpen(false);
     toast({
-      title: 'Produk Dihapus',
+      title: "Produk Dihapus",
       description: `${count} produk berhasil dihapus`,
     });
   };
@@ -170,21 +197,23 @@ export function ProductsPage() {
     const amount = parseInt(stockAmount);
     if (isNaN(amount) || amount <= 0) return;
 
-    const adjustedAmount = stockAdjust.type === 'add' ? amount : -amount;
+    const adjustedAmount = stockAdjust.type === "add" ? amount : -amount;
     updateStock(stockAdjust.product.id, adjustedAmount);
-    setProducts(prev => prev.map(p => 
-      p.id === stockAdjust.product.id 
-        ? { ...p, stock: p.stock + adjustedAmount }
-        : p
-    ));
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === stockAdjust.product.id
+          ? { ...p, stock: p.stock + adjustedAmount }
+          : p,
+      ),
+    );
 
     toast({
-      title: 'Stok Diperbarui',
-      description: `Stok ${stockAdjust.product.name} ${stockAdjust.type === 'add' ? 'ditambah' : 'dikurangi'} ${amount}`,
+      title: "Stok Diperbarui",
+      description: `Stok ${stockAdjust.product.name} ${stockAdjust.type === "add" ? "ditambah" : "dikurangi"} ${amount}`,
     });
 
     setStockAdjust(null);
-    setStockAmount('');
+    setStockAmount("");
   };
 
   return (
@@ -193,10 +222,15 @@ export function ProductsPage() {
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div>
           <h1 className="text-2xl font-bold">Manajemen Produk</h1>
-          <p className="text-muted-foreground">Kelola produk dan stok warung Anda</p>
+          <p className="text-muted-foreground">
+            Kelola produk dan stok warung Anda
+          </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => setCategoryManagerOpen(true)}>
+          <Button
+            variant="outline"
+            onClick={() => setCategoryManagerOpen(true)}
+          >
             <Tag className="w-4 h-4 mr-2" />
             Kategori
           </Button>
@@ -223,10 +257,7 @@ export function ProductsPage() {
           />
         </div>
         {selectedIds.size > 0 && (
-          <Button 
-            variant="destructive" 
-            onClick={() => setBulkDeleteOpen(true)}
-          >
+          <Button variant="destructive" onClick={() => setBulkDeleteOpen(true)}>
             <Trash2 className="w-4 h-4 mr-2" />
             Hapus {selectedIds.size} Produk
           </Button>
@@ -239,7 +270,7 @@ export function ProductsPage() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-12">
-                <Checkbox 
+                <Checkbox
                   checked={allSelected}
                   onCheckedChange={toggleSelectAll}
                   aria-label="Pilih semua"
@@ -266,10 +297,13 @@ export function ProductsPage() {
               </TableRow>
             ) : filteredProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
-                  {products.length === 0 
+                <TableCell
+                  colSpan={8}
+                  className="h-32 text-center text-muted-foreground"
+                >
+                  {products.length === 0
                     ? 'Belum ada produk. Klik "Tambah Produk" untuk memulai.'
-                    : 'Tidak ditemukan produk yang sesuai.'}
+                    : "Tidak ditemukan produk yang sesuai."}
                 </TableCell>
               </TableRow>
             ) : (
@@ -278,9 +312,12 @@ export function ProductsPage() {
                 const outOfStock = product.stock === 0;
                 const isSelected = selectedIds.has(product.id);
                 return (
-                  <TableRow key={product.id} className={cn(isSelected && 'bg-accent/50')}>
+                  <TableRow
+                    key={product.id}
+                    className={cn(isSelected && "bg-accent/50")}
+                  >
                     <TableCell>
-                      <Checkbox 
+                      <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => toggleSelect(product.id)}
                         aria-label={`Pilih ${product.name}`}
@@ -289,7 +326,9 @@ export function ProductsPage() {
                     <TableCell>
                       <div>
                         <p className="font-medium">{product.name}</p>
-                        <p className="text-sm text-muted-foreground">{product.sku}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {product.sku}
+                        </p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -298,7 +337,9 @@ export function ProductsPage() {
                       </span>
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground">
-                      {product.costPrice > 0 ? formatCurrency(product.costPrice) : '-'}
+                      {product.costPrice > 0
+                        ? formatCurrency(product.costPrice)
+                        : "-"}
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatCurrency(product.retailPrice)}
@@ -306,7 +347,9 @@ export function ProductsPage() {
                     <TableCell className="text-right">
                       {product.wholesalePrice > 0 ? (
                         <div>
-                          <p className="font-medium">{formatCurrency(product.wholesalePrice)}</p>
+                          <p className="font-medium">
+                            {formatCurrency(product.wholesalePrice)}
+                          </p>
                           <p className="text-xs text-muted-foreground">
                             min. {product.wholesaleMinQty} {product.unit}
                           </p>
@@ -316,15 +359,19 @@ export function ProductsPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-center">
-                      <div className={cn(
-                        'inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium',
-                        outOfStock 
-                          ? 'bg-destructive/10 text-destructive'
-                          : lowStock 
-                            ? 'bg-warning/10 text-warning'
-                            : 'bg-accent text-accent-foreground'
-                      )}>
-                        {(lowStock || outOfStock) && <AlertCircle className="w-3 h-3" />}
+                      <div
+                        className={cn(
+                          "inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium",
+                          outOfStock
+                            ? "bg-destructive/10 text-destructive"
+                            : lowStock
+                              ? "bg-warning/10 text-warning"
+                              : "bg-accent text-accent-foreground",
+                        )}
+                      >
+                        {(lowStock || outOfStock) && (
+                          <AlertCircle className="w-3 h-3" />
+                        )}
                         {product.stock} {product.unit}
                       </div>
                     </TableCell>
@@ -336,22 +383,32 @@ export function ProductsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => {
-                            setEditingProduct(product);
-                            setFormOpen(true);
-                          }}>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setEditingProduct(product);
+                              setFormOpen(true);
+                            }}
+                          >
                             <Pencil className="w-4 h-4 mr-2" />
                             Edit Produk
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setStockAdjust({ product, type: 'add' })}>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setStockAdjust({ product, type: "add" })
+                            }
+                          >
                             <PackagePlus className="w-4 h-4 mr-2" />
                             Tambah Stok
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setStockAdjust({ product, type: 'subtract' })}>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setStockAdjust({ product, type: "subtract" })
+                            }
+                          >
                             <PackageMinus className="w-4 h-4 mr-2" />
                             Kurangi Stok
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => setDeleteTarget(product)}
                             className="text-destructive focus:text-destructive"
                           >
@@ -388,17 +445,24 @@ export function ProductsPage() {
       />
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Produk?</AlertDialogTitle>
             <AlertDialogDescription>
-              Anda yakin ingin menghapus {deleteTarget?.name}? Tindakan ini tidak dapat dibatalkan.
+              Anda yakin ingin menghapus {deleteTarget?.name}? Tindakan ini
+              tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteProduct} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDeleteProduct}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Hapus
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -406,14 +470,21 @@ export function ProductsPage() {
       </AlertDialog>
 
       {/* Stock Adjustment Dialog */}
-      <AlertDialog open={!!stockAdjust} onOpenChange={() => { setStockAdjust(null); setStockAmount(''); }}>
+      <AlertDialog
+        open={!!stockAdjust}
+        onOpenChange={() => {
+          setStockAdjust(null);
+          setStockAmount("");
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {stockAdjust?.type === 'add' ? 'Tambah' : 'Kurangi'} Stok
+              {stockAdjust?.type === "add" ? "Tambah" : "Kurangi"} Stok
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {stockAdjust?.product.name} - Stok saat ini: {stockAdjust?.product.stock} {stockAdjust?.product.unit}
+              {stockAdjust?.product.name} - Stok saat ini:{" "}
+              {stockAdjust?.product.stock} {stockAdjust?.product.unit}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4">
@@ -426,8 +497,13 @@ export function ProductsPage() {
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setStockAmount('')}>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleStockAdjust} disabled={!stockAmount || parseInt(stockAmount) <= 0}>
+            <AlertDialogCancel onClick={() => setStockAmount("")}>
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleStockAdjust}
+              disabled={!stockAmount || parseInt(stockAmount) <= 0}
+            >
               Simpan
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -437,14 +513,20 @@ export function ProductsPage() {
       <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus {selectedIds.size} Produk?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Hapus {selectedIds.size} Produk?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Anda yakin ingin menghapus {selectedIds.size} produk yang dipilih? Tindakan ini tidak dapat dibatalkan.
+              Anda yakin ingin menghapus {selectedIds.size} produk yang dipilih?
+              Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Hapus Semua
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -452,9 +534,9 @@ export function ProductsPage() {
       </AlertDialog>
 
       {/* Category Manager */}
-      <CategoryManager 
-        open={categoryManagerOpen} 
-        onClose={() => setCategoryManagerOpen(false)} 
+      <CategoryManager
+        open={categoryManagerOpen}
+        onClose={() => setCategoryManagerOpen(false)}
       />
     </div>
   );

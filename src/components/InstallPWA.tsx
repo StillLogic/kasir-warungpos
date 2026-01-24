@@ -1,20 +1,20 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Download, X } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Download, X } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
 export function InstallPWA() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [showInstall, setShowInstall] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    if (window.matchMedia("(display-mode: standalone)").matches) {
       setIsInstalled(true);
       return;
     }
@@ -25,16 +25,15 @@ export function InstallPWA() {
       setShowInstall(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener("beforeinstallprompt", handler);
 
-    // Check if installed via app installed event
-    window.addEventListener('appinstalled', () => {
+    window.addEventListener("appinstalled", () => {
       setIsInstalled(true);
       setShowInstall(false);
     });
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener("beforeinstallprompt", handler);
     };
   }, []);
 
@@ -43,8 +42,8 @@ export function InstallPWA() {
 
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
+
+    if (outcome === "accepted") {
       setShowInstall(false);
     }
     setDeferredPrompt(null);
@@ -52,12 +51,10 @@ export function InstallPWA() {
 
   const handleDismiss = () => {
     setShowInstall(false);
-    // Don't show again for this session
-    sessionStorage.setItem('pwa-dismissed', 'true');
+    sessionStorage.setItem("pwa-dismissed", "true");
   };
 
-  // Don't show if already installed, dismissed, or no prompt available
-  if (isInstalled || !showInstall || sessionStorage.getItem('pwa-dismissed')) {
+  if (isInstalled || !showInstall || sessionStorage.getItem("pwa-dismissed")) {
     return null;
   }
 
