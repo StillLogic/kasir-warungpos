@@ -47,7 +47,7 @@ export function HistoryPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-16">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">Riwayat Transaksi</h1>
