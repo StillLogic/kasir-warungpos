@@ -302,7 +302,7 @@ export function DebtsPage() {
   // Customer List View
   if (!selectedCustomer) {
     return (
-      <div className="space-y-6 pb-16">
+      <div className="space-y-6">
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card>
@@ -409,7 +409,7 @@ export function DebtsPage() {
 
   // Customer Detail View - Simple Table
   return (
-    <div className="space-y-6 pb-16">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={handleBack}>
