@@ -55,7 +55,7 @@ export function Layout({ children }: LayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full px-4 lg:px-6 py-4 overflow-y-auto overflow-x-hidden scrollbar-hide">
+      <main className="flex-1 w-full px-4 lg:px-6 py-4 overflow-y-auto overflow-x-hidden scrollbar-hide safe-bottom">
         {children}
       </main>
     </div>

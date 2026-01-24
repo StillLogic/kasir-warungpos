@@ -108,7 +108,8 @@
   body,
   #root {
     height: 100%;
-    height: 100dvh;
+    height: 100vh;
+    height: 100svh; /* Small viewport height for mobile */
     margin: 0;
     padding: 0;
     overflow: hidden;

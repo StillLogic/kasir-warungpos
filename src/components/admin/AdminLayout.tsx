@@ -120,7 +120,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             className="fixed inset-0 bg-black/50 z-40"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="fixed left-0 top-0 bottom-0 w-64 bg-card z-50 shadow-xl h-full">
+          <aside className="fixed left-0 top-0 bottom-0 w-64 bg-card z-50 shadow-xl safe-top safe-bottom">
             <SidebarContent />
           </aside>
         </>
@@ -149,7 +149,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
         {/* Page Content */}
         <main
-          className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide p-4 lg:p-6"
+          className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide p-4 lg:p-6 safe-bottom"
           data-scrollable
         >
           {children}
