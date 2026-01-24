@@ -102,9 +102,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div 
-      className="min-h-dvh bg-background flex overflow-hidden"
+      className="h-full min-h-dvh bg-background flex overflow-hidden"
       style={{ 
-        minHeight: "calc(var(--vh, 1vh) * 100)",
         paddingBottom: "env(safe-area-inset-bottom, 0px)"
       }}
     >
