@@ -4,7 +4,7 @@ import { generateId, toUnix, fromUnix } from './utils';
 import { getDB } from './db';
 import { updateStockAsync, getProductsAsync } from './products';
 
-// Konversi CartItem ke format ringan
+
 function itemToRecord(item: CartItem): CartItemRecord {
   return {
     pi: item.product.id,
@@ -16,7 +16,7 @@ function itemToRecord(item: CartItem): CartItemRecord {
   };
 }
 
-// Konversi format ringan ke CartItem
+
 async function itemFromRecord(r: CartItemRecord): Promise<CartItem> {
   const products = await getProductsAsync();
   const product = products.find(p => p.id === r.pi);
@@ -42,7 +42,7 @@ async function itemFromRecord(r: CartItemRecord): Promise<CartItem> {
   };
 }
 
-// Konversi format ringan ke Transaction
+
 async function fromRecord(r: TransactionRecord): Promise<Transaction> {
   const items = await Promise.all(r.it.map(itemFromRecord));
   return {
@@ -58,11 +58,11 @@ async function fromRecord(r: TransactionRecord): Promise<Transaction> {
   };
 }
 
-// Public API - Async functions
+
 export async function getTransactionsAsync(): Promise<Transaction[]> {
   const db = await getDB();
   const records = await db.getAll('transactions');
-  // Sort by date descending
+  
   records.sort((a, b) => b.ca - a.ca);
   return Promise.all(records.map(fromRecord));
 }
@@ -85,7 +85,7 @@ export async function saveTransactionAsync(transaction: Omit<Transaction, 'id' |
 
   await db.put('transactions', newRecord);
 
-  // Update stock for each item (only for cash transactions, debt handles stock separately)
+  
   if (transaction.paymentType !== 'debt') {
     for (const item of transaction.items) {
       await updateStockAsync(item.product.id, -item.quantity);
@@ -106,7 +106,7 @@ export async function getTodayRevenueAsync(): Promise<number> {
   return todayTx.reduce((sum, t) => sum + t.total, 0);
 }
 
-// Synchronous wrappers for backward compatibility
+
 let cachedTransactions: Transaction[] = [];
 let txCacheInitialized = false;
 let txCachePromise: Promise<void> | null = null;
@@ -117,7 +117,7 @@ async function ensureTxCache(): Promise<void> {
   
   txCachePromise = (async () => {
     try {
-      // Add timeout to prevent infinite loading
+      
       const timeoutPromise = new Promise<Transaction[]>((_, reject) => 
         setTimeout(() => reject(new Error('Timeout')), 5000)
       );
@@ -133,7 +133,7 @@ async function ensureTxCache(): Promise<void> {
   return txCachePromise;
 }
 
-// Wait for transactions cache to be ready
+
 export async function waitForTransactions(): Promise<Transaction[]> {
   try {
     await ensureTxCache();
@@ -158,7 +158,7 @@ export function saveTransaction(transaction: Omit<Transaction, 'id' | 'createdAt
   };
   cachedTransactions.unshift(newTransaction);
   
-  // Async save
+  
   saveTransactionAsync(transaction).then(t => {
     const idx = cachedTransactions.findIndex(ct => ct.id === newTransaction.id);
     if (idx !== -1) cachedTransactions[idx] = t;
@@ -176,5 +176,5 @@ export function getTodayRevenue(): number {
   return getTodayTransactions().reduce((sum, t) => sum + t.total, 0);
 }
 
-// Initialize cache
+
 ensureTxCache();

@@ -74,7 +74,7 @@ export function ProductsPage() {
     return () => { mounted = false; };
   }, []);
 
-  // Sort by stock (lowest first) then filter
+  
   const filteredProducts = products
     .filter(p =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -189,7 +189,7 @@ export function ProductsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div>
           <h1 className="text-2xl font-bold">Manajemen Produk</h1>
@@ -211,7 +211,7 @@ export function ProductsPage() {
         </div>
       </div>
 
-      {/* Search and Bulk Actions */}
+      
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -233,7 +233,7 @@ export function ProductsPage() {
         )}
       </div>
 
-      {/* Products Table */}
+      
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
@@ -369,7 +369,7 @@ export function ProductsPage() {
         </Table>
       </div>
 
-      {/* Product Form Dialog */}
+      
       <ProductForm
         open={formOpen}
         onClose={() => {
@@ -380,14 +380,14 @@ export function ProductsPage() {
         product={editingProduct}
       />
 
-      {/* Import Dialog */}
+      
       <ImportProductDialog
         open={importOpen}
         onClose={() => setImportOpen(false)}
         onImport={handleImportProducts}
       />
 
-      {/* Delete Confirmation */}
+      
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -405,7 +405,7 @@ export function ProductsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Stock Adjustment Dialog */}
+      
       <AlertDialog open={!!stockAdjust} onOpenChange={() => { setStockAdjust(null); setStockAmount(''); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -433,7 +433,7 @@ export function ProductsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {/* Bulk Delete Confirmation */}
+      
       <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -451,7 +451,7 @@ export function ProductsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Category Manager */}
+      
       <CategoryManager 
         open={categoryManagerOpen} 
         onClose={() => setCategoryManagerOpen(false)} 

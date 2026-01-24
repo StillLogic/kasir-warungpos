@@ -76,7 +76,7 @@ export function DebtDialog({ open, onClose, onConfirm, total, items }: DebtDialo
         </DialogHeader>
 
         <div className="flex flex-col gap-4 flex-1 min-h-0">
-          {/* Summary */}
+          
           <div className="bg-muted rounded-lg p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Jumlah Item</span>
@@ -88,7 +88,7 @@ export function DebtDialog({ open, onClose, onConfirm, total, items }: DebtDialo
             </div>
           </div>
 
-          {/* Search & Add Customer */}
+          
           {!showAddForm ? (
             <>
               <div className="relative">
@@ -110,7 +110,7 @@ export function DebtDialog({ open, onClose, onConfirm, total, items }: DebtDialo
                 Tambah Pelanggan Baru
               </Button>
 
-              {/* Customer List */}
+              
               <ScrollArea className="flex-1 -mx-6 px-6">
                 <div className="space-y-2">
                   {filteredCustomers.length === 0 ? (
@@ -196,7 +196,7 @@ export function DebtDialog({ open, onClose, onConfirm, total, items }: DebtDialo
             </div>
           )}
 
-          {/* Actions */}
+          
           {!showAddForm && (
             <div className="flex gap-3 pt-2">
               <Button variant="outline" className="flex-1" onClick={handleClose}>

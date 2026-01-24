@@ -1,4 +1,4 @@
-// CSV utilities for product import/export
+
 import { getCategoryNames } from '@/database/categories';
 
 export interface CSVProduct {
@@ -15,7 +15,7 @@ export interface CSVProduct {
 
 const UNITS = ['pcs', 'kg', 'liter', 'pack', 'dus', 'sachet'];
 
-// Generate CSV template
+
 export function generateCSVTemplate(): string {
   const headers = ['name', 'sku', 'category', 'costPrice', 'retailPrice', 'wholesalePrice', 'wholesaleMinQty', 'stock', 'unit'];
   const exampleRows = [
@@ -32,7 +32,7 @@ export function generateCSVTemplate(): string {
   return csvContent;
 }
 
-// Parse CSV content to product array
+
 export function parseCSV(content: string): { products: CSVProduct[]; errors: string[] } {
   const lines = content.trim().split('\n');
   const products: CSVProduct[] = [];
@@ -43,7 +43,7 @@ export function parseCSV(content: string): { products: CSVProduct[]; errors: str
     return { products, errors };
   }
   
-  // Parse header
+  
   const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
   const requiredHeaders = ['name', 'sku', 'category', 'retailprice', 'stock', 'unit'];
   
@@ -57,7 +57,7 @@ export function parseCSV(content: string): { products: CSVProduct[]; errors: str
     return { products, errors };
   }
   
-  // Get column indices
+  
   const nameIdx = headers.indexOf('name');
   const skuIdx = headers.indexOf('sku');
   const categoryIdx = headers.indexOf('category');
@@ -68,7 +68,7 @@ export function parseCSV(content: string): { products: CSVProduct[]; errors: str
   const stockIdx = headers.indexOf('stock');
   const unitIdx = headers.indexOf('unit');
   
-  // Parse data rows
+  
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
@@ -76,7 +76,7 @@ export function parseCSV(content: string): { products: CSVProduct[]; errors: str
     const values = parseCSVLine(line);
     const rowNum = i + 1;
     
-    // Validate required fields
+    
     const name = values[nameIdx]?.trim();
     const sku = values[skuIdx]?.trim();
     const category = values[categoryIdx]?.trim();
@@ -117,7 +117,7 @@ export function parseCSV(content: string): { products: CSVProduct[]; errors: str
       continue;
     }
     
-    // Optional fields
+    
     const costPrice = parseFloat(values[costPriceIdx]?.trim() || '0') || 0;
     const wholesalePrice = parseFloat(values[wholesalePriceIdx]?.trim() || '0') || 0;
     const wholesaleMinQty = parseInt(values[wholesaleMinQtyIdx]?.trim() || '0') || 0;
@@ -138,7 +138,7 @@ export function parseCSV(content: string): { products: CSVProduct[]; errors: str
   return { products, errors };
 }
 
-// Parse a single CSV line (handles quoted values)
+
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
@@ -161,7 +161,7 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
-// Download CSV file
+
 export function downloadCSV(content: string, filename: string): void {
   const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

@@ -257,7 +257,7 @@ export function CategoryManager({ open, onClose, onCategoriesChange }: CategoryM
         </DialogContent>
       </Dialog>
 
-      {/* Add/Edit Form Dialog */}
+      
       <Dialog open={formOpen} onOpenChange={handleCloseForm}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -303,7 +303,7 @@ export function CategoryManager({ open, onClose, onCategoriesChange }: CategoryM
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
+      
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

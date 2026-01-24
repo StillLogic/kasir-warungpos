@@ -91,7 +91,7 @@ export function ImportProductDialog({ open, onClose, onImport }: ImportProductDi
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Download Template */}
+          
           <div className="flex items-center gap-4 p-4 bg-accent/50 rounded-lg">
             <FileText className="w-8 h-8 text-primary" />
             <div className="flex-1">
@@ -106,7 +106,7 @@ export function ImportProductDialog({ open, onClose, onImport }: ImportProductDi
             </Button>
           </div>
 
-          {/* File Upload */}
+          
           <div className="border-2 border-dashed border-border rounded-lg p-6">
             <input
               ref={inputRef}
@@ -130,10 +130,10 @@ export function ImportProductDialog({ open, onClose, onImport }: ImportProductDi
             </label>
           </div>
 
-          {/* Preview Results */}
+          
           {preview && (
             <div className="space-y-3">
-              {/* Success Count */}
+              
               {preview.products.length > 0 && (
                 <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
                   <CheckCircle2 className="w-4 h-4" />
@@ -141,7 +141,7 @@ export function ImportProductDialog({ open, onClose, onImport }: ImportProductDi
                 </div>
               )}
 
-              {/* Error List */}
+              
               {preview.errors.length > 0 && (
                 <div className="bg-destructive/10 rounded-lg p-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-destructive mb-2">
@@ -158,7 +158,7 @@ export function ImportProductDialog({ open, onClose, onImport }: ImportProductDi
                 </div>
               )}
 
-              {/* Product Preview Table */}
+              
               {preview.products.length > 0 && (
                 <div className="border rounded-lg overflow-hidden">
                   <ScrollArea className="h-48">

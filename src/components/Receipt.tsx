@@ -47,7 +47,7 @@ function getSettings(): StoreSettings {
       return { ...defaultSettings, ...JSON.parse(saved) };
     }
   } catch {
-    // ignore
+    
   }
   return defaultSettings;
 }
@@ -181,7 +181,7 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
         </DialogHeader>
 
         <div ref={receiptRef} className="bg-white p-4 space-y-4">
-          {/* Store Header */}
+          
           <div className="text-center border-b border-dashed border-gray-300 pb-4">
             <h2 className="text-xl font-bold text-black">{settings.storeName}</h2>
             {settings.storeAddress && (
@@ -198,7 +198,7 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
             </p>
           </div>
 
-          {/* Items */}
+          
           <div className="space-y-2">
             {transaction.items.map((item, index) => (
               <div key={index} className="flex justify-between text-sm text-black">
@@ -217,7 +217,7 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
             ))}
           </div>
 
-          {/* Totals */}
+          
           <div className="border-t border-dashed border-gray-300 pt-4 space-y-2">
             <div className="flex justify-between font-bold text-lg text-black">
               <span>Total</span>
@@ -235,7 +235,7 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
             </div>
           </div>
 
-          {/* Footer */}
+          
           <div className="text-center border-t border-dashed border-gray-300 pt-4">
             <p className="text-sm text-gray-600">{settings.receiptFooter}</p>
           </div>

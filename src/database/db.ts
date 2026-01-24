@@ -24,13 +24,13 @@ export async function getDB(): Promise<IDBPDatabase<WarungPOSDB>> {
 
   dbInstance = await openDB<WarungPOSDB>(DB_NAME, DB_VERSION, {
     upgrade(db) {
-      // Products store
+      
       if (!db.objectStoreNames.contains('products')) {
         const productStore = db.createObjectStore('products', { keyPath: 'i' });
         productStore.createIndex('by-sku', 's');
       }
 
-      // Transactions store
+      
       if (!db.objectStoreNames.contains('transactions')) {
         const txStore = db.createObjectStore('transactions', { keyPath: 'i' });
         txStore.createIndex('by-date', 'ca');
@@ -41,11 +41,11 @@ export async function getDB(): Promise<IDBPDatabase<WarungPOSDB>> {
   return dbInstance;
 }
 
-// Migrasi data dari localStorage ke IndexedDB (one-time)
+
 export async function migrateFromLocalStorage(): Promise<void> {
   const db = await getDB();
   
-  // Migrate products
+  
   const oldProducts = localStorage.getItem('db_products');
   if (oldProducts) {
     const products: ProductRecord[] = JSON.parse(oldProducts);
@@ -57,14 +57,14 @@ export async function migrateFromLocalStorage(): Promise<void> {
     localStorage.removeItem('db_products');
   }
 
-  // Also check old key
+  
   const legacyProducts = localStorage.getItem('pos_products');
   if (legacyProducts) {
-    // This is the old format, need to convert
+    
     localStorage.removeItem('pos_products');
   }
 
-  // Migrate transactions
+  
   const oldTransactions = localStorage.getItem('db_transactions');
   if (oldTransactions) {
     const transactions: TransactionRecord[] = JSON.parse(oldTransactions);
@@ -76,7 +76,7 @@ export async function migrateFromLocalStorage(): Promise<void> {
     localStorage.removeItem('db_transactions');
   }
 
-  // Also check old key
+  
   const legacyTransactions = localStorage.getItem('pos_transactions');
   if (legacyTransactions) {
     localStorage.removeItem('pos_transactions');

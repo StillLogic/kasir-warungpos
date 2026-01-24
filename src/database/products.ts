@@ -3,7 +3,7 @@ import { ProductRecord } from './types';
 import { generateId, toUnix, fromUnix } from './utils';
 import { getDB } from './db';
 
-// Konversi Product ke format ringan
+
 function toRecord(p: Product): ProductRecord {
   return {
     i: p.id,
@@ -21,7 +21,7 @@ function toRecord(p: Product): ProductRecord {
   };
 }
 
-// Konversi format ringan ke Product
+
 function fromRecord(r: ProductRecord): Product {
   return {
     id: r.i,
@@ -39,7 +39,7 @@ function fromRecord(r: ProductRecord): Product {
   };
 }
 
-// Public API - Async functions for IndexedDB
+
 export async function getProductsAsync(): Promise<Product[]> {
   const db = await getDB();
   const records = await db.getAll('products');
@@ -115,7 +115,7 @@ export async function getProductBySkuAsync(sku: string): Promise<Product | null>
   return record ? fromRecord(record) : null;
 }
 
-// Synchronous wrappers for backward compatibility (using cached data)
+
 let cachedProducts: Product[] = [];
 let cacheInitialized = false;
 let cachePromise: Promise<void> | null = null;
@@ -126,7 +126,7 @@ async function ensureCache(): Promise<void> {
   
   cachePromise = (async () => {
     try {
-      // Add timeout to prevent infinite loading in certain environments
+      
       const timeoutPromise = new Promise<Product[]>((_, reject) => 
         setTimeout(() => reject(new Error('Timeout')), 5000)
       );
@@ -142,19 +142,19 @@ async function ensureCache(): Promise<void> {
   return cachePromise;
 }
 
-// Wait for cache to be ready with timeout
+
 export async function waitForProducts(): Promise<Product[]> {
   try {
     await ensureCache();
   } catch {
-    // Ensure we always return, even on error
+    
     cacheInitialized = true;
   }
   return cachedProducts;
 }
 
 export function getProducts(): Product[] {
-  // If not initialized, return empty and let caller handle async loading
+  
   return cachedProducts;
 }
 
@@ -164,7 +164,7 @@ export function isProductsCacheReady(): boolean {
 
 export function saveProducts(products: Product[]): void {
   cachedProducts = products;
-  // Async save
+  
   (async () => {
     const db = await getDB();
     const tx = db.transaction('products', 'readwrite');
@@ -186,10 +186,10 @@ export function addProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedA
     updatedAt: now,
   };
   
-  // Add to cache
+  
   cachedProducts = [...cachedProducts, newProduct];
   
-  // Async save to IndexedDB
+  
   (async () => {
     const db = await getDB();
     await db.put('products', toRecord(newProduct));
@@ -210,7 +210,7 @@ export function updateProduct(id: string, data: Partial<Product>): Product | nul
   
   cachedProducts = cachedProducts.map(p => p.id === id ? updated : p);
   
-  // Async save
+  
   updateProductAsync(id, data);
   return updated;
 }
@@ -221,7 +221,7 @@ export function deleteProduct(id: string): boolean {
   
   cachedProducts = cachedProducts.filter(p => p.id !== id);
   
-  // Async delete
+  
   deleteProductAsync(id);
   return true;
 }
@@ -236,7 +236,7 @@ export function updateStock(id: string, quantity: number): boolean {
       : p
   );
   
-  // Async save
+  
   updateStockAsync(id, quantity);
   return true;
 }
@@ -245,5 +245,5 @@ export function getProductBySku(sku: string): Product | null {
   return cachedProducts.find(p => p.sku === sku) || null;
 }
 
-// Initialize cache on module load
+
 ensureCache();

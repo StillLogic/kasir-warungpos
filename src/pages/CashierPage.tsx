@@ -165,7 +165,7 @@ export function CashierPage() {
       description: `Pembayaran sebesar ${payment.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })} diterima`,
     });
 
-    // Refresh products to update stock
+    
     waitForProducts().then(setProducts);
   };
 
@@ -175,10 +175,10 @@ export function CashierPage() {
   };
 
   const handleConfirmDebt = async (customer: Customer) => {
-    // Create debt record
+    
     await createDebt(customer.id, customer.name, cart, cartTotal);
     
-    // Also save as transaction for history/reports
+    
     saveTransaction({
       items: cart,
       total: cartTotal,
@@ -197,7 +197,7 @@ export function CashierPage() {
       description: `Hutang atas nama ${customer.name} sebesar ${cartTotal.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })} telah dicatat`,
     });
 
-    // Refresh products to update stock
+    
     waitForProducts().then(setProducts);
   };
 
@@ -220,9 +220,9 @@ export function CashierPage() {
 
   return (
     <div className="h-full flex gap-4 lg:gap-6">
-      {/* Product Grid */}
+      
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Search and Filter */}
+        
         <div className="flex gap-2 sm:gap-3 mb-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -247,7 +247,7 @@ export function CashierPage() {
             </SelectContent>
           </Select>
           
-          {/* Mobile Cart Button */}
+          
           {isMobile && (
             <Sheet open={cartOpen} onOpenChange={setCartOpen}>
               <SheetTrigger asChild>
@@ -275,7 +275,7 @@ export function CashierPage() {
           )}
         </div>
 
-        {/* Products */}
+        
         <div className="flex-1 overflow-auto scrollbar-thin" data-scrollable>
           {loading ? (
             <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
@@ -301,7 +301,7 @@ export function CashierPage() {
         </div>
       </div>
 
-      {/* Cart Sidebar - Desktop Only */}
+      
       {!isMobile && (
         <div className="w-80 lg:w-96 bg-card border border-border rounded-lg flex flex-col overflow-hidden shrink-0">
           <div className="p-4 border-b border-border">
@@ -311,7 +311,7 @@ export function CashierPage() {
         </div>
       )}
 
-      {/* Checkout Dialog */}
+      
       <CheckoutDialog
         open={checkoutOpen}
         onClose={() => setCheckoutOpen(false)}
@@ -320,7 +320,7 @@ export function CashierPage() {
         items={cart}
       />
 
-      {/* Debt Dialog */}
+      
       <DebtDialog
         open={debtDialogOpen}
         onClose={() => setDebtDialogOpen(false)}
@@ -329,7 +329,7 @@ export function CashierPage() {
         items={cart}
       />
 
-      {/* Receipt */}
+      
       <Receipt
         transaction={lastTransaction}
         open={receiptOpen}

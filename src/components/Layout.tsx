@@ -18,7 +18,6 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Header */}
       <header className="bg-card border-b border-border shrink-0 z-50">
         <div className="w-full flex items-center justify-between h-14 px-4 lg:px-6">
           <div className="flex items-center gap-2">
@@ -54,7 +53,6 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 w-full px-4 lg:px-6 py-4 overflow-y-auto overflow-x-hidden scrollbar-hide">
         {children}
       </main>

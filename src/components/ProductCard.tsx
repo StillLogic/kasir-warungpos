@@ -21,7 +21,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
         outOfStock && 'opacity-50 cursor-not-allowed hover:shadow-none hover:border-border'
       )}
     >
-      {/* Mobile: Compact horizontal layout */}
+      
       <div className="flex items-start gap-2 md:hidden">
         <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center shrink-0">
           <Package className="w-4 h-4 text-accent-foreground" />
@@ -47,7 +47,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
         </div>
       </div>
 
-      {/* Desktop/Tablet: Vertical card layout */}
+      
       <div className="hidden md:flex flex-col gap-3">
         <div className="flex items-start gap-3">
           <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center shrink-0">

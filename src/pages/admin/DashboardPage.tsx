@@ -59,14 +59,14 @@ export function DashboardPage() {
     return () => { mounted = false; };
   }, []);
 
-  // Calculate actual revenue: cash transactions + debt payments (money actually received)
+  
   const calculateDayRevenue = (dateStr: string) => {
-    // Cash transactions only
+    
     const cashRevenue = transactions
       .filter(t => new Date(t.createdAt).toDateString() === dateStr && t.paymentType !== 'debt')
       .reduce((sum, t) => sum + t.total, 0);
     
-    // Debt payments received on this day
+    
     const paymentRevenue = debtPayments
       .filter(p => new Date(p.createdAt).toDateString() === dateStr)
       .reduce((sum, p) => sum + p.amount, 0);
@@ -154,7 +154,7 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
+      
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -219,9 +219,9 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      {/* Charts and Lists */}
+      
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Revenue Chart */}
+        
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Pendapatan 7 Hari Terakhir</CardTitle>
@@ -259,7 +259,7 @@ export function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Top Products */}
+        
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Produk Terlaris</CardTitle>
@@ -289,7 +289,7 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      {/* Low Stock Alert */}
+      
       {(stats.lowStockProducts.length > 0 || stats.outOfStockProducts.length > 0) && (
         <Card className="border-warning/50">
           <CardHeader>

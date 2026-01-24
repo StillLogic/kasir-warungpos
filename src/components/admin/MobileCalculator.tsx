@@ -19,7 +19,7 @@ export function MobileCalculator() {
 
   const cost = parseFloat(display) || 0;
 
-  // Get markup from rules
+  
   const markup = useMemo(() => {
     if (cost <= 0) return null;
     const categoryId = selectedCategory === '__all__' ? null : selectedCategory;
@@ -28,7 +28,7 @@ export function MobileCalculator() {
 
   const isFixedMarkup = markup?.type === 'fixed';
 
-  // Calculate prices based on markup type
+  
   let rawRetailPrice: number;
   let rawWholesalePrice: number;
   
@@ -43,7 +43,7 @@ export function MobileCalculator() {
   const retailPrice = roundToThousand(rawRetailPrice);
   const wholesalePrice = roundToThousand(rawWholesalePrice);
 
-  // Find applied rule
+  
   const appliedRule = useMemo(() => {
     if (!markup || cost <= 0) return null;
     const categoryId = selectedCategory === '__all__' ? null : selectedCategory;
@@ -132,9 +132,9 @@ export function MobileCalculator() {
 
   return (
     <div className="flex flex-col h-full max-h-[calc(100dvh-3.5rem)]">
-      {/* Display Section */}
+      
       <div className="bg-card border-b border-border p-4 space-y-3">
-        {/* Category Selector */}
+        
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger className="h-9 text-sm">
             <SelectValue placeholder="Kategori" />
@@ -149,7 +149,7 @@ export function MobileCalculator() {
           </SelectContent>
         </Select>
 
-        {/* Cost Display */}
+        
         <div className="bg-muted/50 rounded-lg p-3">
           <div className="text-xs text-muted-foreground mb-1">Harga Modal</div>
           <div className="text-2xl font-bold font-mono text-right truncate">
@@ -157,7 +157,7 @@ export function MobileCalculator() {
           </div>
         </div>
 
-        {/* Applied Rule Info */}
+        
         {cost > 0 && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
             <Info className="w-3 h-3 shrink-0" />
@@ -175,9 +175,9 @@ export function MobileCalculator() {
         )}
       </div>
 
-      {/* Results Section */}
+      
       <div className="grid grid-cols-2 gap-2 p-3 bg-background">
-        {/* Retail */}
+        
         <button
           onClick={() => markup && copyToClipboard(retailPrice, 'Eceran')}
           disabled={!markup || cost <= 0}
@@ -202,7 +202,7 @@ export function MobileCalculator() {
           </div>
         </button>
 
-        {/* Wholesale */}
+        
         <button
           onClick={() => markup && copyToClipboard(wholesalePrice, 'Grosir')}
           disabled={!markup || cost <= 0}
@@ -228,7 +228,7 @@ export function MobileCalculator() {
         </button>
       </div>
 
-      {/* Numpad */}
+      
       <div className="flex-1 p-3 pt-0">
         <div className="grid grid-cols-4 gap-2 h-full">
           {numpadButtons.map((btn, idx) => (

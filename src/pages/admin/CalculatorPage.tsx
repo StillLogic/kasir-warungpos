@@ -17,7 +17,7 @@ import { MobileCalculator } from '@/components/admin/MobileCalculator';
 export function CalculatorPage() {
   const isMobile = useIsMobile();
   
-  // Show mobile calculator on mobile devices
+  
   if (isMobile) {
     return <MobileCalculator />;
   }
@@ -35,14 +35,14 @@ function DesktopCalculator() {
 
   const cost = parseFloat(costPrice) || 0;
   
-  // Get markup from rules based on cost price and category
+  
   const markup = useMemo(() => {
     if (cost <= 0) return null;
     const categoryId = selectedCategory === '__all__' ? null : selectedCategory;
     return getMarkupForPrice(cost, categoryId);
   }, [cost, selectedCategory]);
 
-  // Calculate prices based on markup type
+  
   const isFixedMarkup = markup?.type === 'fixed';
   
   let rawRetailPrice: number;
@@ -61,14 +61,14 @@ function DesktopCalculator() {
   const retailProfit = retailPrice - cost;
   const wholesaleProfit = wholesalePrice - cost;
 
-  // Find which rule is being applied
+  
   const appliedRule = useMemo(() => {
     if (!markup || cost <= 0) return null;
     const categoryId = selectedCategory === '__all__' ? null : selectedCategory;
     
-    // Find matching rule
+    
     for (const rule of markupRules) {
-      // Check category-specific first
+      
       if (categoryId && rule.categoryId === categoryId) {
         const minMatch = cost >= rule.minPrice;
         const maxMatch = rule.maxPrice === null || cost <= rule.maxPrice;
@@ -79,7 +79,7 @@ function DesktopCalculator() {
       }
     }
     
-    // Fallback to general rules
+    
     for (const rule of markupRules) {
       if (rule.categoryId !== null) continue;
       const minMatch = cost >= rule.minPrice;
@@ -115,7 +115,7 @@ function DesktopCalculator() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Result Section - Now First */}
+        
         <Card>
           <CardHeader>
             <CardTitle>Hasil Perhitungan</CardTitle>
@@ -136,7 +136,7 @@ function DesktopCalculator() {
               </Alert>
             )}
 
-            {/* Retail Price */}
+            
             <div className="p-4 rounded-lg bg-primary/10 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">Harga Jual Eceran</span>
@@ -161,7 +161,7 @@ function DesktopCalculator() {
               </p>
             </div>
 
-            {/* Wholesale Price */}
+            
             <div className="p-4 rounded-lg bg-secondary/50 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">Harga Jual Grosir</span>
@@ -186,7 +186,7 @@ function DesktopCalculator() {
               </p>
             </div>
 
-            {/* Summary */}
+            
             {cost > 0 && markup && (
               <div className="pt-4 border-t space-y-2">
                 <h4 className="font-medium">Ringkasan</h4>
@@ -202,7 +202,7 @@ function DesktopCalculator() {
           </CardContent>
         </Card>
 
-        {/* Input Section - Now Second */}
+        
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -246,7 +246,7 @@ function DesktopCalculator() {
               </p>
             </div>
 
-            {/* Applied Rule Info */}
+            
             {cost > 0 && (
               <div className="p-3 rounded-lg bg-muted/50 space-y-1">
                 <div className="flex items-center gap-2 text-sm font-medium">
@@ -284,7 +284,7 @@ function DesktopCalculator() {
         </Card>
       </div>
 
-      {/* Markup Rules Reference */}
+      
       <Card>
         <CardHeader>
           <CardTitle>Daftar Aturan Markup</CardTitle>

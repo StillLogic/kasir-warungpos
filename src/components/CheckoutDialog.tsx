@@ -44,7 +44,7 @@ export function CheckoutDialog({ open, onClose, onConfirm, total, items }: Check
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Summary */}
+          
           <div className="bg-muted rounded-lg p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Jumlah Item</span>
@@ -56,7 +56,7 @@ export function CheckoutDialog({ open, onClose, onConfirm, total, items }: Check
             </div>
           </div>
 
-          {/* Payment Input */}
+          
           <div className="space-y-2">
             <Label htmlFor="payment">Jumlah Bayar</Label>
             <Input
@@ -70,7 +70,7 @@ export function CheckoutDialog({ open, onClose, onConfirm, total, items }: Check
             />
           </div>
 
-          {/* Quick Amounts */}
+          
           <div className="flex flex-wrap gap-2">
             {quickAmounts.map((amount) => (
               <Button
@@ -91,7 +91,7 @@ export function CheckoutDialog({ open, onClose, onConfirm, total, items }: Check
             </Button>
           </div>
 
-          {/* Change */}
+          
           <div className="bg-accent rounded-lg p-4">
             <div className="flex justify-between items-center">
               <span className="text-accent-foreground">Kembalian</span>
@@ -106,7 +106,7 @@ export function CheckoutDialog({ open, onClose, onConfirm, total, items }: Check
             )}
           </div>
 
-          {/* Actions */}
+          
           <div className="flex gap-3">
             <Button variant="outline" className="flex-1" onClick={onClose}>
               Batal

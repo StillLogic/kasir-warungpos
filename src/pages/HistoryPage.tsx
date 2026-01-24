@@ -48,13 +48,13 @@ export function HistoryPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      
       <div>
         <h1 className="text-2xl font-bold">Riwayat Transaksi</h1>
         <p className="text-muted-foreground">Lihat semua transaksi penjualan</p>
       </div>
 
-      {/* Stats Cards */}
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -102,7 +102,7 @@ export function HistoryPage() {
         </Card>
       </div>
 
-      {/* Search */}
+      
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
@@ -113,7 +113,7 @@ export function HistoryPage() {
         />
       </div>
 
-      {/* Transactions Table */}
+      
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
@@ -193,7 +193,7 @@ export function HistoryPage() {
         </Table>
       </div>
 
-      {/* Receipt Dialog */}
+      
       <Receipt
         transaction={selectedTransaction}
         open={receiptOpen}

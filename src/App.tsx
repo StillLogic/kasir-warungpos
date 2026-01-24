@@ -25,7 +25,6 @@ const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
-    // Migrate data from localStorage to IndexedDB on first load
     migrateFromLocalStorage();
   }, []);
 
@@ -37,10 +36,7 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Main Cashier */}
               <Route path="/" element={<Index />} />
-
-              {/* Admin Routes */}
               <Route
                 path="/admin"
                 element={

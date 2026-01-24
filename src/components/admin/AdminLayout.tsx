@@ -47,7 +47,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
-      {/* Sidebar Header */}
       <div className="p-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -66,7 +65,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         )}
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-hide">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -90,7 +88,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         })}
       </nav>
 
-      {/* Back to Cashier */}
       <div className="p-3 border-t border-border">
         <Link
           to="/"
@@ -106,14 +103,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="h-full flex bg-background">
-      {/* Desktop Sidebar */}
       {!isMobile && (
         <aside className="w-64 bg-card border-r border-border shrink-0 flex flex-col">
           <SidebarContent />
         </aside>
       )}
 
-      {/* Mobile Sidebar Overlay */}
       {isMobile && sidebarOpen && (
         <>
           <div
@@ -126,9 +121,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </>
       )}
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
         <header className="bg-card border-b border-border shrink-0 h-14 flex items-center justify-between px-4">
           <div className="flex items-center gap-3">
             {isMobile && (
@@ -147,7 +140,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <ThemeToggle />
         </header>
 
-        {/* Page Content */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide p-4 lg:p-6">
           {children}
         </main>

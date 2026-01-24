@@ -1,4 +1,4 @@
-// Data backup and restore utilities
+
 import { getDB } from '@/database/db';
 import { ProductRecord, TransactionRecord } from '@/database/types';
 
@@ -7,10 +7,10 @@ export interface BackupData {
   createdAt: string;
   appVersion: string;
   data: {
-    // IndexedDB data
+    
     products: unknown[];
     transactions: unknown[];
-    // LocalStorage data
+    
     categories: unknown[];
     customers: unknown[];
     debts: unknown[];
@@ -23,15 +23,15 @@ export interface BackupData {
 const BACKUP_VERSION = 1;
 const APP_VERSION = '1.0.0';
 
-// Export all data to a JSON file
+
 export async function exportBackup(): Promise<Blob> {
   const db = await getDB();
   
-  // Get IndexedDB data
+  
   const products = await db.getAll('products');
   const transactions = await db.getAll('transactions');
   
-  // Get localStorage data
+  
   const categories = JSON.parse(localStorage.getItem('db_categories') || '[]');
   const customers = JSON.parse(localStorage.getItem('db_customers') || '[]');
   const debts = JSON.parse(localStorage.getItem('db_debts') || '[]');
@@ -59,7 +59,7 @@ export async function exportBackup(): Promise<Blob> {
   return new Blob([jsonString], { type: 'application/json' });
 }
 
-// Download backup file
+
 export async function downloadBackup(): Promise<void> {
   const blob = await exportBackup();
   const url = URL.createObjectURL(blob);
@@ -73,7 +73,7 @@ export async function downloadBackup(): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
-// Validate backup file
+
 export function validateBackup(data: unknown): data is BackupData {
   if (!data || typeof data !== 'object') return false;
   
@@ -83,7 +83,7 @@ export function validateBackup(data: unknown): data is BackupData {
   if (typeof backup.createdAt !== 'string') return false;
   if (!backup.data || typeof backup.data !== 'object') return false;
   
-  // Check required data properties
+  
   const requiredProps = ['products', 'transactions'];
   for (const prop of requiredProps) {
     if (!Array.isArray(backup.data[prop as keyof typeof backup.data])) {
@@ -94,7 +94,7 @@ export function validateBackup(data: unknown): data is BackupData {
   return true;
 }
 
-// Import backup data
+
 export async function importBackup(file: File): Promise<{ success: boolean; message: string; itemCounts?: Record<string, number> }> {
   try {
     const text = await file.text();
@@ -107,7 +107,7 @@ export async function importBackup(file: File): Promise<{ success: boolean; mess
     const db = await getDB();
     const itemCounts: Record<string, number> = {};
     
-    // Clear and restore IndexedDB data
+    
     const productsTx = db.transaction('products', 'readwrite');
     await productsTx.store.clear();
     for (const product of data.data.products as ProductRecord[]) {
@@ -124,7 +124,7 @@ export async function importBackup(file: File): Promise<{ success: boolean; mess
     await txsTx.done;
     itemCounts.transactions = (data.data.transactions as TransactionRecord[]).length;
     
-    // Restore localStorage data
+    
     if (data.data.categories) {
       localStorage.setItem('db_categories', JSON.stringify(data.data.categories));
       itemCounts.categories = (data.data.categories as unknown[]).length;
@@ -165,7 +165,7 @@ export async function importBackup(file: File): Promise<{ success: boolean; mess
   }
 }
 
-// Get storage statistics
+
 export async function getStorageStats(): Promise<{
   products: number;
   transactions: number;
