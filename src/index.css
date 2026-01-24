@@ -136,6 +136,12 @@
     }
   }
 
+  /* PWA Standalone Mode */
+  @media all and (display-mode: standalone) {
+    body {
+      padding-top: var(--sat);
+    }
+  }
 }
 
 @layer utilities {
