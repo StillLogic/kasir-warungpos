@@ -101,7 +101,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="h-dvh bg-background flex overflow-hidden">
+    <div 
+      className="min-h-dvh bg-background flex overflow-hidden"
+      style={{ 
+        minHeight: "calc(var(--vh, 1vh) * 100)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)"
+      }}
+    >
       {/* Desktop Sidebar */}
       {!isMobile && (
         <aside className="w-64 bg-card border-r border-border shrink-0">
