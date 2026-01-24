@@ -140,9 +140,16 @@
       min-height: -webkit-fill-available;
       min-height: calc(var(--vh, 1vh) * 100);
       padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
       overflow-x: hidden;
       overflow-y: auto;
+    }
+  }
+
+  /* iOS Safari specific fix */
+  @supports (-webkit-touch-callout: none) {
+    body,
+    #root {
+      min-height: -webkit-fill-available;
     }
   }
 

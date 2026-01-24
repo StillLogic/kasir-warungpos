@@ -50,10 +50,21 @@ const App = () => {
 
     setViewportHeight();
     window.addEventListener("resize", setViewportHeight);
+    window.addEventListener("orientationchange", setViewportHeight);
+    
+    // Handle visual viewport for keyboard appearance
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", setViewportHeight);
+    }
+    
     document.addEventListener("touchmove", preventDefault, { passive: false });
 
     return () => {
       window.removeEventListener("resize", setViewportHeight);
+      window.removeEventListener("orientationchange", setViewportHeight);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", setViewportHeight);
+      }
       document.removeEventListener("touchmove", preventDefault);
     };
   }, []);
