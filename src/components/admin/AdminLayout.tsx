@@ -120,7 +120,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             className="fixed inset-0 bg-black/50 z-40"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="fixed left-0 top-0 bottom-0 w-64 bg-card z-50 shadow-xl safe-top">
+          <aside className="fixed left-0 top-0 bottom-0 w-64 bg-card z-50 shadow-xl h-full">
             <SidebarContent />
           </aside>
         </>
