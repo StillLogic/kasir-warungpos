@@ -188,7 +188,7 @@ export function ProductsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-16">
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div>

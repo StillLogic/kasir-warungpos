@@ -155,7 +155,7 @@ export function SettingsPage() {
   };
 
 return (
-    <div className="grid gap-6 lg:grid-cols-[1fr,auto]">
+    <div className="grid gap-6 lg:grid-cols-[1fr,auto] pb-16">
       <div className="space-y-6 max-w-2xl">
       {/* Backup & Restore - Top Priority */}
       <BackupRestore />
