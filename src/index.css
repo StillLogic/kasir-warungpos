@@ -136,10 +136,6 @@
     }
   }
 
-  /* PWA Standalone Mode */
-  @media all and (display-mode: standalone) {
-    /* No extra padding needed - let content fill screen */
-  }
 }
 
 @layer utilities {
