@@ -18,8 +18,6 @@ import {
 } from "./pages/admin";
 import { Layout } from "./components/Layout";
 import { AdminLayout } from "./components/admin";
-import { InstallPWA } from "./components/InstallPWA";
-import { PWAUpdateNotification } from "./components/PWAUpdateNotification";
 import NotFound from "./pages/NotFound";
 import { migrateFromLocalStorage } from "./database";
 
@@ -29,28 +27,6 @@ const App = () => {
   useEffect(() => {
     // Migrate data from localStorage to IndexedDB on first load
     migrateFromLocalStorage();
-
-    // Prevent pull-to-refresh on PWA
-    const preventDefault = (e: TouchEvent) => {
-      // Allow scrolling inside scrollable elements
-      const target = e.target as HTMLElement;
-      const isScrollable = target.closest('.overflow-y-auto, .overflow-auto, [data-scrollable]');
-      
-      if (!isScrollable && e.touches.length === 1) {
-        const touch = e.touches[0];
-        const startY = touch.clientY;
-        
-        if (window.scrollY === 0 && startY > 0) {
-          // Only prevent if at top and pulling down
-        }
-      }
-    };
-
-    document.addEventListener("touchmove", preventDefault, { passive: true });
-
-    return () => {
-      document.removeEventListener("touchmove", preventDefault);
-    };
   }, []);
 
   return (
@@ -133,8 +109,6 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-          <InstallPWA />
-          <PWAUpdateNotification />
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>
