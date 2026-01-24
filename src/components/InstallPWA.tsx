@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, X } from 'lucide-react';
 
@@ -7,18 +7,21 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-export const InstallPWA = forwardRef<HTMLDivElement>((_, ref) => {
+export function InstallPWA() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstall, setShowInstall] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
-    // Check if running as standalone PWA (iOS and Android)
+    // Don't show if running as standalone PWA
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
       || (window.navigator as any).standalone === true;
     
     if (isStandalone) {
-      setIsInstalled(true);
+      return;
+    }
+
+    // Don't show if already dismissed this session
+    if (sessionStorage.getItem('pwa-dismissed')) {
       return;
     }
 
@@ -30,10 +33,9 @@ export const InstallPWA = forwardRef<HTMLDivElement>((_, ref) => {
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    // Check if installed via app installed event
     const appInstalledHandler = () => {
-      setIsInstalled(true);
       setShowInstall(false);
+      setDeferredPrompt(null);
     };
     window.addEventListener('appinstalled', appInstalledHandler);
 
@@ -57,17 +59,15 @@ export const InstallPWA = forwardRef<HTMLDivElement>((_, ref) => {
 
   const handleDismiss = () => {
     setShowInstall(false);
-    // Don't show again for this session
     sessionStorage.setItem('pwa-dismissed', 'true');
   };
 
-  // Don't show if already installed, dismissed, or no prompt available
-  if (isInstalled || !showInstall || sessionStorage.getItem('pwa-dismissed')) {
+  if (!showInstall) {
     return null;
   }
 
   return (
-    <div ref={ref} className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 bg-card border border-border rounded-lg shadow-lg p-4 z-50 animate-in slide-in-from-bottom-4">
+    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 bg-card border border-border rounded-lg shadow-lg p-4 z-[100] animate-in slide-in-from-bottom-4 safe-bottom">
       <button
         onClick={handleDismiss}
         className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
@@ -91,6 +91,4 @@ export const InstallPWA = forwardRef<HTMLDivElement>((_, ref) => {
       </div>
     </div>
   );
-});
-
-InstallPWA.displayName = 'InstallPWA';
+}

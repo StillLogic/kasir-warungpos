@@ -30,41 +30,25 @@ const App = () => {
     // Migrate data from localStorage to IndexedDB on first load
     migrateFromLocalStorage();
 
-    // Prevent pull-to-refresh and overscroll on PWA
+    // Prevent pull-to-refresh on PWA
     const preventDefault = (e: TouchEvent) => {
-      if (e.touches.length > 1) return;
-
+      // Allow scrolling inside scrollable elements
       const target = e.target as HTMLElement;
-      const scrollableParent = target.closest("[data-scrollable]");
-
-      if (!scrollableParent && window.scrollY === 0) {
-        e.preventDefault();
+      const isScrollable = target.closest('.overflow-y-auto, .overflow-auto, [data-scrollable]');
+      
+      if (!isScrollable && e.touches.length === 1) {
+        const touch = e.touches[0];
+        const startY = touch.clientY;
+        
+        if (window.scrollY === 0 && startY > 0) {
+          // Only prevent if at top and pulling down
+        }
       }
     };
 
-    // Lock viewport height for iOS PWA
-    const setViewportHeight = () => {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty("--vh", `${vh}px`);
-    };
-
-    setViewportHeight();
-    window.addEventListener("resize", setViewportHeight);
-    window.addEventListener("orientationchange", setViewportHeight);
-    
-    // Handle visual viewport for keyboard appearance
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", setViewportHeight);
-    }
-    
-    document.addEventListener("touchmove", preventDefault, { passive: false });
+    document.addEventListener("touchmove", preventDefault, { passive: true });
 
     return () => {
-      window.removeEventListener("resize", setViewportHeight);
-      window.removeEventListener("orientationchange", setViewportHeight);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener("resize", setViewportHeight);
-      }
       document.removeEventListener("touchmove", preventDefault);
     };
   }, []);

@@ -63,7 +63,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-hide">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
@@ -87,7 +87,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       </nav>
 
       {/* Back to Cashier */}
-      <div className="p-3 border-t border-border">
+      <div className="p-3 border-t border-border safe-bottom">
         <Link
           to="/"
           onClick={() => isMobile && setSidebarOpen(false)}
@@ -101,15 +101,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div 
-      className="h-full min-h-dvh bg-background flex overflow-hidden"
-      style={{ 
-        paddingBottom: "env(safe-area-inset-bottom, 0px)"
-      }}
-    >
+    <div className="h-full flex bg-background overflow-hidden">
       {/* Desktop Sidebar */}
       {!isMobile && (
-        <aside className="w-64 bg-card border-r border-border shrink-0">
+        <aside className="w-64 bg-card border-r border-border shrink-0 flex flex-col">
           <SidebarContent />
         </aside>
       )}
@@ -121,7 +116,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             className="fixed inset-0 bg-black/50 z-40"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="fixed left-0 top-0 bottom-0 w-64 bg-card z-50 shadow-xl">
+          <aside className="fixed left-0 top-0 bottom-0 w-64 bg-card z-50 shadow-xl safe-top">
             <SidebarContent />
           </aside>
         </>
@@ -145,7 +140,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto p-4 lg:p-6" data-scrollable>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide p-4 lg:p-6 safe-bottom">
           {children}
         </main>
       </div>
