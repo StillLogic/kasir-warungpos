@@ -50,12 +50,6 @@
     --sidebar-accent-foreground: 152 60% 25%;
     --sidebar-border: 210 15% 88%;
     --sidebar-ring: 152 60% 40%;
-
-    /* Safe area insets */
-    --sat: env(safe-area-inset-top, 0px);
-    --sab: env(safe-area-inset-bottom, 0px);
-    --sal: env(safe-area-inset-left, 0px);
-    --sar: env(safe-area-inset-right, 0px);
   }
 
   .dark {
@@ -109,7 +103,7 @@
   #root {
     height: 100%;
     height: 100vh;
-    height: 100svh; /* Small viewport height for mobile */
+    height: 100svh;
     margin: 0;
     padding: 0;
     overflow: hidden;
@@ -137,29 +131,5 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
-  }
-
-  /* Safe area utilities */
-  .safe-top {
-    padding-top: var(--sat);
-  }
-
-  .safe-bottom {
-    padding-bottom: var(--sab);
-  }
-
-  .safe-left {
-    padding-left: var(--sal);
-  }
-
-  .safe-right {
-    padding-right: var(--sar);
-  }
-
-  .safe-all {
-    padding-top: var(--sat);
-    padding-bottom: var(--sab);
-    padding-left: var(--sal);
-    padding-right: var(--sar);
   }
 }
