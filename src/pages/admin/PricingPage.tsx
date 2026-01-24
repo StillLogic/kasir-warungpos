@@ -542,175 +542,178 @@ export function PricingPage() {
         </AlertDescription>
       </Alert>
 
+      {/* Add Markup Rules Section - Now at Top */}
+      {(categoriesWithoutRules.length > 0 || !groupedRules['__all__']) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Plus className="w-5 h-5" />
+              Tambah Aturan Markup
+            </CardTitle>
+            <CardDescription>
+              Pilih kategori untuk membuat aturan markup baru
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {/* General rules option */}
+              {!groupedRules['__all__'] && (
+                <button
+                  onClick={() => handleOpenBatchDialog(null)}
+                  className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-primary/5 transition-colors text-center group"
+                >
+                  <Layers className="w-6 h-6 mx-auto mb-2 text-muted-foreground group-hover:text-primary" />
+                  <p className="font-medium text-sm">Semua Produk</p>
+                  <p className="text-xs text-muted-foreground mt-1">Aturan default</p>
+                </button>
+              )}
+              
+              {/* Categories without rules */}
+              {categoriesWithoutRules.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => handleOpenBatchDialog(cat.id)}
+                  className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-primary/5 transition-colors text-center group"
+                >
+                  <Percent className="w-6 h-6 mx-auto mb-2 text-muted-foreground group-hover:text-primary" />
+                  <p className="font-medium text-sm">{cat.name}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Belum ada aturan</p>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty state - when no categories exist */}
+      {Object.keys(groupedRules).length === 0 && categoriesWithoutRules.length === 0 && !categories.length && (
+        <Card>
+          <CardContent className="py-12">
+            <div className="text-center text-muted-foreground">
+              <Percent className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>Belum ada kategori produk</p>
+              <p className="text-sm mt-1">Buat kategori terlebih dahulu di menu Produk</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Categories with Markup Rules */}
-      <div className="space-y-3">
-        {Object.entries(groupedRules).map(([key, group]) => (
-          <Collapsible
-            key={key}
-            open={expandedCategory === key}
-            onOpenChange={(open) => setExpandedCategory(open ? key : null)}
-          >
-            <Card>
-              <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <ChevronRight className={cn(
-                        "w-5 h-5 transition-transform",
-                        expandedCategory === key && "rotate-90"
-                      )} />
-                      <Badge variant={group.categoryId ? "default" : "secondary"} className="text-sm">
-                        {group.categoryName}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {group.rules.length} aturan
-                      </span>
+      {Object.keys(groupedRules).length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold">Daftar Aturan Markup</h3>
+          {Object.entries(groupedRules).map(([key, group]) => (
+            <Collapsible
+              key={key}
+              open={expandedCategory === key}
+              onOpenChange={(open) => setExpandedCategory(open ? key : null)}
+            >
+              <Card>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <ChevronRight className={cn(
+                          "w-5 h-5 transition-transform",
+                          expandedCategory === key && "rotate-90"
+                        )} />
+                        <Badge variant={group.categoryId ? "default" : "secondary"} className="text-sm">
+                          {group.categoryName}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {group.rules.length} aturan
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className="pt-0">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Rentang Harga Modal</TableHead>
-                          <TableHead className="text-center">Tipe</TableHead>
-                          <TableHead className="text-center">Markup Satuan</TableHead>
-                          <TableHead className="text-center">Markup Grosir</TableHead>
-                          <TableHead className="text-right">Aksi</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {group.rules.map((rule) => {
-                          const markup = formatMarkupDisplay(rule);
-                          return (
-                            <TableRow key={rule.id}>
-                              <TableCell className="font-medium">
-                                {formatPriceRange(rule.minPrice, rule.maxPrice)}
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Badge variant="outline">
-                                  {rule.markupType === 'fixed' ? 'Rupiah' : 'Persen'}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium ${
-                                  markup.isFixed 
-                                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
-                                    : 'bg-primary/10 text-primary'
-                                }`}>
-                                  {markup.isFixed ? '+' : ''}{markup.retail}
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium ${
-                                  markup.isFixed 
-                                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
-                                    : 'bg-secondary text-secondary-foreground'
-                                }`}>
-                                  {markup.isFixed ? '+' : ''}{markup.wholesale}
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex items-center justify-end gap-1">
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    onClick={() => handleOpenDialog(rule)}
-                                  >
-                                    <Pencil className="w-4 h-4" />
-                                  </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    onClick={() => confirmDelete(rule.id)}
-                                    className="text-destructive hover:text-destructive"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  <div className="mt-4 flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleOpenDialog(undefined, group.categoryId)}
-                      className="gap-1"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Tambah Aturan
-                    </Button>
-                  </div>
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
-        ))}
-
-        {/* Categories without rules - show as options to add */}
-        {(categoriesWithoutRules.length > 0 || !groupedRules['__all__']) && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Plus className="w-5 h-5" />
-                Tambah Aturan Markup
-              </CardTitle>
-              <CardDescription>
-                Pilih kategori untuk membuat aturan markup baru
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {/* General rules option */}
-                {!groupedRules['__all__'] && (
-                  <button
-                    onClick={() => handleOpenBatchDialog(null)}
-                    className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-primary/5 transition-colors text-center group"
-                  >
-                    <Layers className="w-6 h-6 mx-auto mb-2 text-muted-foreground group-hover:text-primary" />
-                    <p className="font-medium text-sm">Semua Produk</p>
-                    <p className="text-xs text-muted-foreground mt-1">Aturan default</p>
-                  </button>
-                )}
-                
-                {/* Categories without rules */}
-                {categoriesWithoutRules.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => handleOpenBatchDialog(cat.id)}
-                    className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-primary/5 transition-colors text-center group"
-                  >
-                    <Percent className="w-6 h-6 mx-auto mb-2 text-muted-foreground group-hover:text-primary" />
-                    <p className="font-medium text-sm">{cat.name}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Belum ada aturan</p>
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Empty state */}
-        {Object.keys(groupedRules).length === 0 && categoriesWithoutRules.length === 0 && !categories.length && (
-          <Card>
-            <CardContent className="py-12">
-              <div className="text-center text-muted-foreground">
-                <Percent className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Belum ada kategori produk</p>
-                <p className="text-sm mt-1">Buat kategori terlebih dahulu di menu Produk</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="pt-0">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Rentang Harga Modal</TableHead>
+                            <TableHead className="text-center">Tipe</TableHead>
+                            <TableHead className="text-center">Markup Satuan</TableHead>
+                            <TableHead className="text-center">Markup Grosir</TableHead>
+                            <TableHead className="text-right">Aksi</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {group.rules.map((rule) => {
+                            const markup = formatMarkupDisplay(rule);
+                            return (
+                              <TableRow key={rule.id}>
+                                <TableCell className="font-medium">
+                                  {formatPriceRange(rule.minPrice, rule.maxPrice)}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Badge variant="outline">
+                                    {rule.markupType === 'fixed' ? 'Rupiah' : 'Persen'}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium ${
+                                    markup.isFixed 
+                                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
+                                      : 'bg-primary/10 text-primary'
+                                  }`}>
+                                    {markup.isFixed ? '+' : ''}{markup.retail}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium ${
+                                    markup.isFixed 
+                                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
+                                      : 'bg-secondary text-secondary-foreground'
+                                  }`}>
+                                    {markup.isFixed ? '+' : ''}{markup.wholesale}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon"
+                                      onClick={() => handleOpenDialog(rule)}
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon"
+                                      onClick={() => confirmDelete(rule.id)}
+                                      className="text-destructive hover:text-destructive"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    <div className="mt-4 flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleOpenDialog(undefined, group.categoryId)}
+                        className="gap-1"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Tambah Aturan
+                      </Button>
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+          ))}
+        </div>
+      )}
 
       {/* Single Rule Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
