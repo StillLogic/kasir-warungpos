@@ -87,7 +87,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       </nav>
 
       {/* Back to Cashier */}
-      <div className="p-3 border-t border-border safe-bottom">
+      <div className="p-3 border-t border-border">
         <Link
           to="/"
           onClick={() => isMobile && setSidebarOpen(false)}
@@ -140,7 +140,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide p-4 lg:p-6 safe-bottom">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide p-4 lg:p-6">
           {children}
         </main>
       </div>
