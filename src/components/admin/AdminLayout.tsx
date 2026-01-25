@@ -101,22 +101,30 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="h-dvh bg-background flex overflow-hidden">
+    <div className="h-dvh bg-background flex overflow-hidden animate-fade-in">
       {/* Desktop Sidebar */}
       {!isMobile && (
-        <aside className="w-64 bg-card border-r border-border shrink-0">
+        <aside className="w-64 bg-card border-r border-border shrink-0 animate-slide-in-left">
           <SidebarContent />
         </aside>
       )}
 
       {/* Mobile Sidebar Overlay */}
-      {isMobile && sidebarOpen && (
+      {isMobile && (
         <>
           <div 
-            className="fixed inset-0 bg-black/50 z-40"
+            className={cn(
+              "fixed inset-0 bg-black/50 z-40 transition-opacity duration-300",
+              sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+            )}
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="fixed left-0 top-0 bottom-0 w-64 bg-card z-50 shadow-xl">
+          <aside 
+            className={cn(
+              "fixed left-0 top-0 bottom-0 w-64 bg-card z-50 shadow-xl transition-transform duration-300 ease-out",
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            )}
+          >
             <SidebarContent />
           </aside>
         </>
@@ -140,7 +148,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto p-4 lg:p-6" data-scrollable>
+        <main className="flex-1 overflow-auto p-4 lg:p-6 animate-fade-in" data-scrollable>
           {children}
         </main>
       </div>
