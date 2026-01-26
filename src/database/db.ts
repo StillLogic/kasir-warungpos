@@ -1,6 +1,43 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import { ProductRecord, TransactionRecord } from "./types";
 
+interface EmployeeRecord {
+  i: string;
+  n: string;
+  p: string;
+  ph?: string;
+  ca: number;
+  ua: number;
+}
+
+interface IncomeRecord {
+  i: string;
+  ei: string;
+  en: string;
+  d: number;
+  t: string;
+  desc?: string;
+  a: number;
+  ip: 0 | 1;
+  pa?: number;
+  ca: number;
+  ua: number;
+}
+
+interface DebtRecord {
+  i: string;
+  ei: string;
+  en: string;
+  d: number;
+  desc: string;
+  a: number;
+  ip: 0 | 1;
+  pa?: number;
+  pm?: string;
+  ca: number;
+  ua: number;
+}
+
 interface WarungPOSDB extends DBSchema {
   products: {
     key: string;
@@ -12,10 +49,24 @@ interface WarungPOSDB extends DBSchema {
     value: TransactionRecord;
     indexes: { "by-date": number };
   };
+  employees: {
+    key: string;
+    value: EmployeeRecord;
+  };
+  employeeIncomes: {
+    key: string;
+    value: IncomeRecord;
+    indexes: { "by-employee": string };
+  };
+  employeeDebts: {
+    key: string;
+    value: DebtRecord;
+    indexes: { "by-employee": string };
+  };
 }
 
 const DB_NAME = "warungpos-db";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbInstance: IDBPDatabase<WarungPOSDB> | null = null;
 
@@ -23,7 +74,7 @@ export async function getDB(): Promise<IDBPDatabase<WarungPOSDB>> {
   if (dbInstance) return dbInstance;
 
   dbInstance = await openDB<WarungPOSDB>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
+    upgrade(db, oldVersion) {
       if (!db.objectStoreNames.contains("products")) {
         const productStore = db.createObjectStore("products", { keyPath: "i" });
         productStore.createIndex("by-sku", "s");
@@ -32,6 +83,23 @@ export async function getDB(): Promise<IDBPDatabase<WarungPOSDB>> {
       if (!db.objectStoreNames.contains("transactions")) {
         const txStore = db.createObjectStore("transactions", { keyPath: "i" });
         txStore.createIndex("by-date", "ca");
+      }
+
+      // Version 2: Add employee stores
+      if (oldVersion < 2) {
+        if (!db.objectStoreNames.contains("employees")) {
+          db.createObjectStore("employees", { keyPath: "i" });
+        }
+
+        if (!db.objectStoreNames.contains("employeeIncomes")) {
+          const incomeStore = db.createObjectStore("employeeIncomes", { keyPath: "i" });
+          incomeStore.createIndex("by-employee", "ei");
+        }
+
+        if (!db.objectStoreNames.contains("employeeDebts")) {
+          const debtStore = db.createObjectStore("employeeDebts", { keyPath: "i" });
+          debtStore.createIndex("by-employee", "ei");
+        }
       }
     },
   });

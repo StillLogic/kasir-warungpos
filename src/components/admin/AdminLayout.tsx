@@ -11,12 +11,18 @@ import {
   ChevronLeft,
   Percent,
   Calculator,
-  CreditCard
+  CreditCard,
+  Users,
+  Wallet,
+  HandCoins,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '../ThemeToggle';
 import { Button } from '../ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -27,23 +33,37 @@ const navItems = [
   { path: '/admin/products', label: 'Produk', icon: Package },
   { path: '/admin/pricing', label: 'Harga Jual', icon: Percent },
   { path: '/admin/calculator', label: 'Kalkulator', icon: Calculator },
-  { path: '/admin/debts', label: 'Hutang', icon: CreditCard },
+  { path: '/admin/debts', label: 'Hutang Pelanggan', icon: CreditCard },
   { path: '/admin/history', label: 'Riwayat', icon: History },
   { path: '/admin/reports', label: 'Laporan', icon: BarChart3 },
   { path: '/admin/settings', label: 'Pengaturan', icon: Settings },
+];
+
+const employeeSubItems = [
+  { path: '/admin/employees', label: 'Nama Pegawai', icon: Users },
+  { path: '/admin/employees/income', label: 'Pendapatan', icon: Wallet },
+  { path: '/admin/employees/debts', label: 'Hutang Pegawai', icon: HandCoins },
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [employeeMenuOpen, setEmployeeMenuOpen] = useState(
+    location.pathname.startsWith('/admin/employees')
+  );
 
   const isActive = (path: string) => {
     if (path === '/admin') {
       return location.pathname === '/admin';
     }
+    if (path === '/admin/employees') {
+      return location.pathname === '/admin/employees';
+    }
     return location.pathname.startsWith(path);
   };
+
+  const isEmployeeSection = location.pathname.startsWith('/admin/employees');
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -65,8 +85,71 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1">
-        {navItems.map((item) => {
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        {navItems.slice(0, 5).map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.path);
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => isMobile && setSidebarOpen(false)}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                active
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+              )}
+            >
+              <Icon className="w-5 h-5" />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+
+        {/* Employee Menu */}
+        <Collapsible open={employeeMenuOpen} onOpenChange={setEmployeeMenuOpen}>
+          <CollapsibleTrigger asChild>
+            <button
+              className={cn(
+                'flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isEmployeeSection
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5" />
+                <span>Pegawai</span>
+              </div>
+              {employeeMenuOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pl-4 space-y-1 mt-1">
+            {employeeSubItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => isMobile && setSidebarOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    active
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </CollapsibleContent>
+        </Collapsible>
+
+        {navItems.slice(5).map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
           return (
