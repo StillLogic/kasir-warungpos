@@ -179,6 +179,7 @@ return (
               value={settings.storeName}
               onChange={(e) => updateSettings('storeName', toTitleCase(e.target.value))}
               placeholder="Nama toko Anda"
+              maxLength={50}
             />
           </div>
           <div className="space-y-2">
@@ -189,6 +190,7 @@ return (
               onChange={(e) => updateSettings('storeAddress', toTitleCase(e.target.value))}
               placeholder="Alamat lengkap toko"
               rows={2}
+              maxLength={200}
             />
           </div>
           <div className="space-y-2">
@@ -203,6 +205,7 @@ return (
                 }
               }}
               placeholder="08xxxxxxxxxx"
+              maxLength={20}
             />
             <p className="text-xs text-muted-foreground">Otomatis diformat ke +62</p>
           </div>
@@ -266,6 +269,7 @@ return (
               onChange={(e) => updateSettings('receiptFooter', e.target.value)}
               placeholder="Pesan yang ditampilkan di bawah nota"
               rows={2}
+              maxLength={100}
             />
           </div>
 

@@ -160,6 +160,7 @@ export function DebtDialog({ open, onClose, onConfirm, total, items }: DebtDialo
                   onChange={(e) => setNewCustomerName(toTitleCase(e.target.value))}
                   placeholder="Masukkan nama pelanggan"
                   autoFocus
+                  maxLength={50}
                 />
               </div>
               <div className="space-y-2">
@@ -170,6 +171,7 @@ export function DebtDialog({ open, onClose, onConfirm, total, items }: DebtDialo
                   onChange={(e) => handlePhoneChange(e, setNewCustomerPhone)}
                   onBlur={() => handlePhoneBlur(newCustomerPhone, setNewCustomerPhone)}
                   placeholder="08xxxxxxxxxx"
+                  maxLength={20}
                 />
                 <p className="text-xs text-muted-foreground">Otomatis diformat ke +62</p>
               </div>

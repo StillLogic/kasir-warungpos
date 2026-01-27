@@ -208,6 +208,7 @@ export function ProductForm({
               {...register("name")}
               placeholder="Masukkan nama produk"
               onChange={(e) => setValue("name", toTitleCase(e.target.value))}
+              maxLength={100}
             />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
