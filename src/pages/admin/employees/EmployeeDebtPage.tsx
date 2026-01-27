@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -60,6 +59,9 @@ import {
 } from "@/database/employees";
 import { formatCurrency } from "@/lib/format";
 import { toast } from "sonner";
+import { PriceInput } from "@/components/ui/price-input";
+import { handleTitleCaseChange } from "@/lib/text";
+import { Input } from "@/components/ui/input";
 
 export function EmployeeDebtPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -393,7 +395,7 @@ export function EmployeeDebtPage() {
               <Input
                 value={formData.description}
                 onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
+                  handleTitleCaseChange(e, (v) => setFormData({ ...formData, description: v }))
                 }
                 placeholder="Contoh: Pinjaman darurat"
                 maxLength={100}
@@ -401,20 +403,11 @@ export function EmployeeDebtPage() {
             </div>
             <div className="space-y-2">
               <Label>Nominal *</Label>
-              <Input
-                type="text"
+              <PriceInput
                 value={formData.amount}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^\d]/g, "");
-                  setFormData({ ...formData, amount: value });
-                }}
+                onChange={(v) => setFormData({ ...formData, amount: v })}
                 placeholder="Masukkan nominal"
               />
-              {formData.amount && (
-                <p className="text-sm text-muted-foreground">
-                  {formatCurrency(parseInt(formData.amount) || 0)}
-                </p>
-              )}
             </div>
           </div>
           <DialogFooter>

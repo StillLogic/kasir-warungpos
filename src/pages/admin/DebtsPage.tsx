@@ -4,6 +4,7 @@ import { formatCurrency } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PriceInput } from "@/components/ui/price-input";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -81,7 +82,8 @@ export function DebtsPage() {
   const [selectedCustomer, setSelectedCustomer] =
     useState<CustomerDebtSummary | null>(null);
   const [customerDebts, setCustomerDebts] = useState<Debt[]>([]);
-  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentAmountStr, setPaymentAmountStr] = useState<string>("0");
+  const paymentAmount = parseInt(paymentAmountStr) || 0;
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const isMobile = useIsMobile();
   const printRef = useRef<HTMLDivElement>(null);
@@ -114,7 +116,7 @@ export function DebtsPage() {
   };
 
   const handleOpenPayDialog = () => {
-    setPaymentAmount(selectedCustomer?.totalDebt || 0);
+    setPaymentAmountStr((selectedCustomer?.totalDebt || 0).toString());
     setPayDialogOpen(true);
   };
 
@@ -138,7 +140,7 @@ export function DebtsPage() {
     });
 
     setPayDialogOpen(false);
-    setPaymentAmount(0);
+    setPaymentAmountStr("0");
 
     loadCustomerDebts(selectedCustomer.customerId);
     loadCustomers();
@@ -646,11 +648,10 @@ export function DebtsPage() {
 
             <div className="space-y-2">
               <Label htmlFor="payAmount">Jumlah Bayar</Label>
-              <Input
+              <PriceInput
                 id="payAmount"
-                type="number"
-                value={paymentAmount || ""}
-                onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                value={paymentAmountStr}
+                onChange={setPaymentAmountStr}
                 className="text-xl h-14 font-semibold"
                 autoFocus
               />
@@ -660,7 +661,7 @@ export function DebtsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPaymentAmount(selectedCustomer.totalDebt)}
+                onClick={() => setPaymentAmountStr(selectedCustomer.totalDebt.toString())}
               >
                 Lunas
               </Button>
@@ -668,7 +669,7 @@ export function DebtsPage() {
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  setPaymentAmount(Math.round(selectedCustomer.totalDebt / 2))
+                  setPaymentAmountStr(Math.round(selectedCustomer.totalDebt / 2).toString())
                 }
               >
                 50%
