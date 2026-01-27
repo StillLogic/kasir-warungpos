@@ -16,7 +16,6 @@ import {
   CalculatorPage,
   DebtsPage,
 } from "./pages/admin";
-import { EmployeeNamesPage, EmployeeIncomePage, EmployeeDebtPage } from "./pages/admin/employees";
 import { AdminLayout } from "./components/admin";
 import { InstallPWA } from "./components/InstallPWA";
 import { PWAUpdateNotification } from "./components/PWAUpdateNotification";
@@ -100,30 +99,6 @@ const App = () => {
                 element={
                   <AdminLayout>
                     <SettingsPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/employees"
-                element={
-                  <AdminLayout>
-                    <EmployeeNamesPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/employees/income"
-                element={
-                  <AdminLayout>
-                    <EmployeeIncomePage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/employees/debts"
-                element={
-                  <AdminLayout>
-                    <EmployeeDebtPage />
                   </AdminLayout>
                 }
               />

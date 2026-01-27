@@ -38,7 +38,6 @@ import {
   deleteCategory,
   isCategoryInUse,
 } from '@/database/categories';
-import { handleTitleCaseChange, handleUpperCaseChange } from '@/lib/text';
 
 interface CategoryManagerProps {
   open: boolean;
@@ -272,9 +271,8 @@ export function CategoryManager({ open, onClose, onCategoriesChange }: CategoryM
               <Input
                 id="categoryName"
                 value={name}
-                onChange={(e) => handleTitleCaseChange(e, setName)}
+                onChange={(e) => setName(e.target.value.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' '))}
                 placeholder="Contoh: Elektronik"
-                maxLength={50}
               />
             </div>
             <div className="space-y-2">
@@ -282,7 +280,7 @@ export function CategoryManager({ open, onClose, onCategoriesChange }: CategoryM
               <Input
                 id="categoryPrefix"
                 value={prefix}
-                onChange={(e) => handleUpperCaseChange(e, setPrefix)}
+                onChange={(e) => setPrefix(e.target.value.toUpperCase())}
                 placeholder="Contoh: ELK"
                 maxLength={3}
               />

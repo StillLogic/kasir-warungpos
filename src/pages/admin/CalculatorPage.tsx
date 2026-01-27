@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +25,6 @@ import { getCategories } from "@/database/categories";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileCalculator } from "@/components/admin/MobileCalculator";
-import { PriceInput } from "@/components/ui/price-input";
 
 export function CalculatorPage() {
   const isMobile = useIsMobile();
@@ -233,11 +233,13 @@ function DesktopCalculator() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="costPrice">Harga Modal (Rp)</Label>
-              <PriceInput
+              <Input
                 id="costPrice"
-                placeholder="Contoh: 10.000"
+                type="number"
+                placeholder="Contoh: 10000"
                 value={costPrice}
-                onChange={setCostPrice}
+                onChange={(e) => setCostPrice(e.target.value)}
+                min="0"
               />
             </div>
 
