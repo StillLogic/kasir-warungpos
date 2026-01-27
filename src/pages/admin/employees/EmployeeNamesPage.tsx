@@ -37,6 +37,7 @@ import {
   deleteEmployeeAsync,
 } from "@/database/employees";
 import { toast } from "sonner";
+import { handleTitleCaseChange, handlePhoneChange, handlePhoneBlur } from "@/lib/text";
 
 export function EmployeeNamesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -205,7 +206,7 @@ export function EmployeeNamesPage() {
                 id="name"
                 value={formData.name}
                 onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                  handleTitleCaseChange(e, (v) => setFormData({ ...formData, name: v }))
                 }
                 placeholder="Masukkan nama pegawai"
                 maxLength={100}
@@ -217,7 +218,7 @@ export function EmployeeNamesPage() {
                 id="position"
                 value={formData.position}
                 onChange={(e) =>
-                  setFormData({ ...formData, position: e.target.value })
+                  handleTitleCaseChange(e, (v) => setFormData({ ...formData, position: v }))
                 }
                 placeholder="Contoh: Kasir, Pelayan, Chef"
                 maxLength={50}
@@ -229,11 +230,15 @@ export function EmployeeNamesPage() {
                 id="phone"
                 value={formData.phone}
                 onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
+                  handlePhoneChange(e, (v) => setFormData({ ...formData, phone: v }))
+                }
+                onBlur={() =>
+                  handlePhoneBlur(formData.phone, (v) => setFormData({ ...formData, phone: v }))
                 }
                 placeholder="Contoh: 081234567890"
                 maxLength={20}
               />
+              <p className="text-xs text-muted-foreground">Otomatis diformat ke +62</p>
             </div>
           </div>
           <DialogFooter>
