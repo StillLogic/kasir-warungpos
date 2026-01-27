@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CartItem } from '@/types/pos';
 import { formatCurrency } from '@/lib/format';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { PriceInput } from '@/components/ui/price-input';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
@@ -22,18 +22,26 @@ interface CheckoutDialogProps {
 const quickAmounts = [5000, 10000, 20000, 50000, 100000];
 
 export function CheckoutDialog({ open, onClose, onConfirm, total, items }: CheckoutDialogProps) {
-  const [payment, setPayment] = useState<number>(total);
+  const [paymentStr, setPaymentStr] = useState<string>('');
+  const payment = parseInt(paymentStr) || 0;
   const change = payment - total;
+
+  // Reset payment when dialog opens with new total
+  useEffect(() => {
+    if (open) {
+      setPaymentStr(total > 0 ? String(total) : '');
+    }
+  }, [open, total]);
 
   const handleConfirm = () => {
     if (payment >= total) {
       onConfirm(payment);
-      setPayment(0);
+      setPaymentStr('');
     }
   };
 
   const handleQuickAmount = (amount: number) => {
-    setPayment(prev => prev + amount);
+    setPaymentStr(prev => String((parseInt(prev) || 0) + amount));
   };
 
   return (
@@ -59,11 +67,10 @@ export function CheckoutDialog({ open, onClose, onConfirm, total, items }: Check
           {/* Payment Input */}
           <div className="space-y-2">
             <Label htmlFor="payment">Jumlah Bayar</Label>
-            <Input
+            <PriceInput
               id="payment"
-              type="number"
-              value={payment || ''}
-              onChange={(e) => setPayment(Number(e.target.value))}
+              value={paymentStr}
+              onChange={setPaymentStr}
               placeholder="Masukkan jumlah pembayaran"
               className="text-xl h-14 font-semibold"
               autoFocus
@@ -85,7 +92,7 @@ export function CheckoutDialog({ open, onClose, onConfirm, total, items }: Check
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPayment(total)}
+              onClick={() => setPaymentStr(String(total))}
             >
               Uang Pas
             </Button>

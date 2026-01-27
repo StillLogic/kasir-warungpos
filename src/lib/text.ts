@@ -42,18 +42,30 @@ export function formatPhoneNumber(phone: string): string {
   if (!phone) return phone;
 
   let cleaned = phone.replace(/[^\d+]/g, "");
+  
+  // Remove leading + for processing
+  const withoutPlus = cleaned.startsWith("+") ? cleaned.substring(1) : cleaned;
+  
+  if (!withoutPlus) return "";
 
+  // Already has +62
   if (cleaned.startsWith("+62")) {
     return cleaned;
-  } else if (cleaned.startsWith("62")) {
-    return "+" + cleaned;
-  } else if (cleaned.startsWith("0")) {
-    return "+62" + cleaned.substring(1);
-  } else if (cleaned.startsWith("8")) {
-    return "+62" + cleaned;
   }
-
-  return cleaned;
+  // Starts with 62 (without +)
+  if (withoutPlus.startsWith("62")) {
+    return "+" + withoutPlus;
+  }
+  // Starts with 0 (Indonesian format)
+  if (withoutPlus.startsWith("0")) {
+    return "+62" + withoutPlus.substring(1);
+  }
+  // Starts with 8 (common Indonesian mobile)
+  if (withoutPlus.startsWith("8")) {
+    return "+62" + withoutPlus;
+  }
+  // Any other random numbers - prepend +62
+  return "+62" + withoutPlus;
 }
 
 export function handlePhoneChange(

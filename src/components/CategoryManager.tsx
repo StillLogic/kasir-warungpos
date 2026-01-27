@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, Tag, AlertTriangle } from 'lucide-react';
+import { toTitleCase } from '@/lib/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -271,8 +272,9 @@ export function CategoryManager({ open, onClose, onCategoriesChange }: CategoryM
               <Input
                 id="categoryName"
                 value={name}
-                onChange={(e) => setName(e.target.value.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' '))}
+                onChange={(e) => setName(toTitleCase(e.target.value))}
                 placeholder="Contoh: Elektronik"
+                maxLength={30}
               />
             </div>
             <div className="space-y-2">
