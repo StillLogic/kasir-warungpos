@@ -1,9 +1,9 @@
-import { CartItem } from '@/types/pos';
-import { formatCurrency } from '@/lib/format';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Minus, Plus, Trash2, ShoppingBag, CreditCard } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { CartItem } from "@/types/pos";
+import { formatCurrency } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Minus, Plus, Trash2, ShoppingBag, CreditCard } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CartProps {
   items: CartItem[];
@@ -14,7 +14,14 @@ interface CartProps {
   total: number;
 }
 
-export function Cart({ items, onUpdateQuantity, onRemoveItem, onCheckout, onDebt, total }: CartProps) {
+export function Cart({
+  items,
+  onUpdateQuantity,
+  onRemoveItem,
+  onCheckout,
+  onDebt,
+  total,
+}: CartProps) {
   if (items.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
@@ -35,12 +42,18 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem, onCheckout, onDebt
           >
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm truncate">{item.product.name}</h4>
+                <h4 className="font-medium text-sm truncate">
+                  {item.product.name}
+                </h4>
                 <p className="text-xs text-muted-foreground">
-                  {formatCurrency(item.priceType === 'wholesale' ? item.product.wholesalePrice : item.product.retailPrice)}
-                  {' / '}
+                  {formatCurrency(
+                    item.priceType === "wholesale"
+                      ? item.product.wholesalePrice
+                      : item.product.retailPrice,
+                  )}
+                  {" / "}
                   {item.product.unit}
-                  {item.priceType === 'wholesale' && (
+                  {item.priceType === "wholesale" && (
                     <span className="ml-1 text-primary">(Grosir)</span>
                   )}
                 </p>
@@ -60,21 +73,30 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem, onCheckout, onDebt
                   variant="outline"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
+                  onClick={() =>
+                    onUpdateQuantity(item.product.id, item.quantity - 1)
+                  }
                 >
                   <Minus className="w-4 h-4" />
                 </Button>
                 <Input
                   type="number"
                   value={item.quantity}
-                  onChange={(e) => onUpdateQuantity(item.product.id, parseInt(e.target.value) || 0)}
+                  onChange={(e) =>
+                    onUpdateQuantity(
+                      item.product.id,
+                      parseInt(e.target.value) || 0,
+                    )
+                  }
                   className="w-16 h-8 text-center"
                 />
                 <Button
                   variant="outline"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
+                  onClick={() =>
+                    onUpdateQuantity(item.product.id, item.quantity + 1)
+                  }
                 >
                   <Plus className="w-4 h-4" />
                 </Button>
@@ -89,23 +111,28 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem, onCheckout, onDebt
 
       <div className="border-t border-border p-4 space-y-4 bg-card">
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">Total ({items.length} item)</span>
+          <span className="text-muted-foreground">
+            Total ({items.length} item)
+          </span>
           <span className="text-2xl font-bold text-primary">
             {formatCurrency(total)}
           </span>
         </div>
         <div className="flex gap-2">
           {onDebt && (
-            <Button 
-              variant="outline" 
-              className="flex-1 h-12 text-base font-semibold border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground" 
+            <Button
+              variant="outline"
+              className="flex-1 h-12 text-base font-semibold border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
               onClick={onDebt}
             >
               <CreditCard className="w-4 h-4 mr-2" />
               Hutang
             </Button>
           )}
-          <Button className="flex-1 h-12 text-base font-semibold" onClick={onCheckout}>
+          <Button
+            className="flex-1 h-12 text-base font-semibold"
+            onClick={onCheckout}
+          >
             Bayar
           </Button>
         </div>

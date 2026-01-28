@@ -280,11 +280,11 @@ export function CashierPage() {
   );
 
   return (
-    <div className="flex gap-4 lg:gap-6 h-[calc(100vh-7rem)]">
+    <div className="flex gap-4 lg:gap-6 h-[calc(100vh-7rem)] overflow-hidden">
       {/* Product Grid */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Search and Filter */}
-        <div className="flex gap-2 sm:gap-3 mb-4">
+        <div className="flex gap-2 sm:gap-3 mb-4 pr-2 pt-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -315,13 +315,13 @@ export function CashierPage() {
                 <Button
                   variant="default"
                   size="icon"
-                  className="shrink-0 relative"
+                  className="shrink-0 relative mr-2"
                 >
                   <ShoppingCart className="w-5 h-5" />
                   {cartItemsCount > 0 && (
                     <Badge
                       variant="destructive"
-                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                      className="absolute -top-2 -right-2 h-5 min-w-5 flex items-center justify-center px-1 text-xs"
                     >
                       {cartItemsCount}
                     </Badge>
@@ -359,7 +359,7 @@ export function CashierPage() {
               <p className="text-sm">Tambahkan produk di menu Produk</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 pb-4 pr-1">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}

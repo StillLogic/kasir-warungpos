@@ -19,6 +19,7 @@ import {
   EmployeeEarningsPage,
   EmployeeDebtsPage,
   EmployeeRecordsPage,
+  ShoppingListPage,
 } from "./pages/admin";
 import { AdminLayout } from "./components/admin";
 import { InstallPWA } from "./components/InstallPWA";
@@ -135,6 +136,14 @@ const App = () => {
                 element={
                   <AdminLayout>
                     <EmployeeRecordsPage />
+                  </AdminLayout>
+                }
+              />
+              <Route
+                path="/admin/shopping-list"
+                element={
+                  <AdminLayout>
+                    <ShoppingListPage />
                   </AdminLayout>
                 }
               />
