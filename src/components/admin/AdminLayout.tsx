@@ -9,14 +9,23 @@ import {
   Menu,
   X,
   ChevronLeft,
+  ChevronDown,
   Percent,
   Calculator,
-  CreditCard
+  CreditCard,
+  Users,
+  Wallet,
+  HandCoins
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '../ThemeToggle';
 import { Button } from '../ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -27,16 +36,25 @@ const navItems = [
   { path: '/admin/products', label: 'Produk', icon: Package },
   { path: '/admin/pricing', label: 'Harga Jual', icon: Percent },
   { path: '/admin/calculator', label: 'Kalkulator', icon: Calculator },
-  { path: '/admin/debts', label: 'Hutang', icon: CreditCard },
+  { path: '/admin/debts', label: 'Hutang Pelanggan', icon: CreditCard },
   { path: '/admin/history', label: 'Riwayat', icon: History },
   { path: '/admin/reports', label: 'Laporan', icon: BarChart3 },
   { path: '/admin/settings', label: 'Pengaturan', icon: Settings },
+];
+
+const employeeSubItems = [
+  { path: '/admin/employees', label: 'Data Karyawan', icon: Users },
+  { path: '/admin/employees/earnings', label: 'Pendapatan', icon: Wallet },
+  { path: '/admin/employees/debts', label: 'Hutang Karyawan', icon: HandCoins },
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [employeeMenuOpen, setEmployeeMenuOpen] = useState(() => 
+    location.pathname.startsWith('/admin/employees')
+  );
 
   const isActive = (path: string) => {
     if (path === '/admin') {
@@ -44,6 +62,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     }
     return location.pathname.startsWith(path);
   };
+
+  const isEmployeeActive = employeeSubItems.some(item => location.pathname === item.path);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -65,8 +85,74 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1">
-        {navItems.map((item) => {
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        {navItems.slice(0, 5).map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.path);
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => isMobile && setSidebarOpen(false)}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                active
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+              )}
+            >
+              <Icon className="w-5 h-5" />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+
+        {/* Employee Menu with Submenu */}
+        <Collapsible open={employeeMenuOpen} onOpenChange={setEmployeeMenuOpen}>
+          <CollapsibleTrigger asChild>
+            <button
+              className={cn(
+                'flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isEmployeeActive
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5" />
+                <span>Karyawan</span>
+              </div>
+              <ChevronDown className={cn(
+                "w-4 h-4 transition-transform",
+                employeeMenuOpen && "rotate-180"
+              )} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pl-4 mt-1 space-y-1">
+            {employeeSubItems.map((item) => {
+              const Icon = item.icon;
+              const active = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => isMobile && setSidebarOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    active
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </CollapsibleContent>
+        </Collapsible>
+
+        {navItems.slice(5).map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
           return (
@@ -143,7 +229,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </Button>
             )}
             <h1 className="font-semibold text-lg truncate">
-              {navItems.find(item => isActive(item.path))?.label || 'Admin'}
+              {employeeSubItems.find(item => location.pathname === item.path)?.label || 
+               navItems.find(item => isActive(item.path))?.label || 'Admin'}
             </h1>
           </div>
           <ThemeToggle />
