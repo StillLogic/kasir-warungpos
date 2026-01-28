@@ -169,6 +169,13 @@ export function isProductsCacheReady(): boolean {
   return cacheInitialized;
 }
 
+// Force refresh products from database (bypass cache)
+export async function refreshProducts(): Promise<Product[]> {
+  const freshProducts = await getProductsAsync();
+  cachedProducts = freshProducts;
+  return cachedProducts;
+}
+
 export function saveProducts(products: Product[]): void {
   cachedProducts = products;
   (async () => {

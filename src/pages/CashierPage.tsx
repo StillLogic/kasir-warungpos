@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Product, CartItem, Transaction } from "@/types/pos";
 import { Customer } from "@/types/debt";
 import { Employee } from "@/types/employee";
-import { saveTransaction, waitForProducts } from "@/database";
+import { saveTransaction, waitForProducts, refreshProducts } from "@/database";
 import { createDebt } from "@/database/debts";
 import { createEmployeeDebt } from "@/database/employees";
 import { ProductCard } from "@/components/ProductCard";
@@ -182,7 +182,10 @@ export function CashierPage() {
       description: `Pembayaran sebesar ${payment.toLocaleString("id-ID", { style: "currency", currency: "IDR" })} diterima`,
     });
 
-    waitForProducts().then(setProducts);
+    // Hot reload products data from database
+    setTimeout(() => {
+      refreshProducts().then(setProducts);
+    }, 300);
   };
 
   const handleDebt = () => {
@@ -211,7 +214,10 @@ export function CashierPage() {
       description: `Hutang atas nama ${customer.name} sebesar ${cartTotal.toLocaleString("id-ID", { style: "currency", currency: "IDR" })} telah dicatat`,
     });
 
-    waitForProducts().then(setProducts);
+    // Hot reload products data from database
+    setTimeout(() => {
+      refreshProducts().then(setProducts);
+    }, 300);
   };
 
   const handleConfirmEmployeeDebt = async (employee: Employee) => {
@@ -250,7 +256,10 @@ export function CashierPage() {
       description: `Hutang atas nama ${employee.name} sebesar ${cartTotal.toLocaleString("id-ID", { style: "currency", currency: "IDR" })} telah dicatat`,
     });
 
-    waitForProducts().then(setProducts);
+    // Hot reload products data from database
+    setTimeout(() => {
+      refreshProducts().then(setProducts);
+    }, 300);
   };
 
   const CartContent = () => (
