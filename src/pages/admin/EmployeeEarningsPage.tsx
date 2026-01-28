@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Search, Check, Trash2, Calendar, Filter } from "lucide-react";
+import { Plus, Search, Trash2, Calendar, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,7 +37,6 @@ import {
   getEmployees,
   getEarnings,
   createEarning,
-  markEarningAsPaid,
   deleteEarning,
 } from "@/database/employees";
 import { Employee, EmployeeEarning } from "@/types/employee";
@@ -47,14 +46,16 @@ import { id as localeId } from "date-fns/locale";
 export function EmployeeEarningsPage() {
   const { toast } = useToast();
   const [employees] = useState<Employee[]>(() => getEmployees());
-  const [earnings, setEarnings] = useState<EmployeeEarning[]>(() => getEarnings());
+  const [earnings, setEarnings] = useState<EmployeeEarning[]>(() =>
+    getEarnings(),
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [filterEmployee, setFilterEmployee] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [earningToDelete, setEarningToDelete] = useState<EmployeeEarning | null>(null);
+  const [earningToDelete, setEarningToDelete] =
+    useState<EmployeeEarning | null>(null);
 
   // Form state - using string for PriceInput
   const [formEmployeeId, setFormEmployeeId] = useState("");
@@ -67,15 +68,44 @@ export function EmployeeEarningsPage() {
       const matchesSearch =
         e.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         e.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesEmployee = filterEmployee === "all" || e.employeeId === filterEmployee;
+      const matchesEmployee =
+        filterEmployee === "all" || e.employeeId === filterEmployee;
       const matchesType = filterType === "all" || e.type === filterType;
-      const matchesStatus =
-        filterStatus === "all" ||
-        (filterStatus === "paid" && e.isPaid) ||
-        (filterStatus === "unpaid" && !e.isPaid);
-      return matchesSearch && matchesEmployee && matchesType && matchesStatus;
+      return matchesSearch && matchesEmployee && matchesType;
     });
-  }, [earnings, searchQuery, filterEmployee, filterType, filterStatus]);
+  }, [earnings, searchQuery, filterEmployee, filterType]);
+
+  // Group earnings by employee
+  const earningsByEmployee = useMemo(() => {
+    const grouped: Record<
+      string,
+      {
+        employeeName: string;
+        earnings: EmployeeEarning[];
+        total: number;
+      }
+    > = {};
+
+    filteredEarnings.forEach((earning) => {
+      if (!grouped[earning.employeeId]) {
+        grouped[earning.employeeId] = {
+          employeeName: earning.employeeName,
+          earnings: [],
+          total: 0,
+        };
+      }
+      grouped[earning.employeeId].earnings.push(earning);
+      grouped[earning.employeeId].total += earning.amount;
+    });
+
+    // Sort employees by name
+    return Object.entries(grouped)
+      .sort(([, a], [, b]) => a.employeeName.localeCompare(b.employeeName))
+      .map(([employeeId, data]) => ({
+        employeeId,
+        ...data,
+      }));
+  }, [filteredEarnings]);
 
   const refreshEarnings = () => {
     setEarnings(getEarnings());
@@ -131,20 +161,10 @@ export function EmployeeEarningsPage() {
   const getDefaultDescription = (type: EmployeeEarning["type"]): string => {
     switch (type) {
       case "salary":
-        return "Gaji Bulanan";
+        return "Gaji Pokok";
       case "commission":
-        return "Komisi Transaksi";
-      case "bonus":
-        return "Bonus";
-      case "other":
-        return "Pendapatan Lain";
+        return "Komisi";
     }
-  };
-
-  const handleMarkAsPaid = (id: string) => {
-    markEarningAsPaid(id);
-    toast({ title: "Berhasil", description: "Pendapatan ditandai sudah dibayar" });
-    refreshEarnings();
   };
 
   const handleDelete = () => {
@@ -157,37 +177,24 @@ export function EmployeeEarningsPage() {
   };
 
   const getTypeBadge = (type: EmployeeEarning["type"]) => {
-    const variants: Record<EmployeeEarning["type"], { label: string; className: string }> = {
-      salary: { label: "Gaji", className: "bg-blue-500/10 text-blue-500" },
-      commission: { label: "Komisi", className: "bg-green-500/10 text-green-500" },
-      bonus: { label: "Bonus", className: "bg-yellow-500/10 text-yellow-500" },
-      other: { label: "Lainnya", className: "bg-gray-500/10 text-gray-500" },
+    const variants: Record<
+      EmployeeEarning["type"],
+      { label: string; className: string }
+    > = {
+      salary: { label: "Pokok", className: "bg-blue-500/10 text-blue-500" },
+      commission: {
+        label: "Komisi",
+        className: "bg-green-500/10 text-green-500",
+      },
     };
     const variant = variants[type];
     return <Badge className={variant.className}>{variant.label}</Badge>;
   };
 
-  const totalUnpaid = filteredEarnings.filter((e) => !e.isPaid).reduce((sum, e) => sum + e.amount, 0);
-  const totalPaid = filteredEarnings.filter((e) => e.isPaid).reduce((sum, e) => sum + e.amount, 0);
+  const total = filteredEarnings.reduce((sum, e) => sum + e.amount, 0);
 
   return (
     <div className="space-y-6">
-      {/* Summary */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Belum Dibayar</p>
-            <p className="text-2xl font-bold text-primary">{formatCurrency(totalUnpaid)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Sudah Dibayar</p>
-            <p className="text-2xl font-bold text-green-600">{formatCurrency(totalPaid)}</p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Header & Filters */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between">
@@ -229,92 +236,98 @@ export function EmployeeEarningsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Semua Tipe</SelectItem>
-              <SelectItem value="salary">Gaji</SelectItem>
+              <SelectItem value="salary">Pokok</SelectItem>
               <SelectItem value="commission">Komisi</SelectItem>
-              <SelectItem value="bonus">Bonus</SelectItem>
-              <SelectItem value="other">Lainnya</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Status</SelectItem>
-              <SelectItem value="unpaid">Belum Dibayar</SelectItem>
-              <SelectItem value="paid">Sudah Dibayar</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      {/* Earnings List */}
-      {filteredEarnings.length === 0 ? (
+      {/* Earnings Table by Employee */}
+      {earningsByEmployee.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            {searchQuery || filterEmployee !== "all" || filterType !== "all" || filterStatus !== "all"
+            {searchQuery || filterEmployee !== "all" || filterType !== "all"
               ? "Tidak ada pendapatan yang cocok"
               : "Belum ada data pendapatan"}
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {filteredEarnings.map((earning) => (
-            <Card key={earning.id}>
-              <CardContent className="py-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium">{earning.employeeName}</span>
-                      {getTypeBadge(earning.type)}
-                      {earning.isPaid ? (
-                        <Badge variant="outline" className="text-green-600 border-green-600">
-                          Dibayar
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-orange-500 border-orange-500">
-                          Belum Dibayar
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">{earning.description}</p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-                      <Calendar className="h-3 w-3" />
-                      {format(new Date(earning.createdAt), "dd MMM yyyy, HH:mm", { locale: localeId })}
-                      {earning.isPaid && earning.paidAt && (
-                        <span className="text-green-600">
-                          • Dibayar {format(new Date(earning.paidAt), "dd MMM yyyy", { locale: localeId })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="font-semibold text-lg">{formatCurrency(earning.amount)}</p>
-                    <div className="flex gap-1 mt-2 justify-end">
-                      {!earning.isPaid && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleMarkAsPaid(earning.id)}
-                        >
-                          <Check className="h-4 w-4 mr-1" />
-                          Bayar
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => {
-                          setEarningToDelete(earning);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
+        <div className="space-y-6">
+          {earningsByEmployee.map((employeeData) => (
+            <Card key={employeeData.employeeId}>
+              <CardContent className="pt-4">
+                {/* Employee Header */}
+                <div className="flex items-center justify-between mb-4 pb-3 border-b">
+                  <h3 className="font-semibold text-lg">
+                    {employeeData.employeeName}
+                  </h3>
+                  <span className="font-medium text-primary">
+                    +{formatCurrency(employeeData.total)}
+                  </span>
+                </div>
+
+                {/* Earnings Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 px-2 font-medium text-muted-foreground">
+                          Tanggal
+                        </th>
+                        <th className="text-left py-2 px-2 font-medium text-muted-foreground">
+                          Tipe
+                        </th>
+                        <th className="text-left py-2 px-2 font-medium text-muted-foreground">
+                          Keterangan
+                        </th>
+                        <th className="text-right py-2 px-2 font-medium text-muted-foreground">
+                          Nominal
+                        </th>
+                        <th className="text-center py-2 px-2 font-medium text-muted-foreground">
+                          Aksi
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {employeeData.earnings.map((earning) => (
+                        <tr key={earning.id} className="border-b last:border-0">
+                          <td className="py-2 px-2">
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <Calendar className="h-3 w-3" />
+                              {format(
+                                new Date(earning.createdAt),
+                                "dd MMM yyyy",
+                                { locale: localeId },
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-2 px-2">
+                            {getTypeBadge(earning.type)}
+                          </td>
+                          <td className="py-2 px-2 text-muted-foreground">
+                            {earning.description}
+                          </td>
+                          <td className="py-2 px-2 text-right font-medium text-primary">
+                            +{formatCurrency(earning.amount)}
+                          </td>
+                          <td className="py-2 px-2 text-center">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={() => {
+                                setEarningToDelete(earning);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </CardContent>
             </Card>
@@ -346,15 +359,16 @@ export function EmployeeEarningsPage() {
             </div>
             <div className="space-y-2">
               <Label>Tipe *</Label>
-              <Select value={formType} onValueChange={(v) => setFormType(v as EmployeeEarning["type"])}>
+              <Select
+                value={formType}
+                onValueChange={(v) => setFormType(v as EmployeeEarning["type"])}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="salary">Gaji</SelectItem>
+                  <SelectItem value="salary">Pokok</SelectItem>
                   <SelectItem value="commission">Komisi</SelectItem>
-                  <SelectItem value="bonus">Bonus</SelectItem>
-                  <SelectItem value="other">Lainnya</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -369,7 +383,11 @@ export function EmployeeEarningsPage() {
             </div>
             <div className="space-y-2">
               <Label>Nominal *</Label>
-              <PriceInput value={formAmount} onChange={setFormAmount} placeholder="0" />
+              <PriceInput
+                value={formAmount}
+                onChange={setFormAmount}
+                placeholder="0"
+              />
             </div>
           </div>
           <DialogFooter>
@@ -387,7 +405,8 @@ export function EmployeeEarningsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Pendapatan?</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus pendapatan {formatCurrency(earningToDelete?.amount || 0)} untuk{" "}
+              Apakah Anda yakin ingin menghapus pendapatan{" "}
+              {formatCurrency(earningToDelete?.amount || 0)} untuk{" "}
               {earningToDelete?.employeeName}?
             </AlertDialogDescription>
           </AlertDialogHeader>

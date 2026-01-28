@@ -193,9 +193,7 @@ export async function createDebt(
   debts.push(newDebt);
   saveDebts(debts);
 
-  for (const item of items) {
-    await updateStockAsync(item.product.id, -item.quantity);
-  }
+  // Stock is now updated in saveTransactionAsync, so no need to update here
 
   return fromRecord(newDebt);
 }

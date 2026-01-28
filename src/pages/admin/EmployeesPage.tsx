@@ -21,17 +21,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
-import { PriceInput } from "@/components/ui/price-input";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/lib/format";
 import { toTitleCase, formatPhoneNumber } from "@/lib/text";
 import {
   getEmployees,
   createEmployee,
   updateEmployee,
   deleteEmployee,
-  getEmployeeTotalDebt,
-  getEmployeeTotalUnpaidEarnings,
 } from "@/database/employees";
 import { Employee } from "@/types/employee";
 
@@ -42,19 +38,19 @@ export function EmployeesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(
+    null,
+  );
 
-  // Form state - using string for PriceInput
+  // Form state
   const [formName, setFormName] = useState("");
   const [formPosition, setFormPosition] = useState("");
   const [formPhone, setFormPhone] = useState("");
-  const [formBaseSalary, setFormBaseSalary] = useState("");
-  const [formCommissionRate, setFormCommissionRate] = useState(0);
 
   const filteredEmployees = employees.filter(
     (e) =>
       e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.position.toLowerCase().includes(searchQuery.toLowerCase())
+      e.position.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const refreshEmployees = () => {
@@ -65,8 +61,6 @@ export function EmployeesPage() {
     setFormName("");
     setFormPosition("");
     setFormPhone("");
-    setFormBaseSalary("");
-    setFormCommissionRate(0);
     setEditingEmployee(null);
   };
 
@@ -80,8 +74,6 @@ export function EmployeesPage() {
     setFormName(employee.name);
     setFormPosition(employee.position);
     setFormPhone(employee.phone || "");
-    setFormBaseSalary(String(employee.baseSalary || ""));
-    setFormCommissionRate(employee.commissionRate);
     setDialogOpen(true);
   };
 
@@ -99,8 +91,6 @@ export function EmployeesPage() {
       name: toTitleCase(formName.trim()),
       position: toTitleCase(formPosition.trim()),
       phone: formPhone.trim() ? formatPhoneNumber(formPhone.trim()) : undefined,
-      baseSalary: Number(formBaseSalary) || 0,
-      commissionRate: Math.min(100, Math.max(0, formCommissionRate)),
     };
 
     if (editingEmployee) {
@@ -149,86 +139,57 @@ export function EmployeesPage() {
       {filteredEmployees.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            {searchQuery ? "Tidak ada karyawan yang cocok" : "Belum ada data karyawan"}
+            {searchQuery
+              ? "Tidak ada karyawan yang cocok"
+              : "Belum ada data karyawan"}
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredEmployees.map((employee) => {
-            const totalDebt = getEmployeeTotalDebt(employee.id);
-            const totalUnpaidEarnings = getEmployeeTotalUnpaidEarnings(employee.id);
-            
-            return (
-              <Card key={employee.id} className="relative">
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{employee.name}</CardTitle>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                        <Briefcase className="h-3.5 w-3.5" />
-                        {employee.position}
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => openEditDialog(employee)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => {
-                          setEmployeeToDelete(employee);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+          {filteredEmployees.map((employee) => (
+            <Card key={employee.id} className="relative">
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-lg">{employee.name}</CardTitle>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                      <Briefcase className="h-3.5 w-3.5" />
+                      {employee.position}
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {employee.phone && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Phone className="h-3.5 w-3.5" />
-                      {employee.phone}
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Gaji Pokok</p>
-                      <p className="font-medium">{formatCurrency(employee.baseSalary)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Komisi</p>
-                      <p className="font-medium">{employee.commissionRate}%</p>
-                    </div>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => openEditDialog(employee)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => {
+                        setEmployeeToDelete(employee);
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-
-                  <div className="pt-2 border-t grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Pendapatan Belum Dibayar</p>
-                      <p className="font-medium text-primary">
-                        {formatCurrency(totalUnpaidEarnings)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Total Hutang</p>
-                      <p className={`font-medium ${totalDebt > 0 ? "text-destructive" : ""}`}>
-                        {formatCurrency(totalDebt)}
-                      </p>
-                    </div>
+                </div>
+              </CardHeader>
+              {employee.phone && (
+                <CardContent className="pt-0">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Phone className="h-3.5 w-3.5" />
+                    {employee.phone}
                   </div>
                 </CardContent>
-              </Card>
-            );
-          })}
+              )}
+            </Card>
+          ))}
         </div>
       )}
 
@@ -271,29 +232,6 @@ export function EmployeesPage() {
                 maxLength={15}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="salary">Gaji Pokok</Label>
-                <PriceInput
-                  id="salary"
-                  value={formBaseSalary}
-                  onChange={setFormBaseSalary}
-                  placeholder="0"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="commission">Komisi (%)</Label>
-                <Input
-                  id="commission"
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={formCommissionRate}
-                  onChange={(e) => setFormCommissionRate(Number(e.target.value))}
-                  placeholder="0"
-                />
-              </div>
-            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
@@ -312,8 +250,8 @@ export function EmployeesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Karyawan?</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus karyawan "{employeeToDelete?.name}"?
-              Tindakan ini tidak dapat dibatalkan.
+              Apakah Anda yakin ingin menghapus karyawan "
+              {employeeToDelete?.name}"? Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

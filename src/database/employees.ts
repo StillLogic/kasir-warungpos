@@ -1,10 +1,17 @@
-import { Employee, EmployeeEarning, EmployeeDebt, EmployeeDebtPayment } from "@/types/employee";
+import {
+  Employee,
+  EmployeeEarning,
+  EmployeeDebt,
+  EmployeeDebtPayment,
+  EmployeeSettlement,
+} from "@/types/employee";
 import { generateId, toUnix, fromUnix } from "./utils";
 
 const EMPLOYEES_KEY = "db_employees";
 const EARNINGS_KEY = "db_employee_earnings";
 const EMPLOYEE_DEBTS_KEY = "db_employee_debts";
 const EMPLOYEE_DEBT_PAYMENTS_KEY = "db_employee_debt_payments";
+const EMPLOYEE_SETTLEMENTS_KEY = "db_employee_settlements";
 
 // ============ Employee Records ============
 interface EmployeeRecord {
@@ -12,8 +19,6 @@ interface EmployeeRecord {
   n: string; // name
   p: string; // position
   ph?: string; // phone
-  bs: number; // baseSalary
-  cr: number; // commissionRate
   ca: number; // createdAt
   ua: number; // updatedAt
 }
@@ -24,8 +29,6 @@ function employeeToRecord(e: Employee): EmployeeRecord {
     n: e.name,
     p: e.position,
     ph: e.phone,
-    bs: e.baseSalary,
-    cr: e.commissionRate,
     ca: toUnix(new Date(e.createdAt)),
     ua: toUnix(new Date(e.updatedAt)),
   };
@@ -37,8 +40,6 @@ function employeeFromRecord(r: EmployeeRecord): Employee {
     name: r.n,
     position: r.p,
     phone: r.ph,
-    baseSalary: r.bs,
-    commissionRate: r.cr,
     createdAt: fromUnix(r.ca),
     updatedAt: fromUnix(r.ua),
   };
@@ -73,19 +74,27 @@ interface EarningRecord {
 
 function earningTypeToNumber(type: EmployeeEarning["type"]): 0 | 1 | 2 | 3 {
   switch (type) {
-    case "salary": return 0;
-    case "commission": return 1;
-    case "bonus": return 2;
-    case "other": return 3;
+    case "salary":
+      return 0;
+    case "commission":
+      return 1;
+    case "bonus":
+      return 2;
+    case "other":
+      return 3;
   }
 }
 
 function earningTypeFromNumber(n: 0 | 1 | 2 | 3): EmployeeEarning["type"] {
   switch (n) {
-    case 0: return "salary";
-    case 1: return "commission";
-    case 2: return "bonus";
-    case 3: return "other";
+    case 0:
+      return "salary";
+    case 1:
+      return "commission";
+    case 2:
+      return "bonus";
+    case 3:
+      return "other";
   }
 }
 
@@ -149,17 +158,23 @@ interface DebtRecord {
 
 function debtStatusToNumber(status: EmployeeDebt["status"]): 0 | 1 | 2 {
   switch (status) {
-    case "unpaid": return 0;
-    case "partial": return 1;
-    case "paid": return 2;
+    case "unpaid":
+      return 0;
+    case "partial":
+      return 1;
+    case "paid":
+      return 2;
   }
 }
 
 function debtStatusFromNumber(n: 0 | 1 | 2): EmployeeDebt["status"] {
   switch (n) {
-    case 0: return "unpaid";
-    case 1: return "partial";
-    case 2: return "paid";
+    case 0:
+      return "unpaid";
+    case 1:
+      return "partial";
+    case 2:
+      return "paid";
   }
 }
 
@@ -261,6 +276,62 @@ function savePayments(payments: PaymentRecord[]) {
   localStorage.setItem(EMPLOYEE_DEBT_PAYMENTS_KEY, JSON.stringify(payments));
 }
 
+// ============ Settlement Records ============
+interface SettlementRecord {
+  i: string; // id
+  ei: string; // employeeId
+  en: string; // employeeName
+  t: 0 | 1; // type (0=admin_to_employee, 1=employee_to_admin)
+  a: number; // amount
+  d: string; // description
+  ca: number; // createdAt
+}
+
+function settlementTypeToNumber(type: EmployeeSettlement["type"]): 0 | 1 {
+  return type === "admin_to_employee" ? 0 : 1;
+}
+
+function settlementTypeFromNumber(n: 0 | 1): EmployeeSettlement["type"] {
+  return n === 0 ? "admin_to_employee" : "employee_to_admin";
+}
+
+function settlementToRecord(s: EmployeeSettlement): SettlementRecord {
+  return {
+    i: s.id,
+    ei: s.employeeId,
+    en: s.employeeName,
+    t: settlementTypeToNumber(s.type),
+    a: s.amount,
+    d: s.description,
+    ca: toUnix(new Date(s.createdAt)),
+  };
+}
+
+function settlementFromRecord(r: SettlementRecord): EmployeeSettlement {
+  return {
+    id: r.i,
+    employeeId: r.ei,
+    employeeName: r.en,
+    type: settlementTypeFromNumber(r.t),
+    amount: r.a,
+    description: r.d,
+    createdAt: fromUnix(r.ca),
+  };
+}
+
+function loadSettlements(): SettlementRecord[] {
+  try {
+    const data = localStorage.getItem(EMPLOYEE_SETTLEMENTS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSettlements(settlements: SettlementRecord[]) {
+  localStorage.setItem(EMPLOYEE_SETTLEMENTS_KEY, JSON.stringify(settlements));
+}
+
 // ============ Employee CRUD ============
 export function getEmployees(): Employee[] {
   return loadEmployees()
@@ -274,15 +345,15 @@ export function getEmployeeById(id: string): Employee | undefined {
   return record ? employeeFromRecord(record) : undefined;
 }
 
-export function createEmployee(data: Omit<Employee, "id" | "createdAt" | "updatedAt">): Employee {
+export function createEmployee(
+  data: Omit<Employee, "id" | "createdAt" | "updatedAt">,
+): Employee {
   const now = toUnix(new Date());
   const newEmployee: EmployeeRecord = {
     i: generateId(),
     n: data.name,
     p: data.position,
     ph: data.phone,
-    bs: data.baseSalary,
-    cr: data.commissionRate,
     ca: now,
     ua: now,
   };
@@ -294,7 +365,10 @@ export function createEmployee(data: Omit<Employee, "id" | "createdAt" | "update
   return employeeFromRecord(newEmployee);
 }
 
-export function updateEmployee(id: string, data: Partial<Omit<Employee, "id" | "createdAt" | "updatedAt">>): Employee | undefined {
+export function updateEmployee(
+  id: string,
+  data: Partial<Omit<Employee, "id" | "createdAt" | "updatedAt">>,
+): Employee | undefined {
   const employees = loadEmployees();
   const index = employees.findIndex((e) => e.i === id);
   if (index === -1) return undefined;
@@ -305,8 +379,6 @@ export function updateEmployee(id: string, data: Partial<Omit<Employee, "id" | "
   if (data.name !== undefined) updated.n = data.name;
   if (data.position !== undefined) updated.p = data.position;
   if (data.phone !== undefined) updated.ph = data.phone;
-  if (data.baseSalary !== undefined) updated.bs = data.baseSalary;
-  if (data.commissionRate !== undefined) updated.cr = data.commissionRate;
 
   employees[index] = updated;
   saveEmployees(employees);
@@ -326,7 +398,10 @@ export function deleteEmployee(id: string): boolean {
 export function getEarnings(): EmployeeEarning[] {
   return loadEarnings()
     .map(earningFromRecord)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 }
 
 export function getEarningsByEmployeeId(employeeId: string): EmployeeEarning[] {
@@ -337,11 +412,15 @@ export function getUnpaidEarnings(): EmployeeEarning[] {
   return getEarnings().filter((e) => !e.isPaid);
 }
 
-export function getUnpaidEarningsByEmployeeId(employeeId: string): EmployeeEarning[] {
+export function getUnpaidEarningsByEmployeeId(
+  employeeId: string,
+): EmployeeEarning[] {
   return getEarnings().filter((e) => e.employeeId === employeeId && !e.isPaid);
 }
 
-export function createEarning(data: Omit<EmployeeEarning, "id" | "createdAt" | "isPaid" | "paidAt">): EmployeeEarning {
+export function createEarning(
+  data: Omit<EmployeeEarning, "id" | "createdAt" | "isPaid" | "paidAt">,
+): EmployeeEarning {
   const now = toUnix(new Date());
   const newEarning: EarningRecord = {
     i: generateId(),
@@ -387,7 +466,10 @@ export function deleteEarning(id: string): boolean {
 export function getEmployeeDebts(): EmployeeDebt[] {
   return loadDebts()
     .map(debtFromRecord)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 }
 
 export function getEmployeeDebtById(id: string): EmployeeDebt | undefined {
@@ -405,10 +487,17 @@ export function getUnpaidEmployeeDebts(): EmployeeDebt[] {
 }
 
 export function getUnpaidDebtsByEmployeeId(employeeId: string): EmployeeDebt[] {
-  return getEmployeeDebts().filter((d) => d.employeeId === employeeId && d.status !== "paid");
+  return getEmployeeDebts().filter(
+    (d) => d.employeeId === employeeId && d.status !== "paid",
+  );
 }
 
-export function createEmployeeDebt(data: { employeeId: string; employeeName: string; description: string; amount: number }): EmployeeDebt {
+export function createEmployeeDebt(data: {
+  employeeId: string;
+  employeeName: string;
+  description: string;
+  amount: number;
+}): EmployeeDebt {
   const now = toUnix(new Date());
   const newDebt: DebtRecord = {
     i: generateId(),
@@ -433,7 +522,7 @@ export function createEmployeeDebt(data: { employeeId: string; employeeName: str
 export function payEmployeeDebt(
   debtId: string,
   amount: number,
-  method: EmployeeDebtPayment["method"]
+  method: EmployeeDebtPayment["method"],
 ): { debt: EmployeeDebt; payment: EmployeeDebtPayment } | undefined {
   const debts = loadDebts();
   const index = debts.findIndex((d) => d.i === debtId);
@@ -480,7 +569,10 @@ export function getEmployeeDebtPayments(debtId: string): EmployeeDebtPayment[] {
   return loadPayments()
     .filter((p) => p.di === debtId)
     .map(paymentFromRecord)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 }
 
 export function deleteEmployeeDebt(id: string): boolean {
@@ -504,9 +596,17 @@ export function getEmployeeTotalUnpaidEarnings(employeeId: string): number {
     .reduce((sum, e) => sum + e.amount, 0);
 }
 
-export function getEmployeesWithDebt(): { employeeId: string; employeeName: string; totalDebt: number; debtCount: number }[] {
+export function getEmployeesWithDebt(): {
+  employeeId: string;
+  employeeName: string;
+  totalDebt: number;
+  debtCount: number;
+}[] {
   const debts = getUnpaidEmployeeDebts();
-  const employeeMap = new Map<string, { employeeName: string; totalDebt: number; debtCount: number }>();
+  const employeeMap = new Map<
+    string,
+    { employeeName: string; totalDebt: number; debtCount: number }
+  >();
 
   for (const debt of debts) {
     const existing = employeeMap.get(debt.employeeId);
@@ -525,4 +625,53 @@ export function getEmployeesWithDebt(): { employeeId: string; employeeName: stri
   return Array.from(employeeMap.entries())
     .map(([employeeId, data]) => ({ employeeId, ...data }))
     .sort((a, b) => b.totalDebt - a.totalDebt);
+}
+
+// ============ Settlement CRUD ============
+export function getSettlements(): EmployeeSettlement[] {
+  return loadSettlements()
+    .map(settlementFromRecord)
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+}
+
+export function getSettlementsByEmployeeId(
+  employeeId: string,
+): EmployeeSettlement[] {
+  return getSettlements().filter((s) => s.employeeId === employeeId);
+}
+
+export function createSettlement(data: {
+  employeeId: string;
+  employeeName: string;
+  type: EmployeeSettlement["type"];
+  amount: number;
+  description: string;
+}): EmployeeSettlement {
+  const now = toUnix(new Date());
+  const newSettlement: SettlementRecord = {
+    i: generateId(),
+    ei: data.employeeId,
+    en: data.employeeName,
+    t: settlementTypeToNumber(data.type),
+    a: data.amount,
+    d: data.description,
+    ca: now,
+  };
+
+  const settlements = loadSettlements();
+  settlements.push(newSettlement);
+  saveSettlements(settlements);
+
+  return settlementFromRecord(newSettlement);
+}
+
+export function deleteSettlement(id: string): boolean {
+  const settlements = loadSettlements();
+  const filtered = settlements.filter((s) => s.i !== id);
+  if (filtered.length === settlements.length) return false;
+  saveSettlements(filtered);
+  return true;
 }

@@ -3,8 +3,6 @@ export interface Employee {
   name: string;
   position: string;
   phone?: string;
-  baseSalary: number; // Gaji pokok
-  commissionRate: number; // Persentase komisi (0-100)
   createdAt: string;
   updatedAt: string;
 }
@@ -14,7 +12,7 @@ export interface EmployeeEarning {
   employeeId: string;
   employeeName: string;
   transactionId?: string; // Link to transaction if commission
-  type: "salary" | "commission" | "bonus" | "other";
+  type: "salary" | "commission";
   description: string;
   amount: number;
   isPaid: boolean;
@@ -42,5 +40,16 @@ export interface EmployeeDebtPayment {
   employeeId: string;
   amount: number;
   method: "cash" | "salary_deduction"; // Tunai atau potong gaji
+  createdAt: string;
+}
+
+// Settlement: Pembayaran untuk menyelesaikan saldo (surplus/minus)
+export interface EmployeeSettlement {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  type: "admin_to_employee" | "employee_to_admin"; // Siapa yang bayar
+  amount: number; // Nominal pembayaran
+  description: string;
   createdAt: string;
 }

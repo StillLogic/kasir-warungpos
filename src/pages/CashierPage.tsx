@@ -1,8 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { Product, CartItem, Transaction } from "@/types/pos";
 import { Customer } from "@/types/debt";
+import { Employee } from "@/types/employee";
 import { saveTransaction, waitForProducts } from "@/database";
 import { createDebt } from "@/database/debts";
+import { createEmployeeDebt } from "@/database/employees";
 import { ProductCard } from "@/components/ProductCard";
 import { Cart } from "@/components/Cart";
 import { CheckoutDialog } from "@/components/CheckoutDialog";
@@ -212,6 +214,45 @@ export function CashierPage() {
     waitForProducts().then(setProducts);
   };
 
+  const handleConfirmEmployeeDebt = async (employee: Employee) => {
+    // Create employee debt for each cart item
+    cart.forEach((item) => {
+      const price =
+        item.priceType === "wholesale"
+          ? item.product.wholesalePrice
+          : item.product.retailPrice;
+      const description = `${item.quantity} ${item.product.name} x ${price.toLocaleString("id-ID")}`;
+
+      createEmployeeDebt({
+        employeeId: employee.id,
+        employeeName: employee.name,
+        description,
+        amount: item.subtotal,
+      });
+    });
+
+    // Save transaction
+    saveTransaction({
+      items: cart,
+      total: cartTotal,
+      payment: 0,
+      change: 0,
+      paymentType: "debt",
+      customerId: employee.id,
+      customerName: `${employee.name} (Karyawan)`,
+    });
+
+    setCart([]);
+    setDebtDialogOpen(false);
+
+    toast({
+      title: "Hutang Karyawan Dicatat",
+      description: `Hutang atas nama ${employee.name} sebesar ${cartTotal.toLocaleString("id-ID", { style: "currency", currency: "IDR" })} telah dicatat`,
+    });
+
+    waitForProducts().then(setProducts);
+  };
+
   const CartContent = () => (
     <Cart
       items={cart}
@@ -346,6 +387,7 @@ export function CashierPage() {
         open={debtDialogOpen}
         onClose={() => setDebtDialogOpen(false)}
         onConfirm={handleConfirmDebt}
+        onConfirmEmployee={handleConfirmEmployeeDebt}
         total={cartTotal}
         items={cart}
       />
