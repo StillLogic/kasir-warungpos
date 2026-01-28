@@ -4,3 +4,6 @@ export { SettingsPage } from './SettingsPage';
 export { PricingPage } from './PricingPage';
 export { CalculatorPage } from './CalculatorPage';
 export { DebtsPage } from './DebtsPage';
+export { EmployeesPage } from './EmployeesPage';
+export { EmployeeEarningsPage } from './EmployeeEarningsPage';
+export { EmployeeDebtsPage } from './EmployeeDebtsPage';
