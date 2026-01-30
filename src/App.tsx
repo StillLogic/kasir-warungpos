@@ -20,6 +20,7 @@ import {
   EmployeeDebtsPage,
   EmployeeRecordsPage,
   ShoppingListPage,
+  MasterDataPage,
 } from "./pages/admin";
 import { AdminLayout } from "./components/admin";
 import { InstallPWA } from "./components/InstallPWA";
@@ -144,6 +145,14 @@ const App = () => {
                 element={
                   <AdminLayout>
                     <ShoppingListPage />
+                  </AdminLayout>
+                }
+              />
+              <Route
+                path="/admin/master-data"
+                element={
+                  <AdminLayout>
+                    <MasterDataPage />
                   </AdminLayout>
                 }
               />

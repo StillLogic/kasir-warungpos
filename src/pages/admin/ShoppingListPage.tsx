@@ -2,8 +2,6 @@ import { useState, useMemo } from "react";
 import {
   ShoppingCategory,
   ShoppingItem,
-  ShoppingUnit,
-  SHOPPING_UNITS,
 } from "@/types/shopping-list";
 import {
   getShoppingCategories,
@@ -15,6 +13,7 @@ import {
   toggleShoppingItemPurchased,
   clearPurchasedItems,
 } from "@/database/shopping-list";
+import { getUnitNames } from "@/database/units";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +55,7 @@ export function ShoppingListPage() {
     getShoppingCategories,
   );
   const [items, setItems] = useState<ShoppingItem[]>(getShoppingItems);
+  const [units, setUnits] = useState<string[]>(getUnitNames);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Form states
@@ -75,7 +75,7 @@ export function ShoppingListPage() {
     productName: "",
     brand: "",
     quantity: 1,
-    unit: "pcs" as ShoppingUnit,
+    unit: units[0] || "Pcs",
   });
 
   const purchasedItems = items.filter((i) => i.isPurchased).length;
@@ -115,6 +115,7 @@ export function ShoppingListPage() {
   const refreshData = () => {
     setCategories(getShoppingCategories());
     setItems(getShoppingItems());
+    setUnits(getUnitNames());
   };
 
   const handleAddCategory = () => {
@@ -181,7 +182,7 @@ export function ShoppingListPage() {
       productName: "",
       brand: "",
       quantity: 1,
-      unit: "pcs",
+      unit: units[0] || "Pcs",
     });
     setFormOpen(false);
     refreshData();
@@ -517,7 +518,7 @@ export function ShoppingListPage() {
                 <Label>Satuan *</Label>
                 <Select
                   value={formData.unit}
-                  onValueChange={(value: ShoppingUnit) =>
+                  onValueChange={(value: string) =>
                     setFormData({ ...formData, unit: value })
                   }
                 >
@@ -525,9 +526,9 @@ export function ShoppingListPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {SHOPPING_UNITS.map((unit) => (
-                      <SelectItem key={unit.value} value={unit.value}>
-                        {unit.label}
+                    {units.map((unit) => (
+                      <SelectItem key={unit} value={unit}>
+                        {unit}
                       </SelectItem>
                     ))}
                   </SelectContent>

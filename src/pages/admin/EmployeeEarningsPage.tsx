@@ -186,6 +186,8 @@ export function EmployeeEarningsPage() {
         label: "Komisi",
         className: "bg-green-500/10 text-green-500",
       },
+      bonus: { label: "Bonus", className: "bg-purple-500/10 text-purple-500" },
+      other: { label: "Lainnya", className: "bg-gray-500/10 text-gray-500" },
     };
     const variant = variants[type];
     return <Badge className={variant.className}>{variant.label}</Badge>;
