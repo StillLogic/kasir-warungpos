@@ -1,14 +1,3 @@
-export type ShoppingUnit = "pcs" | "lusin" | "pack" | "dus" | "karung" | "kg";
-
-export const SHOPPING_UNITS: { value: ShoppingUnit; label: string }[] = [
-  { value: "pcs", label: "Pcs" },
-  { value: "lusin", label: "Lusin" },
-  { value: "pack", label: "Pack" },
-  { value: "dus", label: "Dus" },
-  { value: "karung", label: "Karung" },
-  { value: "kg", label: "Kg" },
-];
-
 export interface ShoppingCategory {
   id: string;
   name: string;
@@ -22,7 +11,7 @@ export interface ShoppingItem {
   productName: string;
   brand: string;
   quantity: number;
-  unit: ShoppingUnit;
+  unit: string;
   isPurchased: boolean;
   createdAt: string;
 }

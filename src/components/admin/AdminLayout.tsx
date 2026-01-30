@@ -18,6 +18,7 @@ import {
   HandCoins,
   ClipboardList,
   ShoppingCart,
+  Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "../ThemeToggle";
@@ -43,6 +44,11 @@ const navItems = [
     path: "/admin/shopping-list",
     label: "Catatan Belanja",
     icon: ShoppingCart,
+  },
+  {
+    path: "/admin/master-data",
+    label: "Master Data",
+    icon: Database,
   },
   { path: "/admin/history", label: "Riwayat", icon: History },
   { path: "/admin/reports", label: "Laporan", icon: BarChart3 },
@@ -104,7 +110,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {navItems.slice(0, 5).map((item) => {
+        {navItems.slice(0, 6).map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
           return (
@@ -172,7 +178,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </CollapsibleContent>
         </Collapsible>
 
-        {navItems.slice(5).map((item) => {
+        {navItems.slice(6).map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
           return (

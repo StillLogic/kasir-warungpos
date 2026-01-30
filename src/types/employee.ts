@@ -12,7 +12,7 @@ export interface EmployeeEarning {
   employeeId: string;
   employeeName: string;
   transactionId?: string; // Link to transaction if commission
-  type: "salary" | "commission";
+  type: "salary" | "commission" | "bonus" | "other";
   description: string;
   amount: number;
   isPaid: boolean;
