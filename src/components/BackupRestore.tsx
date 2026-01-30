@@ -27,6 +27,8 @@ import {
   ShoppingCart,
   Tag,
   CreditCard,
+  Scale,
+  ClipboardList,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { downloadBackup, importBackup, getStorageStats } from "@/lib/backup";
@@ -40,8 +42,11 @@ export function BackupRestore() {
     products: number;
     transactions: number;
     categories: number;
+    units: number;
     customers: number;
     debts: number;
+    employees: number;
+    shoppingItems: number;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -142,7 +147,7 @@ export function BackupRestore() {
         <CardContent className="space-y-4">
           {/* Storage Stats */}
           {stats && (
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-3 bg-muted/50 rounded-lg">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-3 bg-muted/50 rounded-lg">
               <div className="flex items-center gap-2 text-sm">
                 <Package className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium">{stats.products}</span>
@@ -159,6 +164,11 @@ export function BackupRestore() {
                 <span className="text-muted-foreground">kategori</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
+                <Scale className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">{stats.units}</span>
+                <span className="text-muted-foreground">satuan</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
                 <Users className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium">{stats.customers}</span>
                 <span className="text-muted-foreground">pelanggan</span>
@@ -167,6 +177,16 @@ export function BackupRestore() {
                 <CreditCard className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium">{stats.debts}</span>
                 <span className="text-muted-foreground">hutang</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">{stats.employees}</span>
+                <span className="text-muted-foreground">karyawan</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <ClipboardList className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">{stats.shoppingItems}</span>
+                <span className="text-muted-foreground">item belanja</span>
               </div>
             </div>
           )}
