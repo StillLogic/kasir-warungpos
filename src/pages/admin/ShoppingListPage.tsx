@@ -44,7 +44,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, FolderPlus, Search, ChevronDown } from "lucide-react";
+import { Plus, Trash2, FolderPlus, Search, ChevronDown, FileDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { handleTitleCaseChange } from "@/lib/text";
 import { cn } from "@/lib/utils";
@@ -79,6 +79,122 @@ export function ShoppingListPage() {
   });
 
   const purchasedItems = items.filter((i) => i.isPurchased).length;
+
+  const handleExportPDF = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast({
+        title: "Error",
+        description: "Pop-up diblokir. Izinkan pop-up untuk mencetak.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const now = new Date().toLocaleDateString("id-ID", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    let pagesHtml = "";
+
+    categories.forEach((category, idx) => {
+      const categoryItems = items.filter((i) => i.categoryId === category.id);
+      
+      const rowsHtml = categoryItems.length > 0
+        ? categoryItems
+            .map(
+              (item, i) => `
+              <tr>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${i + 1}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${item.productName}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${item.brand || "-"}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.quantity} ${item.unit}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.isPurchased ? "✓" : ""}</td>
+              </tr>
+            `
+            )
+            .join("")
+        : `<tr><td colspan="5" style="border: 1px solid #ddd; padding: 16px; text-align: center; color: #666;">Tidak ada item</td></tr>`;
+
+      pagesHtml += `
+        <div class="page" style="${idx > 0 ? "page-break-before: always;" : ""}">
+          <h2 style="margin: 0 0 16px 0; font-size: 18px; border-bottom: 2px solid #333; padding-bottom: 8px;">
+            ${category.name}
+          </h2>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+              <tr style="background-color: #f5f5f5;">
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center; width: 40px;">No</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Nama Produk</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Merk</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center; width: 100px;">Jumlah</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center; width: 60px;">Dibeli</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+          <p style="margin-top: 12px; font-size: 11px; color: #666;">
+            Total: ${categoryItems.length} item
+          </p>
+        </div>
+      `;
+    });
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Daftar Belanja - ${now}</title>
+        <style>
+          @media print {
+            .page { page-break-after: always; }
+            .page:last-child { page-break-after: avoid; }
+          }
+          body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            color: #333;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #333;
+          }
+          .header h1 {
+            margin: 0;
+            font-size: 24px;
+          }
+          .header p {
+            margin: 8px 0 0 0;
+            color: #666;
+            font-size: 12px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>📋 Daftar Belanja</h1>
+          <p>${now}</p>
+        </div>
+        ${pagesHtml}
+        <script>
+          window.onload = function() {
+            window.print();
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
 
   const toggleCollapse = (categoryId: string) => {
     setCollapsedCategories((prev) => {
@@ -227,7 +343,7 @@ export function ShoppingListPage() {
             maxLength={50}
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {purchasedItems > 0 && (
             <Button
               variant="outline"
@@ -236,6 +352,12 @@ export function ShoppingListPage() {
             >
               <Trash2 className="w-4 h-4" />
               Hapus Dibeli ({purchasedItems})
+            </Button>
+          )}
+          {categories.length > 0 && (
+            <Button variant="outline" onClick={handleExportPDF}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Export PDF
             </Button>
           )}
           <Button variant="outline" onClick={() => setCategoryFormOpen(true)}>
