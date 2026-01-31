@@ -392,12 +392,12 @@ export function EmployeeEarningsPage() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+          <div className="flex gap-3 pt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setDialogOpen(false)}>
               Batal
             </Button>
-            <Button onClick={handleSubmit}>Tambah</Button>
-          </DialogFooter>
+            <Button className="flex-1" onClick={handleSubmit}>Tambah</Button>
+          </div>
         </DialogContent>
       </Dialog>
 

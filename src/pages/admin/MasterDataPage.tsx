@@ -388,15 +388,16 @@ export function MasterDataPage() {
               </p>
             </div>
           </div>
-          <DialogFooter>
+          <div className="flex gap-3 pt-4">
             <Button
               variant="outline"
+              className="flex-1"
               onClick={() => setCategoryFormOpen(false)}
             >
               Batal
             </Button>
-            <Button onClick={handleSaveCategory}>Simpan</Button>
-          </DialogFooter>
+            <Button className="flex-1" onClick={handleSaveCategory}>Simpan</Button>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -419,12 +420,12 @@ export function MasterDataPage() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setUnitFormOpen(false)}>
+          <div className="flex gap-3 pt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setUnitFormOpen(false)}>
               Batal
             </Button>
-            <Button onClick={handleSaveUnit}>Simpan</Button>
-          </DialogFooter>
+            <Button className="flex-1" onClick={handleSaveUnit}>Simpan</Button>
+          </div>
         </DialogContent>
       </Dialog>
 
