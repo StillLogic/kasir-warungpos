@@ -6,6 +6,7 @@ import { Product, ProductFormData } from "@/types/pos";
 import { generateSKU } from "@/lib/sku";
 import { getCategoryNames, getCategories } from "@/database/categories";
 import { getMarkupForPrice, calculateSellingPrices } from "@/database/markup";
+import { getUnitNames } from "@/database/units";
 import { toTitleCase } from "@/lib/text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,7 +51,7 @@ interface ProductFormProps {
   product?: Product | null;
 }
 
-const units = ["pcs", "pack", "dus", "kg", "liter", "botol", "sachet"];
+
 
 export function ProductForm({
   open,
@@ -70,6 +71,7 @@ export function ProductForm({
   const [wholesalePriceStr, setWholesalePriceStr] = useState("");
 
   const categories = useMemo(() => getCategoryNames(), []);
+  const units = useMemo(() => getUnitNames(), []);
 
   const {
     register,
@@ -89,7 +91,7 @@ export function ProductForm({
       wholesalePrice: 0,
       wholesaleMinQty: 10,
       stock: 0,
-      unit: "pcs",
+      unit: units[0] || "Pcs",
     },
   });
 
