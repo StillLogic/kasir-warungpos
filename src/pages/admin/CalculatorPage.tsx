@@ -36,15 +36,26 @@ export function CalculatorPage() {
   return <DesktopCalculator />;
 }
 
+type Operator = "+" | "-" | "×" | "÷" | null;
+
 function DesktopCalculator() {
   const { toast } = useToast();
   const [costPrice, setCostPrice] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("__all__");
+  
+  // Arithmetic states
+  const [previousValue, setPreviousValue] = useState<number | null>(null);
+  const [operator, setOperator] = useState<Operator>(null);
 
   const categories = useMemo(() => getCategories(), []);
   const markupRules = useMemo(() => getMarkupRules(), []);
 
   const cost = parseFloat(costPrice) || 0;
+
+  // Expression display
+  const expressionDisplay = previousValue !== null && operator
+    ? `${previousValue.toLocaleString("id-ID")} ${operator}`
+    : null;
 
   const markup = useMemo(() => {
     if (cost <= 0) return null;
@@ -97,9 +108,52 @@ function DesktopCalculator() {
     return null;
   }, [cost, selectedCategory, markupRules, categories, markup]);
 
+  const calculate = (left: number, right: number, op: Operator): number => {
+    switch (op) {
+      case "+":
+        return left + right;
+      case "-":
+        return left - right;
+      case "×":
+        return left * right;
+      case "÷":
+        return right !== 0 ? left / right : 0;
+      default:
+        return right;
+    }
+  };
+
+  const handleOperator = (nextOperator: Operator) => {
+    const inputValue = parseFloat(costPrice) || 0;
+
+    if (previousValue === null) {
+      setPreviousValue(inputValue);
+    } else if (operator) {
+      const result = calculate(previousValue, inputValue, operator);
+      setCostPrice(String(Math.round(result)));
+      setPreviousValue(result);
+    }
+
+    setOperator(nextOperator);
+    // After clicking operator, user will type new number
+  };
+
+  const handleEquals = () => {
+    if (operator === null || previousValue === null) return;
+
+    const inputValue = parseFloat(costPrice) || 0;
+    const result = calculate(previousValue, inputValue, operator);
+    
+    setCostPrice(String(Math.round(result)));
+    setPreviousValue(null);
+    setOperator(null);
+  };
+
   const handleReset = () => {
     setCostPrice("");
     setSelectedCategory("__all__");
+    setPreviousValue(null);
+    setOperator(null);
   };
 
   const copyToClipboard = (value: number, label: string) => {
@@ -232,7 +286,14 @@ function DesktopCalculator() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="costPrice">Harga Modal (Rp)</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="costPrice">Harga Modal (Rp)</Label>
+                {expressionDisplay && (
+                  <span className="text-xs text-muted-foreground font-mono">
+                    {expressionDisplay}
+                  </span>
+                )}
+              </div>
               <Input
                 id="costPrice"
                 type="number"
@@ -241,6 +302,58 @@ function DesktopCalculator() {
                 onChange={(e) => setCostPrice(e.target.value)}
                 min="0"
               />
+              {/* Operator Buttons */}
+              <div className="grid grid-cols-5 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOperator("+")}
+                  className="font-bold text-lg"
+                >
+                  +
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOperator("-")}
+                  className="font-bold text-lg"
+                >
+                  −
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOperator("×")}
+                  className="font-bold text-lg"
+                >
+                  ×
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOperator("÷")}
+                  className="font-bold text-lg"
+                >
+                  ÷
+                </Button>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={handleEquals}
+                  disabled={operator === null}
+                  className="font-bold text-lg"
+                >
+                  =
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Gunakan tombol operasi untuk menghitung harga modal
+              </p>
             </div>
 
             <div className="space-y-2">

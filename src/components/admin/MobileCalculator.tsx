@@ -8,16 +8,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Copy, Delete, RotateCcw, Info } from "lucide-react";
+import { Copy, Delete, Info, Plus, Minus, X, Divide, Equal } from "lucide-react";
 import { formatCurrency, roundToThousand } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
 import { getMarkupForPrice, getMarkupRules } from "@/database/markup";
 import { getCategories } from "@/database/categories";
 import { cn } from "@/lib/utils";
 
+type Operator = "+" | "-" | "×" | "÷" | null;
+
 export function MobileCalculator() {
   const { toast } = useToast();
   const [display, setDisplay] = useState<string>("0");
+  const [previousValue, setPreviousValue] = useState<number | null>(null);
+  const [operator, setOperator] = useState<Operator>(null);
+  const [waitingForOperand, setWaitingForOperand] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("__all__");
 
   const categories = useMemo(() => getCategories(), []);
@@ -75,16 +80,27 @@ export function MobileCalculator() {
   }, [cost, selectedCategory, markupRules, categories, markup]);
 
   const handleNumber = (num: string) => {
-    setDisplay((prev) => {
-      if (prev === "0") return num;
-      if (prev.length >= 15) return prev;
-      return prev + num;
-    });
+    if (waitingForOperand) {
+      setDisplay(num);
+      setWaitingForOperand(false);
+    } else {
+      setDisplay((prev) => {
+        if (prev === "0") return num;
+        if (prev.length >= 15) return prev;
+        return prev + num;
+      });
+    }
   };
 
-  const handleClear = () => setDisplay("0");
+  const handleClear = () => {
+    setDisplay("0");
+    setPreviousValue(null);
+    setOperator(null);
+    setWaitingForOperand(false);
+  };
 
   const handleBackspace = () => {
+    if (waitingForOperand) return;
     setDisplay((prev) => {
       if (prev.length === 1) return "0";
       return prev.slice(0, -1);
@@ -92,11 +108,71 @@ export function MobileCalculator() {
   };
 
   const handleTripleZero = () => {
+    if (waitingForOperand) {
+      setDisplay("0");
+      setWaitingForOperand(false);
+      return;
+    }
     setDisplay((prev) => {
       if (prev === "0") return prev;
       if (prev.length >= 12) return prev;
       return prev + "000";
     });
+  };
+
+  const handleDoubleZero = () => {
+    if (waitingForOperand) {
+      setDisplay("0");
+      setWaitingForOperand(false);
+      return;
+    }
+    setDisplay((prev) => {
+      if (prev === "0") return prev;
+      if (prev.length >= 13) return prev;
+      return prev + "00";
+    });
+  };
+
+  const calculate = (left: number, right: number, op: Operator): number => {
+    switch (op) {
+      case "+":
+        return left + right;
+      case "-":
+        return left - right;
+      case "×":
+        return left * right;
+      case "÷":
+        return right !== 0 ? left / right : 0;
+      default:
+        return right;
+    }
+  };
+
+  const handleOperator = (nextOperator: Operator) => {
+    const inputValue = parseFloat(display) || 0;
+
+    if (previousValue === null) {
+      setPreviousValue(inputValue);
+    } else if (operator) {
+      const result = calculate(previousValue, inputValue, operator);
+      setDisplay(String(Math.round(result)));
+      setPreviousValue(result);
+    }
+
+    setWaitingForOperand(true);
+    setOperator(nextOperator);
+  };
+
+  const handleEquals = () => {
+    if (operator === null || previousValue === null) return;
+
+    const inputValue = parseFloat(display) || 0;
+    const result = calculate(previousValue, inputValue, operator);
+    
+    setDisplay(String(Math.round(result)));
+    setPreviousValue(null);
+    setOperator(null);
+    setWaitingForOperand(true);
   };
 
   const copyToClipboard = (value: number, label: string) => {
@@ -107,46 +183,31 @@ export function MobileCalculator() {
     });
   };
 
-  const handleDoubleZero = () => {
-    setDisplay((prev) => {
-      if (prev === "0") return prev;
-      if (prev.length >= 13) return prev;
-      return prev + "00";
-    });
-  };
+  // Expression display for showing pending operation
+  const expressionDisplay = previousValue !== null && operator
+    ? `${formatCurrency(previousValue)} ${operator}`
+    : null;
 
   const numpadButtons = [
     { label: "7", action: () => handleNumber("7") },
     { label: "8", action: () => handleNumber("8") },
     { label: "9", action: () => handleNumber("9") },
-    {
-      label: <Delete className="w-5 h-5" />,
-      action: handleBackspace,
-      variant: "secondary" as const,
-    },
+    { label: <Divide className="w-5 h-5" />, action: () => handleOperator("÷"), variant: "secondary" as const },
     { label: "4", action: () => handleNumber("4") },
     { label: "5", action: () => handleNumber("5") },
     { label: "6", action: () => handleNumber("6") },
-    { label: "C", action: handleClear, variant: "secondary" as const },
+    { label: <X className="w-5 h-5" />, action: () => handleOperator("×"), variant: "secondary" as const },
     { label: "1", action: () => handleNumber("1") },
     { label: "2", action: () => handleNumber("2") },
     { label: "3", action: () => handleNumber("3") },
-    {
-      label: <RotateCcw className="w-5 h-5" />,
-      action: () => {
-        handleClear();
-        setSelectedCategory("__all__");
-      },
-      variant: "destructive" as const,
-    },
+    { label: <Minus className="w-5 h-5" />, action: () => handleOperator("-"), variant: "secondary" as const },
     { label: "0", action: () => handleNumber("0") },
     { label: "00", action: handleDoubleZero, variant: "outline" as const },
-    {
-      label: "000",
-      action: handleTripleZero,
-      variant: "outline" as const,
-      span: 2,
-    },
+    { label: "000", action: handleTripleZero, variant: "outline" as const },
+    { label: <Plus className="w-5 h-5" />, action: () => handleOperator("+"), variant: "secondary" as const },
+    { label: <Delete className="w-5 h-5" />, action: handleBackspace, variant: "outline" as const },
+    { label: "C", action: handleClear, variant: "outline" as const },
+    { label: <Equal className="w-5 h-5" />, action: handleEquals, variant: "default" as const, span: 2 },
   ];
 
   return (
@@ -170,7 +231,14 @@ export function MobileCalculator() {
 
         {/* Cost Display */}
         <div className="bg-muted/50 rounded-lg p-3">
-          <div className="text-xs text-muted-foreground mb-1">Harga Modal</div>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-muted-foreground">Harga Modal</span>
+            {expressionDisplay && (
+              <span className="text-xs text-muted-foreground font-mono">
+                {expressionDisplay}
+              </span>
+            )}
+          </div>
           <div className="text-2xl font-bold font-mono text-right truncate">
             {formatCurrency(cost)}
           </div>
@@ -182,8 +250,10 @@ export function MobileCalculator() {
             <Info className="w-3 h-3 shrink-0" />
             {appliedRule ? (
               <span className="truncate">
-                Markup: {appliedRule.retailMarkupPercent}% /{" "}
-                {appliedRule.wholesaleMarkupPercent}%
+                Markup: {appliedRule.markupType === "fixed" 
+                  ? `+${formatCurrency(appliedRule.retailMarkupFixed || 0)} / +${formatCurrency(appliedRule.wholesaleMarkupFixed || 0)}`
+                  : `${appliedRule.retailMarkupPercent}% / ${appliedRule.wholesaleMarkupPercent}%`
+                }
                 {appliedRule.categoryName && ` (${appliedRule.categoryName})`}
               </span>
             ) : (
@@ -259,7 +329,7 @@ export function MobileCalculator() {
               variant={btn.variant || "outline"}
               onClick={btn.action}
               className={cn(
-                "text-xl font-semibold h-full min-h-[3.5rem]",
+                "text-xl font-semibold h-full min-h-[3rem]",
                 btn.span === 2 && "col-span-2",
               )}
             >
