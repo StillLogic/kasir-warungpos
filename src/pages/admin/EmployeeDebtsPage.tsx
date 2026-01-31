@@ -320,12 +320,12 @@ export function EmployeeDebtsPage() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
+          <div className="flex gap-3 pt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setAddDialogOpen(false)}>
               Batal
             </Button>
-            <Button onClick={handleAddDebt}>Tambah</Button>
-          </DialogFooter>
+            <Button className="flex-1" onClick={handleAddDebt}>Tambah</Button>
+          </div>
         </DialogContent>
       </Dialog>
 

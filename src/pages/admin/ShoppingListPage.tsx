@@ -553,15 +553,16 @@ export function ShoppingListPage() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <div className="flex gap-3 pt-4">
             <Button
               variant="outline"
+              className="flex-1"
               onClick={() => setCategoryFormOpen(false)}
             >
               Batal
             </Button>
-            <Button onClick={handleAddCategory}>Tambah</Button>
-          </DialogFooter>
+            <Button className="flex-1" onClick={handleAddCategory}>Tambah</Button>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -658,12 +659,12 @@ export function ShoppingListPage() {
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setFormOpen(false)}>
+          <div className="flex gap-3 pt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setFormOpen(false)}>
               Batal
             </Button>
-            <Button onClick={handleAddItem}>Tambah</Button>
-          </DialogFooter>
+            <Button className="flex-1" onClick={handleAddItem}>Tambah</Button>
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -961,18 +961,19 @@ export function PricingPage() {
                 </div>
               )}
             </div>
-            <DialogFooter>
+            <div className="flex gap-3 pt-4">
               <Button
                 type="button"
                 variant="outline"
+                className="flex-1"
                 onClick={handleCloseDialog}
               >
                 Batal
               </Button>
-              <Button type="submit">
+              <Button type="submit" className="flex-1">
                 {editingRule ? "Simpan Perubahan" : "Tambah Aturan"}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
@@ -1175,16 +1176,17 @@ export function PricingPage() {
                 </Button>
               </div>
             </div>
-            <DialogFooter>
+            <div className="flex gap-3 pt-4">
               <Button
                 type="button"
                 variant="outline"
+                className="flex-1"
                 onClick={() => setBatchDialogOpen(false)}
               >
                 Batal
               </Button>
-              <Button type="submit">Simpan {tiers.length} Aturan</Button>
-            </DialogFooter>
+              <Button type="submit" className="flex-1">Simpan {tiers.length} Aturan</Button>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
