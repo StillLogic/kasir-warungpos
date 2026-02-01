@@ -1,9 +1,21 @@
 export function toTitleCase(str: string): string {
   if (!str) return str;
+
   return str
-    .toLowerCase()
     .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => {
+      if (!word) return word;
+
+      // Jika kata ini semua uppercase (misal: ELEKTRONIK), pertahankan
+      const isAllUpperCase = word === word.toUpperCase() && /[A-Z]/.test(word);
+
+      if (isAllUpperCase) {
+        return word; // Pertahankan kata uppercase
+      }
+
+      // Jika tidak, konversi ke Title Case (huruf pertama besar)
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
     .join(" ");
 }
 
@@ -42,10 +54,10 @@ export function formatPhoneNumber(phone: string): string {
   if (!phone) return phone;
 
   let cleaned = phone.replace(/[^\d+]/g, "");
-  
+
   // Remove leading + for processing
   const withoutPlus = cleaned.startsWith("+") ? cleaned.substring(1) : cleaned;
-  
+
   if (!withoutPlus) return "";
 
   // Already has +62
