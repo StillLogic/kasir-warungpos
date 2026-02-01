@@ -9,6 +9,7 @@ import {
   deleteShoppingCategory,
   getShoppingItems,
   createShoppingItem,
+  updateShoppingItem,
   deleteShoppingItem,
   toggleShoppingItemPurchased,
   clearPurchasedItems,
@@ -29,7 +30,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -37,17 +37,24 @@ import {
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, FolderPlus, Search, ChevronDown, FileDown } from "lucide-react";
+import { Plus, Trash2, FolderPlus, Search, ChevronDown, FileDown, Pencil, ListPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { handleTitleCaseChange } from "@/lib/text";
 import { cn } from "@/lib/utils";
+
+interface BulkItemInput {
+  id: string;
+  productName: string;
+  brand: string;
+  quantity: string;
+  unit: string;
+}
 
 export function ShoppingListPage() {
   const { toast } = useToast();
@@ -60,23 +67,29 @@ export function ShoppingListPage() {
 
   // Form states
   const [formOpen, setFormOpen] = useState(false);
+  const [bulkFormOpen, setBulkFormOpen] = useState(false);
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
     new Set(),
   );
 
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [formCategoryId, setFormCategoryId] = useState("");
   const [formData, setFormData] = useState({
-    categoryId: "",
     productName: "",
     brand: "",
-    quantity: 1,
+    quantity: "",
     unit: units[0] || "Pcs",
   });
+
+  // Bulk add state
+  const [bulkCategoryId, setBulkCategoryId] = useState("");
+  const [bulkItems, setBulkItems] = useState<BulkItemInput[]>([]);
 
   const purchasedItems = items.filter((i) => i.isPurchased).length;
 
@@ -262,8 +275,42 @@ export function ShoppingListPage() {
     toast({ title: "Berhasil", description: "Kategori dihapus" });
   };
 
-  const handleAddItem = () => {
-    if (!formData.categoryId) {
+  const openAddItemDialog = (categoryId: string) => {
+    setEditingItem(null);
+    setFormCategoryId(categoryId);
+    setFormData({
+      productName: "",
+      brand: "",
+      quantity: "",
+      unit: units[0] || "Pcs",
+    });
+    setFormOpen(true);
+  };
+
+  const openEditItemDialog = (item: ShoppingItem) => {
+    setEditingItem(item);
+    setFormCategoryId(item.categoryId);
+    setFormData({
+      productName: item.productName,
+      brand: item.brand,
+      quantity: item.quantity.toString(),
+      unit: item.unit,
+    });
+    setFormOpen(true);
+  };
+
+  const openBulkAddDialog = (categoryId: string) => {
+    setBulkCategoryId(categoryId);
+    setBulkItems([
+      { id: crypto.randomUUID(), productName: "", brand: "", quantity: "", unit: units[0] || "Pcs" },
+      { id: crypto.randomUUID(), productName: "", brand: "", quantity: "", unit: units[0] || "Pcs" },
+      { id: crypto.randomUUID(), productName: "", brand: "", quantity: "", unit: units[0] || "Pcs" },
+    ]);
+    setBulkFormOpen(true);
+  };
+
+  const handleSaveItem = () => {
+    if (!formCategoryId) {
       toast({
         title: "Error",
         description: "Pilih kategori terlebih dahulu",
@@ -281,29 +328,82 @@ export function ShoppingListPage() {
       return;
     }
 
-    const category = categories.find((c) => c.id === formData.categoryId);
+    const category = categories.find((c) => c.id === formCategoryId);
     if (!category) return;
 
-    createShoppingItem({
-      categoryId: formData.categoryId,
-      categoryName: category.name,
-      productName: formData.productName.trim(),
-      brand: formData.brand.trim(),
-      quantity: formData.quantity,
-      unit: formData.unit,
-    });
+    const quantity = parseInt(formData.quantity) || 1;
 
-    setFormData({
-      categoryId: formData.categoryId,
-      productName: "",
-      brand: "",
-      quantity: 1,
-      unit: units[0] || "Pcs",
-    });
+    if (editingItem) {
+      updateShoppingItem(editingItem.id, {
+        productName: formData.productName.trim(),
+        brand: formData.brand.trim(),
+        quantity,
+        unit: formData.unit,
+      });
+      toast({ title: "Berhasil", description: "Item diperbarui" });
+    } else {
+      createShoppingItem({
+        categoryId: formCategoryId,
+        categoryName: category.name,
+        productName: formData.productName.trim(),
+        brand: formData.brand.trim(),
+        quantity,
+        unit: formData.unit,
+      });
+      toast({ title: "Berhasil", description: "Item ditambahkan" });
+    }
+
     setFormOpen(false);
+    setEditingItem(null);
     refreshData();
+  };
 
-    toast({ title: "Berhasil", description: "Item ditambahkan" });
+  const handleBulkAdd = () => {
+    const category = categories.find((c) => c.id === bulkCategoryId);
+    if (!category) return;
+
+    const validItems = bulkItems.filter((item) => item.productName.trim());
+    if (validItems.length === 0) {
+      toast({
+        title: "Error",
+        description: "Minimal isi satu nama produk",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    validItems.forEach((item) => {
+      createShoppingItem({
+        categoryId: bulkCategoryId,
+        categoryName: category.name,
+        productName: item.productName.trim(),
+        brand: item.brand.trim(),
+        quantity: parseInt(item.quantity) || 1,
+        unit: item.unit,
+      });
+    });
+
+    toast({ title: "Berhasil", description: `${validItems.length} item ditambahkan` });
+    setBulkFormOpen(false);
+    refreshData();
+  };
+
+  const addBulkItemRow = () => {
+    setBulkItems([
+      ...bulkItems,
+      { id: crypto.randomUUID(), productName: "", brand: "", quantity: "", unit: units[0] || "Pcs" },
+    ]);
+  };
+
+  const updateBulkItem = (id: string, field: keyof BulkItemInput, value: string) => {
+    setBulkItems(bulkItems.map((item) =>
+      item.id === id ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const removeBulkItemRow = (id: string) => {
+    if (bulkItems.length <= 1) return;
+    setBulkItems(bulkItems.filter((item) => item.id !== id));
   };
 
   const handleDeleteItem = () => {
@@ -364,13 +464,6 @@ export function ShoppingListPage() {
             <FolderPlus className="h-4 w-4 mr-2" />
             Kategori
           </Button>
-          <Button
-            onClick={() => setFormOpen(true)}
-            disabled={categories.length === 0}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Tambah Item
-          </Button>
         </div>
       </div>
 
@@ -426,17 +519,37 @@ export function ShoppingListPage() {
                         </Badge>
                       </CardTitle>
                     </button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => {
-                        setCategoryToDelete(category.id);
-                        setDeleteConfirmOpen(true);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => openAddItemDialog(category.id)}
+                        title="Tambah 1 item"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => openBulkAddDialog(category.id)}
+                        title="Tambah banyak item"
+                      >
+                        <ListPlus className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => {
+                          setCategoryToDelete(category.id);
+                          setDeleteConfirmOpen(true);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 {!collapsedCategories.has(category.id) && (
@@ -462,7 +575,7 @@ export function ShoppingListPage() {
                               <th className="text-right py-2 px-2 font-medium text-muted-foreground">
                                 Jumlah
                               </th>
-                              <th className="w-10 py-2 px-2"></th>
+                              <th className="w-20 py-2 px-2"></th>
                             </tr>
                           </thead>
                           <tbody>
@@ -510,17 +623,27 @@ export function ShoppingListPage() {
                                   {item.quantity} {item.unit}
                                 </td>
                                 <td className="py-2 px-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-destructive hover:text-destructive"
-                                    onClick={() => {
-                                      setItemToDelete(item.id);
-                                      setDeleteConfirmOpen(true);
-                                    }}
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
+                                  <div className="flex gap-1 justify-end">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => openEditItemDialog(item)}
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-destructive hover:text-destructive"
+                                      onClick={() => {
+                                        setItemToDelete(item.id);
+                                        setDeleteConfirmOpen(true);
+                                      }}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -566,34 +689,13 @@ export function ShoppingListPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Item Dialog */}
+      {/* Add/Edit Item Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Tambah Item Belanja</DialogTitle>
+            <DialogTitle>{editingItem ? "Edit Item" : "Tambah Item"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Kategori *</Label>
-              <Select
-                value={formData.categoryId}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, categoryId: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih kategori" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="space-y-2">
               <Label>Nama Produk *</Label>
               <Input
@@ -624,15 +726,16 @@ export function ShoppingListPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Jumlah *</Label>
+                <Label>Jumlah</Label>
                 <Input
                   type="number"
                   min={1}
+                  placeholder="1"
                   value={formData.quantity}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      quantity: parseInt(e.target.value) || 1,
+                      quantity: e.target.value,
                     })
                   }
                 />
@@ -663,7 +766,116 @@ export function ShoppingListPage() {
             <Button variant="outline" className="flex-1" onClick={() => setFormOpen(false)}>
               Batal
             </Button>
-            <Button className="flex-1" onClick={handleAddItem}>Tambah</Button>
+            <Button className="flex-1" onClick={handleSaveItem}>
+              {editingItem ? "Simpan" : "Tambah"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Add Items Dialog */}
+      <Dialog open={bulkFormOpen} onOpenChange={setBulkFormOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ListPlus className="w-5 h-5" />
+              Tambah Banyak Item - {categories.find(c => c.id === bulkCategoryId)?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {bulkItems.map((item, index) => (
+              <div key={item.id} className="p-3 rounded-lg border space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Item {index + 1}</span>
+                  {bulkItems.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-destructive hover:text-destructive"
+                      onClick={() => removeBulkItemRow(item.id)}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Nama Produk *</Label>
+                    <Input
+                      placeholder="Nama produk"
+                      value={item.productName}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const upperValue = value.charAt(0).toUpperCase() + value.slice(1);
+                        updateBulkItem(item.id, "productName", upperValue);
+                      }}
+                      maxLength={100}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Merk</Label>
+                    <Input
+                      placeholder="Merk (opsional)"
+                      value={item.brand}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const upperValue = value.charAt(0).toUpperCase() + value.slice(1);
+                        updateBulkItem(item.id, "brand", upperValue);
+                      }}
+                      maxLength={50}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Jumlah</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      placeholder="1"
+                      value={item.quantity}
+                      onChange={(e) => updateBulkItem(item.id, "quantity", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Satuan</Label>
+                    <Select
+                      value={item.unit}
+                      onValueChange={(v) => updateBulkItem(item.id, "unit", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {units.map((unit) => (
+                          <SelectItem key={unit} value={unit}>
+                            {unit}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addBulkItemRow}
+              className="w-full gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Tambah Baris
+            </Button>
+          </div>
+          <div className="flex gap-3 pt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setBulkFormOpen(false)}>
+              Batal
+            </Button>
+            <Button className="flex-1" onClick={handleBulkAdd}>
+              Simpan {bulkItems.filter(i => i.productName.trim()).length} Item
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -681,8 +893,9 @@ export function ShoppingListPage() {
                 : "Item ini akan dihapus dari daftar belanja."}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <div className="flex gap-3 pt-4">
             <AlertDialogCancel
+              className="flex-1"
               onClick={() => {
                 setCategoryToDelete(null);
                 setItemToDelete(null);
@@ -691,14 +904,14 @@ export function ShoppingListPage() {
               Batal
             </AlertDialogCancel>
             <AlertDialogAction
+              className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={
                 categoryToDelete ? handleDeleteCategory : handleDeleteItem
               }
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Hapus
             </AlertDialogAction>
-          </AlertDialogFooter>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
 
@@ -711,15 +924,15 @@ export function ShoppingListPage() {
               {purchasedItems} item yang sudah dibeli akan dihapus.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
+          <div className="flex gap-3 pt-4">
+            <AlertDialogCancel className="flex-1">Batal</AlertDialogCancel>
             <AlertDialogAction
+              className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleClearPurchased}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Hapus
             </AlertDialogAction>
-          </AlertDialogFooter>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
     </div>
