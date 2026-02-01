@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -7,7 +7,6 @@ import {
   BarChart3,
   Settings,
   Menu,
-  X,
   ChevronLeft,
   ChevronDown,
   Percent,
@@ -74,6 +73,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     location.pathname.startsWith("/admin/employees"),
   );
 
+  const touchStartX = useRef<number>(0);
+  const touchStartY = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+
   const isActive = (path: string) => {
     if (path === "/admin") {
       return location.pathname === "/admin";
@@ -84,6 +87,74 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const isEmployeeActive = employeeSubItems.some(
     (item) => location.pathname === item.path,
   );
+
+  // Swipe detection
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      // Jangan proses swipe jika touch dimulai di element interaktif
+      if (
+        target.closest('button, a, input, select, textarea, [role="button"]')
+      ) {
+        return;
+      }
+      
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      // Hanya track jika touchStart sudah tercatat
+      if (touchStartX.current > 0) {
+        touchEndX.current = e.touches[0].clientX;
+      }
+    };
+
+    const handleTouchEnd = () => {
+      // Hanya proses jika touchStart tercatat
+      if (touchStartX.current === 0) {
+        return;
+      }
+
+      const diffX = touchStartX.current - touchEndX.current;
+      const diffY = Math.abs(
+        touchStartY.current - (touchEndX.current ? touchStartY.current : 0),
+      );
+      const minSwipeDistance = 50;
+      const edgeThreshold = 100; // Area from edge to start swipe
+
+      // Swipe from right edge to left (open sidebar)
+      if (
+        !sidebarOpen &&
+        touchStartX.current > window.innerWidth - edgeThreshold &&
+        diffX > minSwipeDistance &&
+        diffY < 100 // Mostly horizontal swipe
+      ) {
+        setSidebarOpen(true);
+      }
+
+      // Swipe from left to right (close sidebar)
+      if (sidebarOpen && diffX < -minSwipeDistance && diffY < 100) {
+        setSidebarOpen(false);
+      }
+
+      // Reset
+      touchStartX.current = 0;
+      touchEndX.current = 0;
+    };
+
+    document.addEventListener("touchstart", handleTouchStart, { passive: true });
+    document.addEventListener("touchmove", handleTouchMove, { passive: true });
+    document.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [isMobile, sidebarOpen]);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -97,15 +168,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           />
           <span className="font-semibold">Admin Panel</span>
         </div>
-        {isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X className="w-5 h-5" />
-          </Button>
-        )}
+        <ThemeToggle />
       </div>
 
       {/* Navigation */}
@@ -235,8 +298,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           />
           <aside
             className={cn(
-              "fixed left-0 top-0 bottom-0 w-64 bg-card z-50 shadow-xl transition-transform duration-300 ease-out",
-              sidebarOpen ? "translate-x-0" : "-translate-x-full",
+              "fixed right-0 top-0 bottom-0 w-64 bg-card z-50 shadow-xl transition-transform duration-300 ease-out",
+              sidebarOpen ? "translate-x-0" : "translate-x-full",
             )}
           >
             <SidebarContent />
@@ -248,24 +311,21 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
         <header className="bg-card border-b border-border shrink-0 h-14 flex items-center justify-between px-4">
-          <div className="flex items-center gap-3">
-            {isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
-            )}
-            <h1 className="font-semibold text-lg truncate">
-              {employeeSubItems.find((item) => location.pathname === item.path)
-                ?.label ||
-                navItems.find((item) => isActive(item.path))?.label ||
-                "Admin"}
-            </h1>
-          </div>
-          <ThemeToggle />
+          <h1 className="font-semibold text-lg truncate">
+            {employeeSubItems.find((item) => location.pathname === item.path)
+              ?.label ||
+              navItems.find((item) => isActive(item.path))?.label ||
+              "Admin"}
+          </h1>
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+          )}
         </header>
 
         {/* Page Content */}

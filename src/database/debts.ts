@@ -375,7 +375,7 @@ export function getCustomersWithDebt(): {
   totalDebt: number;
   debtCount: number;
 }[] {
-  const debts = getUnpaidDebts();
+  const debts = getDebts(); // Menggunakan semua debts, termasuk yang sudah lunas
   const customerMap = new Map<
     string,
     { customerName: string; totalDebt: number; debtCount: number }
