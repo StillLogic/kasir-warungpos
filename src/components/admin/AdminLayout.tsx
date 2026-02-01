@@ -100,7 +100,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       ) {
         return;
       }
-      
+
       touchStartX.current = e.touches[0].clientX;
       touchStartY.current = e.touches[0].clientY;
     };
@@ -145,7 +145,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       touchEndX.current = 0;
     };
 
-    document.addEventListener("touchstart", handleTouchStart, { passive: true });
+    document.addEventListener("touchstart", handleTouchStart, {
+      passive: true,
+    });
     document.addEventListener("touchmove", handleTouchMove, { passive: true });
     document.addEventListener("touchend", handleTouchEnd, { passive: true });
 
