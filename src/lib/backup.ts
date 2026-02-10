@@ -25,6 +25,7 @@ export interface BackupData {
     // Shopping list
     shoppingCategories: unknown[];
     shoppingItems: unknown[];
+    shoppingArchives?: unknown[];
     // Settings
     markupRules: unknown[];
     storeSettings: unknown;
@@ -74,6 +75,9 @@ export async function exportBackup(): Promise<Blob> {
   const shoppingItems = JSON.parse(
     localStorage.getItem("db_shopping_items") || "[]",
   );
+  const shoppingArchives = JSON.parse(
+    localStorage.getItem("db_shopping_archives") || "[]",
+  );
 
   // Settings
   const markupRules = JSON.parse(
@@ -102,6 +106,7 @@ export async function exportBackup(): Promise<Blob> {
       employeeSettlements,
       shoppingCategories,
       shoppingItems,
+      shoppingArchives,
       markupRules,
       storeSettings,
     },
@@ -276,6 +281,13 @@ export async function importBackup(
         JSON.stringify(data.data.shoppingItems),
       );
       itemCounts.shoppingItems = (data.data.shoppingItems as unknown[]).length;
+    }
+
+    if (data.data.shoppingArchives) {
+      localStorage.setItem(
+        "db_shopping_archives",
+        JSON.stringify(data.data.shoppingArchives),
+      );
     }
 
     // Restore Settings
