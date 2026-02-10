@@ -219,6 +219,20 @@ kasir-warungpos/
 - ✅ Offline-first approach
 - ✅ Export/import data kapan saja
 
+## 🤝 Kontribusi
+
+Kontribusi sangat diterima! Silakan:
+
+1. Fork repository
+2. Buat feature branch (`git checkout -b fitur-baru`)
+3. Commit changes (`git commit -m 'Tambah fitur baru'`)
+4. Push ke branch (`git push origin fitur-baru`)
+5. Buat Pull Request
+
+## 📄 Lisensi
+
+MIT License - bebas digunakan untuk personal maupun komersial.
+
 ## 🙏 Acknowledgments
 
 - [shadcn/ui](https://ui.shadcn.com/) - Component library

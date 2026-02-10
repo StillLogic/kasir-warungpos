@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import {
   ShoppingCategory,
   ShoppingItem,
-  ShoppingArchive,
 } from "@/types/shopping-list";
 import {
   getShoppingCategories,
@@ -13,10 +12,7 @@ import {
   updateShoppingItem,
   deleteShoppingItem,
   toggleShoppingItemPurchased,
-  toggleCategoryItemsPurchased,
-  archivePurchasedItems,
-  getShoppingArchives,
-  deleteShoppingArchive,
+  clearPurchasedItems,
 } from "@/database/shopping-list";
 import { getUnitNames } from "@/database/units";
 import { Button } from "@/components/ui/button";
@@ -47,7 +43,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, FolderPlus, Search, ChevronDown, FileDown, Pencil, ListPlus, Archive, CalendarDays } from "lucide-react";
+import { Plus, Trash2, FolderPlus, Search, ChevronDown, FileDown, Pencil, ListPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { handleTitleCaseChange } from "@/lib/text";
 import { cn } from "@/lib/utils";
@@ -66,19 +62,15 @@ export function ShoppingListPage() {
     getShoppingCategories,
   );
   const [items, setItems] = useState<ShoppingItem[]>(getShoppingItems);
-  const [archives, setArchives] = useState<ShoppingArchive[]>(getShoppingArchives);
   const [units, setUnits] = useState<string[]>(getUnitNames);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showArchives, setShowArchives] = useState(false);
 
   // Form states
   const [formOpen, setFormOpen] = useState(false);
   const [bulkFormOpen, setBulkFormOpen] = useState(false);
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
-  const [archiveDeleteConfirmOpen, setArchiveDeleteConfirmOpen] = useState(false);
-  const [archiveToDelete, setArchiveToDelete] = useState<string | null>(null);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
@@ -252,7 +244,6 @@ export function ShoppingListPage() {
   const refreshData = () => {
     setCategories(getShoppingCategories());
     setItems(getShoppingItems());
-    setArchives(getShoppingArchives());
     setUnits(getUnitNames());
   };
 
@@ -430,54 +421,13 @@ export function ShoppingListPage() {
     refreshData();
   };
 
-  const handleToggleCategoryPurchased = (categoryId: string, allPurchased: boolean) => {
-    toggleCategoryItemsPurchased(categoryId, !allPurchased);
+  const handleClearPurchased = () => {
+    clearPurchasedItems();
+    setClearConfirmOpen(false);
     refreshData();
-  };
 
-  const handleArchivePurchased = () => {
-    const count = archivePurchasedItems();
-    setArchiveConfirmOpen(false);
-    refreshData();
-    toast({ title: "Berhasil", description: `${count} item diarsipkan` });
+    toast({ title: "Berhasil", description: "Item sudah dibeli dihapus" });
   };
-
-  const handleDeleteArchive = () => {
-    if (!archiveToDelete) return;
-    deleteShoppingArchive(archiveToDelete);
-    setArchiveToDelete(null);
-    setArchiveDeleteConfirmOpen(false);
-    refreshData();
-    toast({ title: "Berhasil", description: "Arsip dihapus" });
-  };
-
-  const formatArchiveDate = (dateStr: string) => {
-    const date = new Date(dateStr + "T00:00:00");
-    return new Intl.DateTimeFormat("id-ID", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(date);
-  };
-
-  // Group archives by month-year
-  const groupedArchives = useMemo(() => {
-    const groups: Record<string, ShoppingArchive[]> = {};
-    archives.forEach((archive) => {
-      const date = new Date(archive.date + "T00:00:00");
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(archive);
-    });
-    return Object.entries(groups)
-      .sort(([a], [b]) => b.localeCompare(a))
-      .map(([key, items]) => {
-        const [year, month] = key.split("-");
-        const monthName = new Intl.DateTimeFormat("id-ID", { month: "long" }).format(new Date(parseInt(year), parseInt(month) - 1));
-        return { label: `${monthName} ${year}`, archives: items };
-      });
-  }, [archives]);
 
   return (
     <div className="space-y-6">
@@ -497,21 +447,11 @@ export function ShoppingListPage() {
           {purchasedItems > 0 && (
             <Button
               variant="outline"
-              onClick={() => setArchiveConfirmOpen(true)}
-              className="gap-2"
+              onClick={() => setClearConfirmOpen(true)}
+              className="gap-2 text-destructive hover:text-destructive"
             >
-              <Archive className="w-4 h-4" />
-              Arsipkan ({purchasedItems})
-            </Button>
-          )}
-          {archives.length > 0 && (
-            <Button
-              variant={showArchives ? "default" : "outline"}
-              onClick={() => setShowArchives(!showArchives)}
-              className="gap-2"
-            >
-              <CalendarDays className="w-4 h-4" />
-              Arsip
+              <Trash2 className="w-4 h-4" />
+              Hapus Dibeli ({purchasedItems})
             </Button>
           )}
           {categories.length > 0 && (
@@ -526,79 +466,6 @@ export function ShoppingListPage() {
           </Button>
         </div>
       </div>
-
-      {/* Archives Section */}
-      {showArchives && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Archive className="w-5 h-5" />
-            Arsip Belanjaan
-          </h2>
-          {groupedArchives.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                Belum ada arsip
-              </CardContent>
-            </Card>
-          ) : (
-            groupedArchives.map((group) => (
-              <div key={group.label} className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                  {group.label}
-                </h3>
-                {group.archives.map((archive) => (
-                  <Card key={archive.id}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <CalendarDays className="w-4 h-4 text-muted-foreground" />
-                          {formatArchiveDate(archive.date)}
-                          <Badge variant="secondary">{archive.items.length} item</Badge>
-                        </CardTitle>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => {
-                            setArchiveToDelete(archive.id);
-                            setArchiveDeleteConfirmOpen(true);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b">
-                              <th className="text-left py-2 px-2 font-medium text-muted-foreground">Nama Produk</th>
-                              <th className="text-left py-2 px-2 font-medium text-muted-foreground">Merk</th>
-                              <th className="text-right py-2 px-2 font-medium text-muted-foreground">Jumlah</th>
-                              <th className="text-left py-2 px-2 font-medium text-muted-foreground">Kategori</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {archive.items.map((item, idx) => (
-                              <tr key={idx} className="border-b last:border-0">
-                                <td className="py-2 px-2 font-medium">{item.productName}</td>
-                                <td className="py-2 px-2 text-muted-foreground">{item.brand || "-"}</td>
-                                <td className="py-2 px-2 text-right">{item.quantity} {item.unit}</td>
-                                <td className="py-2 px-2 text-muted-foreground">{item.categoryName}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ))
-          )}
-        </div>
-      )}
 
       {/* Categories list */}
       {categories.length === 0 ? (
@@ -631,49 +498,27 @@ export function ShoppingListPage() {
                 )
               : categoryItems;
 
-            // Sort: unpurchased first, purchased last
-            const sortedItems = [...filteredItems].sort((a, b) => {
-              if (a.isPurchased === b.isPurchased) return 0;
-              return a.isPurchased ? 1 : -1;
-            });
-
-            const allPurchased = categoryItems.length > 0 && categoryItems.every((i) => i.isPurchased);
-            const somePurchased = categoryItems.some((i) => i.isPurchased);
-
             return (
               <Card key={category.id}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {categoryItems.length > 0 && (
-                        <Checkbox
-                          checked={allPurchased}
-                          className={cn(
-                            somePurchased && !allPurchased && "opacity-50"
-                          )}
-                          onCheckedChange={() =>
-                            handleToggleCategoryPurchased(category.id, allPurchased)
-                          }
-                        />
-                      )}
-                      <button
-                        onClick={() => toggleCollapse(category.id)}
-                        className="flex items-center gap-2 text-left hover:opacity-80"
-                      >
-                        <ChevronDown
-                          className={cn(
-                            "h-4 w-4 transition-transform",
-                            collapsedCategories.has(category.id) && "-rotate-90",
-                          )}
-                        />
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          {category.name}
-                          <Badge variant="secondary">
-                            {categoryItems.length}
-                          </Badge>
-                        </CardTitle>
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => toggleCollapse(category.id)}
+                      className="flex items-center gap-2 text-left hover:opacity-80"
+                    >
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 transition-transform",
+                          collapsedCategories.has(category.id) && "-rotate-90",
+                        )}
+                      />
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        {category.name}
+                        <Badge variant="secondary">
+                          {categoryItems.length}
+                        </Badge>
+                      </CardTitle>
+                    </button>
                     <div className="flex gap-1">
                       <Button
                         variant="ghost"
@@ -709,7 +554,7 @@ export function ShoppingListPage() {
                 </CardHeader>
                 {!collapsedCategories.has(category.id) && (
                   <CardContent>
-                    {sortedItems.length === 0 ? (
+                    {filteredItems.length === 0 ? (
                       <p className="text-muted-foreground text-center py-4">
                         {searchQuery
                           ? "Tidak ada item yang cocok"
@@ -734,7 +579,7 @@ export function ShoppingListPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {sortedItems.map((item) => (
+                            {filteredItems.map((item) => (
                               <tr
                                 key={item.id}
                                 className={cn(
@@ -1070,40 +915,20 @@ export function ShoppingListPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Archive Confirmation Dialog */}
-      <AlertDialog open={archiveConfirmOpen} onOpenChange={setArchiveConfirmOpen}>
+      {/* Clear Purchased Confirmation Dialog */}
+      <AlertDialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Arsipkan Belanjaan?</AlertDialogTitle>
+            <AlertDialogTitle>Hapus Item Sudah Dibeli?</AlertDialogTitle>
             <AlertDialogDescription>
-              {purchasedItems} item yang sudah dicentang akan dipindahkan ke arsip hari ini.
+              {purchasedItems} item yang sudah dibeli akan dihapus.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex gap-3 pt-4">
             <AlertDialogCancel className="flex-1">Batal</AlertDialogCancel>
-            <AlertDialogAction className="flex-1" onClick={handleArchivePurchased}>
-              Arsipkan
-            </AlertDialogAction>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Archive Delete Confirmation Dialog */}
-      <AlertDialog open={archiveDeleteConfirmOpen} onOpenChange={setArchiveDeleteConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Arsip?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Arsip ini akan dihapus secara permanen.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex gap-3 pt-4">
-            <AlertDialogCancel className="flex-1" onClick={() => setArchiveToDelete(null)}>
-              Batal
-            </AlertDialogCancel>
             <AlertDialogAction
               className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleDeleteArchive}
+              onClick={handleClearPurchased}
             >
               Hapus
             </AlertDialogAction>

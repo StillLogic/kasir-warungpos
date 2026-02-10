@@ -15,10 +15,3 @@ export interface ShoppingItem {
   isPurchased: boolean;
   createdAt: string;
 }
-
-export interface ShoppingArchive {
-  id: string;
-  date: string; // YYYY-MM-DD
-  items: ShoppingItem[];
-  archivedAt: string;
-}
