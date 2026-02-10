@@ -28,91 +28,99 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { PriceInput } from "@/components/ui/price-input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/format";
 import {
   getEmployees,
-  getEmployeeDebts,
-  createEmployeeDebt,
-  deleteEmployeeDebt,
+  getEarnings,
+  createEarning,
+  deleteEarning,
 } from "@/database/employees";
-import { Employee, EmployeeDebt } from "@/types/employee";
+import { Employee, EmployeeEarning } from "@/types/employee";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 
-export function EmployeeDebtsPage() {
+export function EmployeeEarningsPage() {
   const { toast } = useToast();
   const [employees] = useState<Employee[]>(() => getEmployees());
-  const [debts, setDebts] = useState<EmployeeDebt[]>(() => getEmployeeDebts());
+  const [earnings, setEarnings] = useState<EmployeeEarning[]>(() =>
+    getEarnings(),
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [filterEmployee, setFilterEmployee] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [earningToDelete, setEarningToDelete] =
+    useState<EmployeeEarning | null>(null);
 
-  // Add debt dialog
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [formEmployeeId, setFormEmployeeId] = useState("");
+  const [formType, setFormType] = useState<EmployeeEarning["type"]>("salary");
   const [formDescription, setFormDescription] = useState("");
   const [formAmount, setFormAmount] = useState("");
 
-  // Delete dialog
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [debtToDelete, setDebtToDelete] = useState<EmployeeDebt | null>(null);
-
-  const filteredDebts = useMemo(() => {
-    return debts.filter((d) => {
+  const filteredEarnings = useMemo(() => {
+    return earnings.filter((e) => {
       const matchesSearch =
-        d.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        d.description.toLowerCase().includes(searchQuery.toLowerCase());
+        e.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        e.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesEmployee =
-        filterEmployee === "all" || d.employeeId === filterEmployee;
-      return matchesSearch && matchesEmployee;
+        filterEmployee === "all" || e.employeeId === filterEmployee;
+      const matchesType = filterType === "all" || e.type === filterType;
+      return matchesSearch && matchesEmployee && matchesType;
     });
-  }, [debts, searchQuery, filterEmployee]);
+  }, [earnings, searchQuery, filterEmployee, filterType]);
 
-  // Group debts by employee
-  const debtsByEmployee = useMemo(() => {
+  const earningsByEmployee = useMemo(() => {
     const grouped: Record<
       string,
       {
         employeeName: string;
-        debts: EmployeeDebt[];
+        earnings: EmployeeEarning[];
         total: number;
       }
     > = {};
 
-    filteredDebts.forEach((debt) => {
-      if (!grouped[debt.employeeId]) {
-        grouped[debt.employeeId] = {
-          employeeName: debt.employeeName,
-          debts: [],
+    filteredEarnings.forEach((earning) => {
+      if (!grouped[earning.employeeId]) {
+        grouped[earning.employeeId] = {
+          employeeName: earning.employeeName,
+          earnings: [],
           total: 0,
         };
       }
-      grouped[debt.employeeId].debts.push(debt);
-      grouped[debt.employeeId].total += debt.amount;
+      grouped[earning.employeeId].earnings.push(earning);
+      grouped[earning.employeeId].total += earning.amount;
     });
 
-    // Sort employees by name
     return Object.entries(grouped)
       .sort(([, a], [, b]) => a.employeeName.localeCompare(b.employeeName))
       .map(([employeeId, data]) => ({
         employeeId,
         ...data,
       }));
-  }, [filteredDebts]);
+  }, [filteredEarnings]);
 
-  const refreshDebts = () => {
-    setDebts(getEmployeeDebts());
+  const refreshEarnings = () => {
+    setEarnings(getEarnings());
   };
 
-  const resetAddForm = () => {
+  const resetForm = () => {
     setFormEmployeeId("");
+    setFormType("salary");
     setFormDescription("");
     setFormAmount("");
   };
 
-  const handleAddDebt = () => {
+  const openAddDialog = () => {
+    resetForm();
+    setDialogOpen(true);
+  };
+
+  const handleSubmit = () => {
     const employee = employees.find((e) => e.id === formEmployeeId);
     if (!employee) {
       toast({
@@ -133,29 +141,56 @@ export function EmployeeDebtsPage() {
       return;
     }
 
-    createEmployeeDebt({
+    createEarning({
       employeeId: employee.id,
       employeeName: employee.name,
-      description: formDescription.trim() || "Hutang",
+      type: formType,
+      description: formDescription.trim() || getDefaultDescription(formType),
       amount,
     });
 
-    toast({ title: "Berhasil", description: "Hutang karyawan ditambahkan" });
-    setAddDialogOpen(false);
-    resetAddForm();
-    refreshDebts();
+    toast({ title: "Berhasil", description: "Pendapatan ditambahkan" });
+    setDialogOpen(false);
+    resetForm();
+    refreshEarnings();
+  };
+
+  const getDefaultDescription = (type: EmployeeEarning["type"]): string => {
+    switch (type) {
+      case "salary":
+        return "Gaji Pokok";
+      case "commission":
+        return "Komisi";
+    }
   };
 
   const handleDelete = () => {
-    if (!debtToDelete) return;
-    deleteEmployeeDebt(debtToDelete.id);
-    toast({ title: "Berhasil", description: "Hutang dihapus" });
+    if (!earningToDelete) return;
+    deleteEarning(earningToDelete.id);
+    toast({ title: "Berhasil", description: "Pendapatan dihapus" });
     setDeleteDialogOpen(false);
-    setDebtToDelete(null);
-    refreshDebts();
+    setEarningToDelete(null);
+    refreshEarnings();
   };
 
-  const total = filteredDebts.reduce((sum, d) => sum + d.amount, 0);
+  const getTypeBadge = (type: EmployeeEarning["type"]) => {
+    const variants: Record<
+      EmployeeEarning["type"],
+      { label: string; className: string }
+    > = {
+      salary: { label: "Pokok", className: "bg-blue-500/10 text-blue-500" },
+      commission: {
+        label: "Komisi",
+        className: "bg-green-500/10 text-green-500",
+      },
+      bonus: { label: "Bonus", className: "bg-purple-500/10 text-purple-500" },
+      other: { label: "Lainnya", className: "bg-gray-500/10 text-gray-500" },
+    };
+    const variant = variants[type];
+    return <Badge className={variant.className}>{variant.label}</Badge>;
+  };
+
+  const total = filteredEarnings.reduce((sum, e) => sum + e.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -165,16 +200,16 @@ export function EmployeeDebtsPage() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Cari hutang..."
+              placeholder="Cari pendapatan..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
               maxLength={50}
             />
           </div>
-          <Button onClick={() => setAddDialogOpen(true)}>
+          <Button onClick={openAddDialog}>
             <Plus className="h-4 w-4 mr-2" />
-            Tambah Hutang
+            Tambah Pendapatan
           </Button>
         </div>
 
@@ -193,21 +228,32 @@ export function EmployeeDebtsPage() {
               ))}
             </SelectContent>
           </Select>
+
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Tipe" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Tipe</SelectItem>
+              <SelectItem value="salary">Pokok</SelectItem>
+              <SelectItem value="commission">Komisi</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {/* Debts Table by Employee */}
-      {debtsByEmployee.length === 0 ? (
+      {/* Earnings Table by Employee */}
+      {earningsByEmployee.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            {searchQuery || filterEmployee !== "all"
-              ? "Tidak ada hutang yang cocok"
-              : "Belum ada data hutang karyawan"}
+            {searchQuery || filterEmployee !== "all" || filterType !== "all"
+              ? "Tidak ada pendapatan yang cocok"
+              : "Belum ada data pendapatan"}
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-6">
-          {debtsByEmployee.map((employeeData) => (
+          {earningsByEmployee.map((employeeData) => (
             <Card key={employeeData.employeeId}>
               <CardContent className="pt-4">
                 {/* Employee Header */}
@@ -215,18 +261,21 @@ export function EmployeeDebtsPage() {
                   <h3 className="font-semibold text-lg">
                     {employeeData.employeeName}
                   </h3>
-                  <span className="font-medium text-destructive">
-                    -{formatCurrency(employeeData.total)}
+                  <span className="font-medium text-primary">
+                    +{formatCurrency(employeeData.total)}
                   </span>
                 </div>
 
-                {/* Debts Table */}
+                {/* Earnings Table */}
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b">
                         <th className="text-left py-2 px-2 font-medium text-muted-foreground">
                           Tanggal
+                        </th>
+                        <th className="text-left py-2 px-2 font-medium text-muted-foreground">
+                          Tipe
                         </th>
                         <th className="text-left py-2 px-2 font-medium text-muted-foreground">
                           Keterangan
@@ -240,21 +289,26 @@ export function EmployeeDebtsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {employeeData.debts.map((debt) => (
-                        <tr key={debt.id} className="border-b last:border-0">
+                      {employeeData.earnings.map((earning) => (
+                        <tr key={earning.id} className="border-b last:border-0">
                           <td className="py-2 px-2">
                             <div className="flex items-center gap-1 text-muted-foreground">
                               <Calendar className="h-3 w-3" />
-                              {format(new Date(debt.createdAt), "dd MMM yyyy", {
-                                locale: localeId,
-                              })}
+                              {format(
+                                new Date(earning.createdAt),
+                                "dd MMM yyyy",
+                                { locale: localeId },
+                              )}
                             </div>
                           </td>
-                          <td className="py-2 px-2 text-muted-foreground">
-                            {debt.description}
+                          <td className="py-2 px-2">
+                            {getTypeBadge(earning.type)}
                           </td>
-                          <td className="py-2 px-2 text-right font-medium text-destructive">
-                            -{formatCurrency(debt.amount)}
+                          <td className="py-2 px-2 text-muted-foreground">
+                            {earning.description}
+                          </td>
+                          <td className="py-2 px-2 text-right font-medium text-primary">
+                            +{formatCurrency(earning.amount)}
                           </td>
                           <td className="py-2 px-2 text-center">
                             <Button
@@ -262,7 +316,7 @@ export function EmployeeDebtsPage() {
                               size="icon"
                               className="h-8 w-8 text-destructive hover:text-destructive"
                               onClick={() => {
-                                setDebtToDelete(debt);
+                                setEarningToDelete(earning);
                                 setDeleteDialogOpen(true);
                               }}
                             >
@@ -280,11 +334,11 @@ export function EmployeeDebtsPage() {
         </div>
       )}
 
-      {/* Add Debt Dialog */}
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+      {/* Add Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Tambah Hutang Karyawan</DialogTitle>
+            <DialogTitle>Tambah Pendapatan</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -303,11 +357,26 @@ export function EmployeeDebtsPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Keterangan</Label>
+              <Label>Tipe *</Label>
+              <Select
+                value={formType}
+                onValueChange={(v) => setFormType(v as EmployeeEarning["type"])}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="salary">Pokok</SelectItem>
+                  <SelectItem value="commission">Komisi</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Deskripsi</Label>
               <Textarea
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
-                placeholder="Keterangan hutang"
+                placeholder="Deskripsi (opsional)"
                 maxLength={100}
               />
             </div>
@@ -321,10 +390,16 @@ export function EmployeeDebtsPage() {
             </div>
           </div>
           <div className="flex gap-3 pt-4">
-            <Button variant="outline" className="flex-1" onClick={() => setAddDialogOpen(false)}>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setDialogOpen(false)}
+            >
               Batal
             </Button>
-            <Button className="flex-1" onClick={handleAddDebt}>Tambah</Button>
+            <Button className="flex-1" onClick={handleSubmit}>
+              Tambah
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -333,12 +408,11 @@ export function EmployeeDebtsPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Hutang?</AlertDialogTitle>
+            <AlertDialogTitle>Hapus Pendapatan?</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus hutang{" "}
-              {formatCurrency(debtToDelete?.amount || 0)} dari{" "}
-              {debtToDelete?.employeeName}? Riwayat pembayaran juga akan
-              dihapus.
+              Apakah Anda yakin ingin menghapus pendapatan{" "}
+              {formatCurrency(earningToDelete?.amount || 0)} untuk{" "}
+              {earningToDelete?.employeeName}?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex gap-3 pt-4">

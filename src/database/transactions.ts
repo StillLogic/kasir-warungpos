@@ -85,7 +85,6 @@ export async function saveTransactionAsync(
 
   await db.put("transactions", newRecord);
 
-  // Always update stock, regardless of payment type
   for (const item of transaction.items) {
     await updateStockAsync(item.product.id, -item.quantity);
   }

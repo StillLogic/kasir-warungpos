@@ -7,33 +7,33 @@ const DEBTS_KEY = "db_debts";
 const PAYMENTS_KEY = "db_debt_payments";
 
 interface DebtItemRecord {
-  pi: string; // productId
-  pn: string; // productName
-  pp: number; // price
-  q: number; // quantity
-  sb: number; // subtotal
+  pi: string;
+  pn: string;
+  pp: number;
+  q: number;
+  sb: number;
 }
 
 interface DebtRecord {
-  i: string; // id
-  ci: string; // customerId
-  cn: string; // customerName
-  it: DebtItemRecord[]; // items
-  t: number; // total
-  pa: number; // paidAmount
-  ra: number; // remainingAmount
-  st: 0 | 1 | 2; // status (0=unpaid, 1=partial, 2=paid)
-  ca: number; // createdAt
-  ua: number; // updatedAt
-  pat?: number; // paidAt
+  i: string;
+  ci: string;
+  cn: string;
+  it: DebtItemRecord[];
+  t: number;
+  pa: number;
+  ra: number;
+  st: 0 | 1 | 2;
+  ca: number;
+  ua: number;
+  pat?: number;
 }
 
 interface PaymentRecord {
-  i: string; // id
-  di: string; // debtId (legacy) or 'customer-{customerId}'
-  ci?: string; // customerId (new)
-  a: number; // amount
-  ca: number; // createdAt
+  i: string;
+  di: string;
+  ci?: string;
+  a: number;
+  ca: number;
 }
 
 function itemToRecord(item: CartItem): DebtItemRecord {
@@ -184,7 +184,7 @@ export async function createDebt(
     t: total,
     pa: 0,
     ra: total,
-    st: 0, // unpaid
+    st: 0,
     ca: now,
     ua: now,
   };
@@ -192,8 +192,6 @@ export async function createDebt(
   const debts = loadDebts();
   debts.push(newDebt);
   saveDebts(debts);
-
-  // Stock is now updated in saveTransactionAsync, so no need to update here
 
   return fromRecord(newDebt);
 }
@@ -375,7 +373,7 @@ export function getCustomersWithDebt(): {
   totalDebt: number;
   debtCount: number;
 }[] {
-  const debts = getDebts(); // Menggunakan semua debts, termasuk yang sudah lunas
+  const debts = getDebts();
   const customerMap = new Map<
     string,
     { customerName: string; totalDebt: number; debtCount: number }

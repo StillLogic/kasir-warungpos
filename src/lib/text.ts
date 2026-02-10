@@ -6,14 +6,12 @@ export function toTitleCase(str: string): string {
     .map((word) => {
       if (!word) return word;
 
-      // Jika kata ini semua uppercase (misal: ELEKTRONIK), pertahankan
       const isAllUpperCase = word === word.toUpperCase() && /[A-Z]/.test(word);
 
       if (isAllUpperCase) {
-        return word; // Pertahankan kata uppercase
+        return word;
       }
 
-      // Jika tidak, konversi ke Title Case (huruf pertama besar)
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
     .join(" ");
@@ -55,28 +53,22 @@ export function formatPhoneNumber(phone: string): string {
 
   let cleaned = phone.replace(/[^\d+]/g, "");
 
-  // Remove leading + for processing
   const withoutPlus = cleaned.startsWith("+") ? cleaned.substring(1) : cleaned;
 
   if (!withoutPlus) return "";
 
-  // Already has +62
   if (cleaned.startsWith("+62")) {
     return cleaned;
   }
-  // Starts with 62 (without +)
   if (withoutPlus.startsWith("62")) {
     return "+" + withoutPlus;
   }
-  // Starts with 0 (Indonesian format)
   if (withoutPlus.startsWith("0")) {
     return "+62" + withoutPlus.substring(1);
   }
-  // Starts with 8 (common Indonesian mobile)
   if (withoutPlus.startsWith("8")) {
     return "+62" + withoutPlus;
   }
-  // Any other random numbers - prepend +62
   return "+62" + withoutPlus;
 }
 

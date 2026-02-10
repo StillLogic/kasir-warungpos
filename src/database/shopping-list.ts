@@ -1,10 +1,16 @@
-import { ShoppingCategory, ShoppingItem } from "@/types/shopping-list";
+import {
+  ShoppingCategory,
+  ShoppingItem,
+  ArchivedShoppingItem,
+  ShoppingArchiveGroup,
+} from "@/types/shopping-list";
 import { generateId } from "./utils";
 
 const SHOPPING_CATEGORIES_KEY = "db_shopping_categories";
 const SHOPPING_ITEMS_KEY = "db_shopping_items";
+const SHOPPING_ARCHIVE_KEY = "db_shopping_archive";
+const SHOPPING_LAST_CHECK_KEY = "db_shopping_last_check_date";
 
-// Categories
 export function getShoppingCategories(): ShoppingCategory[] {
   try {
     const data = localStorage.getItem(SHOPPING_CATEGORIES_KEY);
@@ -30,12 +36,10 @@ export function createShoppingCategory(name: string): ShoppingCategory {
 export function deleteShoppingCategory(id: string): void {
   const categories = getShoppingCategories().filter((c) => c.id !== id);
   localStorage.setItem(SHOPPING_CATEGORIES_KEY, JSON.stringify(categories));
-  // Also delete items in this category
   const items = getShoppingItems().filter((i) => i.categoryId !== id);
   localStorage.setItem(SHOPPING_ITEMS_KEY, JSON.stringify(items));
 }
 
-// Items
 export function getShoppingItems(): ShoppingItem[] {
   try {
     const data = localStorage.getItem(SHOPPING_ITEMS_KEY);
@@ -85,5 +89,143 @@ export function toggleShoppingItemPurchased(id: string): void {
 
 export function clearPurchasedItems(): void {
   const items = getShoppingItems().filter((i) => !i.isPurchased);
+  localStorage.setItem(SHOPPING_ITEMS_KEY, JSON.stringify(items));
+}
+
+export function getArchivedItems(): ArchivedShoppingItem[] {
+  try {
+    const data = localStorage.getItem(SHOPPING_ARCHIVE_KEY);
+    if (!data) return [];
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+export function archivePurchasedItems(): number {
+  const items = getShoppingItems();
+  const purchasedItems = items.filter((i) => i.isPurchased);
+
+  if (purchasedItems.length === 0) return 0;
+
+  const archived = getArchivedItems();
+  const now = new Date().toISOString();
+
+  const archivedItems: ArchivedShoppingItem[] = purchasedItems.map((item) => ({
+    ...item,
+    archivedAt: now,
+  }));
+
+  localStorage.setItem(
+    SHOPPING_ARCHIVE_KEY,
+    JSON.stringify([...archived, ...archivedItems]),
+  );
+
+  const remainingItems = items.filter((i) => !i.isPurchased);
+  localStorage.setItem(SHOPPING_ITEMS_KEY, JSON.stringify(remainingItems));
+
+  return purchasedItems.length;
+}
+
+export function getArchivedItemsGrouped(): ShoppingArchiveGroup[] {
+  const archived = getArchivedItems();
+  const groups = new Map<string, ArchivedShoppingItem[]>();
+
+  archived.forEach((item) => {
+    const date = new Date(item.archivedAt);
+    const dateKey = date.toISOString().split("T")[0];
+
+    if (!groups.has(dateKey)) {
+      groups.set(dateKey, []);
+    }
+    groups.get(dateKey)!.push(item);
+  });
+
+  const result: ShoppingArchiveGroup[] = [];
+
+  groups.forEach((items, dateKey) => {
+    const date = new Date(dateKey + "T00:00:00");
+    const dayNames = [
+      "Minggu",
+      "Senin",
+      "Selasa",
+      "Rabu",
+      "Kamis",
+      "Jumat",
+      "Sabtu",
+    ];
+    const monthNames = [
+      "Januari",
+      "Februari",
+      "Maret",
+      "April",
+      "Mei",
+      "Juni",
+      "Juli",
+      "Agustus",
+      "September",
+      "Oktober",
+      "November",
+      "Desember",
+    ];
+
+    const dayName = dayNames[date.getDay()];
+    const displayDate = `${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+
+    result.push({
+      date: dateKey,
+      dayName,
+      displayDate,
+      items: items.sort(
+        (a, b) =>
+          new Date(b.archivedAt).getTime() - new Date(a.archivedAt).getTime(),
+      ),
+    });
+  });
+
+  return result.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export function deleteArchivedItemsByDate(date: string): void {
+  const archived = getArchivedItems();
+  const filtered = archived.filter((item) => {
+    const itemDate = new Date(item.archivedAt).toISOString().split("T")[0];
+    return itemDate !== date;
+  });
+  localStorage.setItem(SHOPPING_ARCHIVE_KEY, JSON.stringify(filtered));
+}
+
+export function clearAllArchived(): void {
+  localStorage.setItem(SHOPPING_ARCHIVE_KEY, JSON.stringify([]));
+}
+
+export function getLastCheckDate(): string | null {
+  return localStorage.getItem(SHOPPING_LAST_CHECK_KEY);
+}
+
+export function setLastCheckDate(date: string): void {
+  localStorage.setItem(SHOPPING_LAST_CHECK_KEY, date);
+}
+
+export function checkAndAutoArchive(): number {
+  const today = new Date().toISOString().split("T")[0];
+  const lastCheck = getLastCheckDate();
+
+  if (lastCheck !== today) {
+    const count = archivePurchasedItems();
+    setLastCheckDate(today);
+    return count;
+  }
+
+  return 0;
+}
+
+export function toggleAllItemsInCategory(
+  categoryId: string,
+  purchased: boolean,
+): void {
+  const items = getShoppingItems().map((item) =>
+    item.categoryId === categoryId ? { ...item, isPurchased: purchased } : item,
+  );
   localStorage.setItem(SHOPPING_ITEMS_KEY, JSON.stringify(items));
 }

@@ -40,11 +40,6 @@ const navItems = [
   { path: "/admin/calculator", label: "Kalkulator", icon: Calculator },
   { path: "/admin/debts", label: "Hutang Pelanggan", icon: CreditCard },
   {
-    path: "/admin/shopping-list",
-    label: "Catatan Belanja",
-    icon: ShoppingCart,
-  },
-  {
     path: "/admin/master-data",
     label: "Master Data",
     icon: Database,
@@ -52,6 +47,15 @@ const navItems = [
   { path: "/admin/history", label: "Riwayat", icon: History },
   { path: "/admin/reports", label: "Laporan", icon: BarChart3 },
   { path: "/admin/settings", label: "Pengaturan", icon: Settings },
+];
+
+const shoppingSubItems = [
+  {
+    path: "/admin/shopping-list",
+    label: "Daftar Belanja",
+    icon: ClipboardList,
+  },
+  { path: "/admin/shopping-archive", label: "Arsip Belanja", icon: Database },
 ];
 
 const employeeSubItems = [
@@ -72,6 +76,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [employeeMenuOpen, setEmployeeMenuOpen] = useState(() =>
     location.pathname.startsWith("/admin/employees"),
   );
+  const [shoppingMenuOpen, setShoppingMenuOpen] = useState(() =>
+    location.pathname.startsWith("/admin/shopping"),
+  );
 
   const touchStartX = useRef<number>(0);
   const touchStartY = useRef<number>(0);
@@ -88,13 +95,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     (item) => location.pathname === item.path,
   );
 
-  // Swipe detection
+  const isShoppingActive = shoppingSubItems.some(
+    (item) => location.pathname === item.path,
+  );
+
   useEffect(() => {
     if (!isMobile) return;
 
     const handleTouchStart = (e: TouchEvent) => {
       const target = e.target as HTMLElement;
-      // Jangan proses swipe jika touch dimulai di element interaktif
       if (
         target.closest('button, a, input, select, textarea, [role="button"]')
       ) {
@@ -106,14 +115,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      // Hanya track jika touchStart sudah tercatat
       if (touchStartX.current > 0) {
         touchEndX.current = e.touches[0].clientX;
       }
     };
 
     const handleTouchEnd = () => {
-      // Hanya proses jika touchStart tercatat
       if (touchStartX.current === 0) {
         return;
       }
@@ -123,24 +130,21 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         touchStartY.current - (touchEndX.current ? touchStartY.current : 0),
       );
       const minSwipeDistance = 50;
-      const edgeThreshold = 100; // Area from edge to start swipe
+      const edgeThreshold = 100;
 
-      // Swipe from right edge to left (open sidebar)
       if (
         !sidebarOpen &&
         touchStartX.current > window.innerWidth - edgeThreshold &&
         diffX > minSwipeDistance &&
-        diffY < 100 // Mostly horizontal swipe
+        diffY < 100
       ) {
         setSidebarOpen(true);
       }
 
-      // Swipe from left to right (close sidebar)
       if (sidebarOpen && diffX < -minSwipeDistance && diffY < 100) {
         setSidebarOpen(false);
       }
 
-      // Reset
       touchStartX.current = 0;
       touchEndX.current = 0;
     };
@@ -175,7 +179,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {navItems.slice(0, 6).map((item) => {
+        {navItems.slice(0, 5).map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
           return (
@@ -195,6 +199,53 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </Link>
           );
         })}
+
+        {/* Shopping Menu with Submenu */}
+        <Collapsible open={shoppingMenuOpen} onOpenChange={setShoppingMenuOpen}>
+          <CollapsibleTrigger asChild>
+            <button
+              className={cn(
+                "flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                isShoppingActive
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <ShoppingCart className="w-5 h-5" />
+                <span>Belanja</span>
+              </div>
+              <ChevronDown
+                className={cn(
+                  "w-4 h-4 transition-transform",
+                  shoppingMenuOpen && "rotate-180",
+                )}
+              />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pl-4 mt-1 space-y-1">
+            {shoppingSubItems.map((item) => {
+              const Icon = item.icon;
+              const active = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => isMobile && setSidebarOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    active
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Employee Menu with Submenu */}
         <Collapsible open={employeeMenuOpen} onOpenChange={setEmployeeMenuOpen}>
@@ -243,7 +294,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </CollapsibleContent>
         </Collapsible>
 
-        {navItems.slice(6).map((item) => {
+        {navItems.slice(5).map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
           return (

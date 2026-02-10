@@ -13,14 +13,13 @@ const EMPLOYEE_DEBTS_KEY = "db_employee_debts";
 const EMPLOYEE_DEBT_PAYMENTS_KEY = "db_employee_debt_payments";
 const EMPLOYEE_SETTLEMENTS_KEY = "db_employee_settlements";
 
-// ============ Employee Records ============
 interface EmployeeRecord {
-  i: string; // id
-  n: string; // name
-  p: string; // position
-  ph?: string; // phone
-  ca: number; // createdAt
-  ua: number; // updatedAt
+  i: string;
+  n: string;
+  p: string;
+  ph?: string;
+  ca: number;
+  ua: number;
 }
 
 function employeeToRecord(e: Employee): EmployeeRecord {
@@ -58,18 +57,17 @@ function saveEmployees(employees: EmployeeRecord[]) {
   localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(employees));
 }
 
-// ============ Earning Records ============
 interface EarningRecord {
-  i: string; // id
-  ei: string; // employeeId
-  en: string; // employeeName
-  ti?: string; // transactionId
-  t: 0 | 1 | 2 | 3; // type (0=salary, 1=commission, 2=bonus, 3=other)
-  d: string; // description
-  a: number; // amount
-  ip: boolean; // isPaid
-  pa?: number; // paidAt
-  ca: number; // createdAt
+  i: string;
+  ei: string;
+  en: string;
+  ti?: string;
+  t: 0 | 1 | 2 | 3;
+  d: string;
+  a: number;
+  ip: boolean;
+  pa?: number;
+  ca: number;
 }
 
 function earningTypeToNumber(type: EmployeeEarning["type"]): 0 | 1 | 2 | 3 {
@@ -141,19 +139,18 @@ function saveEarnings(earnings: EarningRecord[]) {
   localStorage.setItem(EARNINGS_KEY, JSON.stringify(earnings));
 }
 
-// ============ Debt Records ============
 interface DebtRecord {
-  i: string; // id
-  ei: string; // employeeId
-  en: string; // employeeName
-  d: string; // description
-  a: number; // amount
-  pa: number; // paidAmount
-  ra: number; // remainingAmount
-  st: 0 | 1 | 2; // status (0=unpaid, 1=partial, 2=paid)
-  ca: number; // createdAt
-  ua: number; // updatedAt
-  pat?: number; // paidAt
+  i: string;
+  ei: string;
+  en: string;
+  d: string;
+  a: number;
+  pa: number;
+  ra: number;
+  st: 0 | 1 | 2;
+  ca: number;
+  ua: number;
+  pat?: number;
 }
 
 function debtStatusToNumber(status: EmployeeDebt["status"]): 0 | 1 | 2 {
@@ -223,14 +220,13 @@ function saveDebts(debts: DebtRecord[]) {
   localStorage.setItem(EMPLOYEE_DEBTS_KEY, JSON.stringify(debts));
 }
 
-// ============ Debt Payment Records ============
 interface PaymentRecord {
-  i: string; // id
-  di: string; // debtId
-  ei: string; // employeeId
-  a: number; // amount
-  m: 0 | 1; // method (0=cash, 1=salary_deduction)
-  ca: number; // createdAt
+  i: string;
+  di: string;
+  ei: string;
+  a: number;
+  m: 0 | 1;
+  ca: number;
 }
 
 function paymentMethodToNumber(method: EmployeeDebtPayment["method"]): 0 | 1 {
@@ -276,15 +272,14 @@ function savePayments(payments: PaymentRecord[]) {
   localStorage.setItem(EMPLOYEE_DEBT_PAYMENTS_KEY, JSON.stringify(payments));
 }
 
-// ============ Settlement Records ============
 interface SettlementRecord {
-  i: string; // id
-  ei: string; // employeeId
-  en: string; // employeeName
-  t: 0 | 1; // type (0=admin_to_employee, 1=employee_to_admin)
-  a: number; // amount
-  d: string; // description
-  ca: number; // createdAt
+  i: string;
+  ei: string;
+  en: string;
+  t: 0 | 1;
+  a: number;
+  d: string;
+  ca: number;
 }
 
 function settlementTypeToNumber(type: EmployeeSettlement["type"]): 0 | 1 {
@@ -332,7 +327,6 @@ function saveSettlements(settlements: SettlementRecord[]) {
   localStorage.setItem(EMPLOYEE_SETTLEMENTS_KEY, JSON.stringify(settlements));
 }
 
-// ============ Employee CRUD ============
 export function getEmployees(): Employee[] {
   return loadEmployees()
     .map(employeeFromRecord)
@@ -394,7 +388,6 @@ export function deleteEmployee(id: string): boolean {
   return true;
 }
 
-// ============ Earnings CRUD ============
 export function getEarnings(): EmployeeEarning[] {
   return loadEarnings()
     .map(earningFromRecord)
@@ -462,7 +455,6 @@ export function deleteEarning(id: string): boolean {
   return true;
 }
 
-// ============ Employee Debts CRUD ============
 export function getEmployeeDebts(): EmployeeDebt[] {
   return loadDebts()
     .map(debtFromRecord)
@@ -531,7 +523,6 @@ export function payEmployeeDebt(
   const debt = debts[index];
   const now = toUnix(new Date());
 
-  // Create payment record
   const paymentRecord: PaymentRecord = {
     i: generateId(),
     di: debtId,
@@ -545,16 +536,15 @@ export function payEmployeeDebt(
   payments.push(paymentRecord);
   savePayments(payments);
 
-  // Update debt
   debt.pa += amount;
   debt.ra = Math.max(0, debt.a - debt.pa);
   debt.ua = now;
 
   if (debt.ra === 0) {
-    debt.st = 2; // paid
+    debt.st = 2;
     debt.pat = now;
   } else if (debt.pa > 0) {
-    debt.st = 1; // partial
+    debt.st = 1;
   }
 
   saveDebts(debts);
@@ -583,7 +573,6 @@ export function deleteEmployeeDebt(id: string): boolean {
   return true;
 }
 
-// ============ Summary Functions ============
 export function getEmployeeTotalDebt(employeeId: string): number {
   return getDebtsByEmployeeId(employeeId)
     .filter((d) => d.status !== "paid")
@@ -627,7 +616,6 @@ export function getEmployeesWithDebt(): {
     .sort((a, b) => b.totalDebt - a.totalDebt);
 }
 
-// ============ Settlement CRUD ============
 export function getSettlements(): EmployeeSettlement[] {
   return loadSettlements()
     .map(settlementFromRecord)

@@ -20,6 +20,7 @@ import {
   EmployeeDebtsPage,
   EmployeeRecordsPage,
   ShoppingListPage,
+  ShoppingArchivePage,
   MasterDataPage,
 } from "./pages/admin";
 import { AdminLayout } from "./components/admin";
@@ -145,6 +146,14 @@ const App = () => {
                 element={
                   <AdminLayout>
                     <ShoppingListPage />
+                  </AdminLayout>
+                }
+              />
+              <Route
+                path="/admin/shopping-archive"
+                element={
+                  <AdminLayout>
+                    <ShoppingArchivePage />
                   </AdminLayout>
                 }
               />

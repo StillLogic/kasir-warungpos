@@ -31,8 +31,8 @@ export interface Debt {
 
 export interface DebtPayment {
   id: string;
-  debtId: string; // Keep for backward compatibility, but can be 'customer-{customerId}'
-  customerId?: string; // New: link to customer directly
+  debtId: string;
+  customerId?: string;
   amount: number;
   createdAt: string;
 }

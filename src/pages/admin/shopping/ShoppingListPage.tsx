@@ -1,8 +1,5 @@
-import { useState, useMemo } from "react";
-import {
-  ShoppingCategory,
-  ShoppingItem,
-} from "@/types/shopping-list";
+import { useState, useMemo, useEffect } from "react";
+import { ShoppingCategory, ShoppingItem } from "@/types/shopping-list";
 import {
   getShoppingCategories,
   createShoppingCategory,
@@ -13,6 +10,8 @@ import {
   deleteShoppingItem,
   toggleShoppingItemPurchased,
   clearPurchasedItems,
+  checkAndAutoArchive,
+  toggleAllItemsInCategory,
 } from "@/database/shopping-list";
 import { getUnitNames } from "@/database/units";
 import { Button } from "@/components/ui/button";
@@ -43,7 +42,18 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, FolderPlus, Search, ChevronDown, FileDown, Pencil, ListPlus } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  FolderPlus,
+  Search,
+  ChevronDown,
+  FileDown,
+  Pencil,
+  CheckSquare,
+  XCircle,
+  ShoppingCart,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { handleTitleCaseChange } from "@/lib/text";
 import { cn } from "@/lib/utils";
@@ -65,7 +75,17 @@ export function ShoppingListPage() {
   const [units, setUnits] = useState<string[]>(getUnitNames);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Form states
+  useEffect(() => {
+    const archivedCount = checkAndAutoArchive();
+    if (archivedCount > 0) {
+      toast({
+        title: "Arsip Otomatis",
+        description: `${archivedCount} item yang sudah dibeli telah diarsipkan`,
+      });
+      refreshData();
+    }
+  }, []);
+
   const [formOpen, setFormOpen] = useState(false);
   const [bulkFormOpen, setBulkFormOpen] = useState(false);
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
@@ -75,7 +95,7 @@ export function ShoppingListPage() {
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
-    new Set(),
+    new Set(getShoppingCategories().map((c) => c.id)),
   );
 
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -87,7 +107,6 @@ export function ShoppingListPage() {
     unit: units[0] || "Pcs",
   });
 
-  // Bulk add state
   const [bulkCategoryId, setBulkCategoryId] = useState("");
   const [bulkItems, setBulkItems] = useState<BulkItemInput[]>([]);
 
@@ -115,11 +134,12 @@ export function ShoppingListPage() {
 
     categories.forEach((category, idx) => {
       const categoryItems = items.filter((i) => i.categoryId === category.id);
-      
-      const rowsHtml = categoryItems.length > 0
-        ? categoryItems
-            .map(
-              (item, i) => `
+
+      const rowsHtml =
+        categoryItems.length > 0
+          ? categoryItems
+              .map(
+                (item, i) => `
               <tr>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${i + 1}</td>
                 <td style="border: 1px solid #ddd; padding: 8px;">${item.productName}</td>
@@ -127,10 +147,10 @@ export function ShoppingListPage() {
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.quantity} ${item.unit}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.isPurchased ? "✓" : ""}</td>
               </tr>
-            `
-            )
-            .join("")
-        : `<tr><td colspan="5" style="border: 1px solid #ddd; padding: 16px; text-align: center; color: #666;">Tidak ada item</td></tr>`;
+            `,
+              )
+              .join("")
+          : `<tr><td colspan="5" style="border: 1px solid #ddd; padding: 16px; text-align: center; color: #666;">Tidak ada item</td></tr>`;
 
       pagesHtml += `
         <div class="page" style="${idx > 0 ? "page-break-before: always;" : ""}">
@@ -221,7 +241,6 @@ export function ShoppingListPage() {
     });
   };
 
-  // Filter items based on search
   const filteredCategories = useMemo(() => {
     if (!searchQuery) return categories;
     const lowerQuery = searchQuery.toLowerCase();
@@ -275,18 +294,6 @@ export function ShoppingListPage() {
     toast({ title: "Berhasil", description: "Kategori dihapus" });
   };
 
-  const openAddItemDialog = (categoryId: string) => {
-    setEditingItem(null);
-    setFormCategoryId(categoryId);
-    setFormData({
-      productName: "",
-      brand: "",
-      quantity: "",
-      unit: units[0] || "Pcs",
-    });
-    setFormOpen(true);
-  };
-
   const openEditItemDialog = (item: ShoppingItem) => {
     setEditingItem(item);
     setFormCategoryId(item.categoryId);
@@ -302,9 +309,27 @@ export function ShoppingListPage() {
   const openBulkAddDialog = (categoryId: string) => {
     setBulkCategoryId(categoryId);
     setBulkItems([
-      { id: crypto.randomUUID(), productName: "", brand: "", quantity: "", unit: units[0] || "Pcs" },
-      { id: crypto.randomUUID(), productName: "", brand: "", quantity: "", unit: units[0] || "Pcs" },
-      { id: crypto.randomUUID(), productName: "", brand: "", quantity: "", unit: units[0] || "Pcs" },
+      {
+        id: crypto.randomUUID(),
+        productName: "",
+        brand: "",
+        quantity: "",
+        unit: units[0] || "Pcs",
+      },
+      {
+        id: crypto.randomUUID(),
+        productName: "",
+        brand: "",
+        quantity: "",
+        unit: units[0] || "Pcs",
+      },
+      {
+        id: crypto.randomUUID(),
+        productName: "",
+        brand: "",
+        quantity: "",
+        unit: units[0] || "Pcs",
+      },
     ]);
     setBulkFormOpen(true);
   };
@@ -383,7 +408,10 @@ export function ShoppingListPage() {
       });
     });
 
-    toast({ title: "Berhasil", description: `${validItems.length} item ditambahkan` });
+    toast({
+      title: "Berhasil",
+      description: `${validItems.length} item ditambahkan`,
+    });
     setBulkFormOpen(false);
     refreshData();
   };
@@ -391,14 +419,26 @@ export function ShoppingListPage() {
   const addBulkItemRow = () => {
     setBulkItems([
       ...bulkItems,
-      { id: crypto.randomUUID(), productName: "", brand: "", quantity: "", unit: units[0] || "Pcs" },
+      {
+        id: crypto.randomUUID(),
+        productName: "",
+        brand: "",
+        quantity: "",
+        unit: units[0] || "Pcs",
+      },
     ]);
   };
 
-  const updateBulkItem = (id: string, field: keyof BulkItemInput, value: string) => {
-    setBulkItems(bulkItems.map((item) =>
-      item.id === id ? { ...item, [field]: value } : item
-    ));
+  const updateBulkItem = (
+    id: string,
+    field: keyof BulkItemInput,
+    value: string,
+  ) => {
+    setBulkItems(
+      bulkItems.map((item) =>
+        item.id === id ? { ...item, [field]: value } : item,
+      ),
+    );
   };
 
   const removeBulkItemRow = (id: string) => {
@@ -421,6 +461,17 @@ export function ShoppingListPage() {
     refreshData();
   };
 
+  const handleToggleAllInCategory = (categoryId: string) => {
+    const categoryItems = items.filter((i) => i.categoryId === categoryId);
+    const allPurchased = categoryItems.every((i) => i.isPurchased);
+    toggleAllItemsInCategory(categoryId, !allPurchased);
+    refreshData();
+
+    toast({
+      title: allPurchased ? "Semua item dibatalkan" : "Semua item dicentang",
+    });
+  };
+
   const handleClearPurchased = () => {
     clearPurchasedItems();
     setClearConfirmOpen(false);
@@ -432,6 +483,17 @@ export function ShoppingListPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <ShoppingCart className="w-6 h-6" />
+          Daftar Belanja
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Kelola daftar belanjaan Anda
+        </p>
+      </div>
+
+      {/* Search and Actions */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -487,7 +549,6 @@ export function ShoppingListPage() {
               (i) => i.categoryId === category.id,
             );
 
-            // Filter items based on search within category
             const filteredItems = searchQuery
               ? categoryItems.filter(
                   (i) =>
@@ -498,9 +559,18 @@ export function ShoppingListPage() {
                 )
               : categoryItems;
 
+            const sortedItems = [...filteredItems].sort((a, b) => {
+              if (a.isPurchased === b.isPurchased) return 0;
+              return a.isPurchased ? 1 : -1;
+            });
+
+            const allPurchased =
+              categoryItems.length > 0 &&
+              categoryItems.every((i) => i.isPurchased);
+
             return (
               <Card key={category.id}>
-                <CardHeader className="pb-3">
+                <CardHeader className="p-3">
                   <div className="flex items-center justify-between">
                     <button
                       onClick={() => toggleCollapse(category.id)}
@@ -520,23 +590,31 @@ export function ShoppingListPage() {
                       </CardTitle>
                     </button>
                     <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => openAddItemDialog(category.id)}
-                        title="Tambah 1 item"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
+                      {categoryItems.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleToggleAllInCategory(category.id)}
+                          title={
+                            allPurchased ? "Batalkan semua" : "Centang semua"
+                          }
+                        >
+                          {allPurchased ? (
+                            <XCircle className="w-4 h-4 text-orange-500" />
+                          ) : (
+                            <CheckSquare className="w-4 h-4 text-green-600" />
+                          )}
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => openBulkAddDialog(category.id)}
-                        title="Tambah banyak item"
+                        title="Tambah item"
                       >
-                        <ListPlus className="w-4 h-4" />
+                        <Plus className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -553,33 +631,36 @@ export function ShoppingListPage() {
                   </div>
                 </CardHeader>
                 {!collapsedCategories.has(category.id) && (
-                  <CardContent>
-                    {filteredItems.length === 0 ? (
-                      <p className="text-muted-foreground text-center py-4">
+                  <CardContent className="p-0">
+                    {sortedItems.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-4 px-3">
                         {searchQuery
                           ? "Tidak ada item yang cocok"
                           : "Belum ada item"}
                       </p>
                     ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                      <div className="overflow-x-auto flex justify-center">
+                        <table
+                          className="text-sm table-fixed"
+                          style={{ width: "95%" }}
+                        >
                           <thead>
                             <tr className="border-b">
-                              <th className="w-10 py-2 px-2"></th>
-                              <th className="text-left py-2 px-2 font-medium text-muted-foreground">
+                              <th className="w-10 py-1.5 px-2 text-center"></th>
+                              <th className="w-[35%] text-left py-1.5 pr-1 pl-0 font-medium text-muted-foreground">
                                 Nama Produk
                               </th>
-                              <th className="text-left py-2 px-2 font-medium text-muted-foreground">
+                              <th className="w-[25%] text-left py-1.5 pr-1 pl-0 font-medium text-muted-foreground">
                                 Merk
                               </th>
-                              <th className="text-right py-2 px-2 font-medium text-muted-foreground">
+                              <th className="w-[15%] text-left py-1.5 pr-1 pl-0 font-medium text-muted-foreground">
                                 Jumlah
                               </th>
-                              <th className="w-20 py-2 px-2"></th>
+                              <th className="w-20 py-1.5 px-1"></th>
                             </tr>
                           </thead>
                           <tbody>
-                            {filteredItems.map((item) => (
+                            {sortedItems.map((item) => (
                               <tr
                                 key={item.id}
                                 className={cn(
@@ -588,7 +669,7 @@ export function ShoppingListPage() {
                                     "bg-green-50 dark:bg-green-950/30",
                                 )}
                               >
-                                <td className="py-2 px-2">
+                                <td className="py-1.5 px-2 text-center">
                                   <Checkbox
                                     checked={item.isPurchased}
                                     onCheckedChange={() =>
@@ -598,7 +679,7 @@ export function ShoppingListPage() {
                                 </td>
                                 <td
                                   className={cn(
-                                    "py-2 px-2 font-medium",
+                                    "py-1.5 pr-1 pl-0 font-medium",
                                     item.isPurchased &&
                                       "line-through text-muted-foreground",
                                   )}
@@ -607,7 +688,7 @@ export function ShoppingListPage() {
                                 </td>
                                 <td
                                   className={cn(
-                                    "py-2 px-2 text-muted-foreground",
+                                    "py-1.5 pr-1 pl-0 text-muted-foreground",
                                     item.isPurchased && "line-through",
                                   )}
                                 >
@@ -615,14 +696,13 @@ export function ShoppingListPage() {
                                 </td>
                                 <td
                                   className={cn(
-                                    "py-2 px-2 text-right",
-                                    item.isPurchased &&
-                                      "line-through text-muted-foreground",
+                                    "py-1.5 pr-1 pl-0 text-muted-foreground",
+                                    item.isPurchased && "line-through",
                                   )}
                                 >
                                   {item.quantity} {item.unit}
                                 </td>
-                                <td className="py-2 px-2">
+                                <td className="py-1.5 px-1">
                                   <div className="flex gap-1 justify-end">
                                     <Button
                                       variant="ghost"
@@ -684,16 +764,18 @@ export function ShoppingListPage() {
             >
               Batal
             </Button>
-            <Button className="flex-1" onClick={handleAddCategory}>Tambah</Button>
+            <Button className="flex-1" onClick={handleAddCategory}>
+              Tambah
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Add/Edit Item Dialog */}
+      {/* Edit Item Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingItem ? "Edit Item" : "Tambah Item"}</DialogTitle>
+            <DialogTitle>Edit Item</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -763,30 +845,37 @@ export function ShoppingListPage() {
             </div>
           </div>
           <div className="flex gap-3 pt-4">
-            <Button variant="outline" className="flex-1" onClick={() => setFormOpen(false)}>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setFormOpen(false)}
+            >
               Batal
             </Button>
             <Button className="flex-1" onClick={handleSaveItem}>
-              {editingItem ? "Simpan" : "Tambah"}
+              Simpan
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Bulk Add Items Dialog */}
+      {/* Add Items Dialog */}
       <Dialog open={bulkFormOpen} onOpenChange={setBulkFormOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ListPlus className="w-5 h-5" />
-              Tambah Banyak Item - {categories.find(c => c.id === bulkCategoryId)?.name}
+              <Plus className="w-5 h-5" />
+              Tambah Item -{" "}
+              {categories.find((c) => c.id === bulkCategoryId)?.name}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {bulkItems.map((item, index) => (
               <div key={item.id} className="p-3 rounded-lg border space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">Item {index + 1}</span>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Item {index + 1}
+                  </span>
                   {bulkItems.length > 1 && (
                     <Button
                       variant="ghost"
@@ -806,7 +895,8 @@ export function ShoppingListPage() {
                       value={item.productName}
                       onChange={(e) => {
                         const value = e.target.value;
-                        const upperValue = value.charAt(0).toUpperCase() + value.slice(1);
+                        const upperValue =
+                          value.charAt(0).toUpperCase() + value.slice(1);
                         updateBulkItem(item.id, "productName", upperValue);
                       }}
                       maxLength={100}
@@ -819,7 +909,8 @@ export function ShoppingListPage() {
                       value={item.brand}
                       onChange={(e) => {
                         const value = e.target.value;
-                        const upperValue = value.charAt(0).toUpperCase() + value.slice(1);
+                        const upperValue =
+                          value.charAt(0).toUpperCase() + value.slice(1);
                         updateBulkItem(item.id, "brand", upperValue);
                       }}
                       maxLength={50}
@@ -834,7 +925,9 @@ export function ShoppingListPage() {
                       min={1}
                       placeholder="1"
                       value={item.quantity}
-                      onChange={(e) => updateBulkItem(item.id, "quantity", e.target.value)}
+                      onChange={(e) =>
+                        updateBulkItem(item.id, "quantity", e.target.value)
+                      }
                     />
                   </div>
                   <div className="space-y-1">
@@ -870,11 +963,15 @@ export function ShoppingListPage() {
             </Button>
           </div>
           <div className="flex gap-3 pt-4">
-            <Button variant="outline" className="flex-1" onClick={() => setBulkFormOpen(false)}>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setBulkFormOpen(false)}
+            >
               Batal
             </Button>
             <Button className="flex-1" onClick={handleBulkAdd}>
-              Simpan {bulkItems.filter(i => i.productName.trim()).length} Item
+              Simpan {bulkItems.filter((i) => i.productName.trim()).length} Item
             </Button>
           </div>
         </DialogContent>

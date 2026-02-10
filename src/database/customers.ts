@@ -1,15 +1,15 @@
-import { Customer } from '@/types/debt';
-import { generateId, toUnix, fromUnix } from './utils';
+import { Customer } from "@/types/debt";
+import { generateId, toUnix, fromUnix } from "./utils";
 
-const STORAGE_KEY = 'db_customers';
+const STORAGE_KEY = "db_customers";
 
 interface CustomerRecord {
-  i: string;      // id
-  n: string;      // name
-  p?: string;     // phone
-  a?: string;     // address
-  ca: number;     // createdAt
-  ua: number;     // updatedAt
+  i: string;
+  n: string;
+  p?: string;
+  a?: string;
+  ca: number;
+  ua: number;
 }
 
 function toRecord(customer: Customer): CustomerRecord {
@@ -53,11 +53,13 @@ export function getCustomers(): Customer[] {
 
 export function getCustomerById(id: string): Customer | undefined {
   const customers = loadCustomers();
-  const record = customers.find(c => c.i === id);
+  const record = customers.find((c) => c.i === id);
   return record ? fromRecord(record) : undefined;
 }
 
-export function addCustomer(data: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>): Customer {
+export function addCustomer(
+  data: Omit<Customer, "id" | "createdAt" | "updatedAt">,
+): Customer {
   const now = toUnix(new Date());
   const newCustomer: CustomerRecord = {
     i: generateId(),
@@ -75,10 +77,13 @@ export function addCustomer(data: Omit<Customer, 'id' | 'createdAt' | 'updatedAt
   return fromRecord(newCustomer);
 }
 
-export function updateCustomer(id: string, data: Partial<Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>>): Customer | undefined {
+export function updateCustomer(
+  id: string,
+  data: Partial<Omit<Customer, "id" | "createdAt" | "updatedAt">>,
+): Customer | undefined {
   const customers = loadCustomers();
-  const index = customers.findIndex(c => c.i === id);
-  
+  const index = customers.findIndex((c) => c.i === id);
+
   if (index === -1) return undefined;
 
   customers[index] = {
@@ -95,10 +100,10 @@ export function updateCustomer(id: string, data: Partial<Omit<Customer, 'id' | '
 
 export function deleteCustomer(id: string): boolean {
   const customers = loadCustomers();
-  const filtered = customers.filter(c => c.i !== id);
-  
+  const filtered = customers.filter((c) => c.i !== id);
+
   if (filtered.length === customers.length) return false;
-  
+
   saveCustomers(filtered);
   return true;
 }
@@ -106,8 +111,9 @@ export function deleteCustomer(id: string): boolean {
 export function searchCustomers(query: string): Customer[] {
   const customers = getCustomers();
   const lowerQuery = query.toLowerCase();
-  return customers.filter(c => 
-    c.name.toLowerCase().includes(lowerQuery) ||
-    (c.phone && c.phone.includes(query))
+  return customers.filter(
+    (c) =>
+      c.name.toLowerCase().includes(lowerQuery) ||
+      (c.phone && c.phone.includes(query)),
   );
 }

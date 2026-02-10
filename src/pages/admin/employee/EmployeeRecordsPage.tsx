@@ -57,7 +57,6 @@ export function EmployeeRecordsPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Settlement dialog state
   const [settlementDialogOpen, setSettlementDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<{
     id: string;
@@ -66,14 +65,12 @@ export function EmployeeRecordsPage() {
   } | null>(null);
   const [settlementAmount, setSettlementAmount] = useState("");
 
-  // Set default amount when dialog opens
   useEffect(() => {
     if (selectedEmployee) {
       setSettlementAmount(Math.abs(selectedEmployee.balance).toString());
     }
   }, [selectedEmployee]);
 
-  // Combine earnings, debts, and settlements into single record list
   const allRecords = useMemo(() => {
     const earnings = getEarnings();
     const debts = getEmployeeDebts();
@@ -115,7 +112,6 @@ export function EmployeeRecordsPage() {
       }),
     );
 
-    // Combine and sort by date (newest first)
     return [...earningRecords, ...debtRecords, ...settlementRecords].sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -135,7 +131,6 @@ export function EmployeeRecordsPage() {
     });
   }, [allRecords, searchQuery, filterEmployee, filterType]);
 
-  // Group records by employee
   const recordsByEmployee = useMemo(() => {
     const grouped: Record<
       string,
@@ -144,7 +139,7 @@ export function EmployeeRecordsPage() {
         records: RecordItem[];
         totalEarning: number;
         totalDebt: number;
-        totalSettlement: number; // positive = admin paid, negative = employee paid
+        totalSettlement: number;
       }
     > = {};
 
@@ -164,17 +159,14 @@ export function EmployeeRecordsPage() {
       } else if (record.type === "debt") {
         grouped[record.employeeId].totalDebt += record.amount;
       } else if (record.type === "settlement") {
-        // If admin paid employee (surplus case), it reduces balance
-        // If employee paid admin (minus case), it increases balance
         if (record.category === "Dibayar Admin") {
-          grouped[record.employeeId].totalSettlement += record.amount; // Admin paid, reduces surplus
+          grouped[record.employeeId].totalSettlement += record.amount;
         } else {
-          grouped[record.employeeId].totalSettlement -= record.amount; // Employee paid, reduces debt
+          grouped[record.employeeId].totalSettlement -= record.amount;
         }
       }
     });
 
-    // Sort employees by name
     return Object.entries(grouped)
       .sort(([, a], [, b]) => a.employeeName.localeCompare(b.employeeName))
       .map(([employeeId, data]) => ({
@@ -206,7 +198,7 @@ export function EmployeeRecordsPage() {
     }
 
     const balance = selectedEmployee.balance;
-    const isAdminPaying = balance > 0; // Surplus = admin pays employee
+    const isAdminPaying = balance > 0;
 
     createSettlement({
       employeeId: selectedEmployee.id,
@@ -298,7 +290,6 @@ export function EmployeeRecordsPage() {
                     {employeeData.employeeName}
                   </h3>
                   {(() => {
-                    // Balance = earnings - debts - settlements
                     const balance =
                       employeeData.totalEarning -
                       employeeData.totalDebt -
@@ -354,7 +345,6 @@ export function EmployeeRecordsPage() {
                     </thead>
                     <tbody>
                       {employeeData.records.map((record) => {
-                        // Determine badge and text colors
                         let badgeClass = "";
                         let textClass = "";
                         let prefix = "";
@@ -370,8 +360,6 @@ export function EmployeeRecordsPage() {
                         } else if (record.type === "settlement") {
                           badgeClass = "bg-yellow-500/10 text-yellow-600";
                           textClass = "text-yellow-600";
-                          // Admin paid employee = deduction from balance (-)
-                          // Employee paid admin = addition to balance (+)
                           prefix =
                             record.category === "Dibayar Admin" ? "-" : "+";
                         }

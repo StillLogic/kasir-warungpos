@@ -15,3 +15,14 @@ export interface ShoppingItem {
   isPurchased: boolean;
   createdAt: string;
 }
+
+export interface ArchivedShoppingItem extends ShoppingItem {
+  archivedAt: string;
+}
+
+export interface ShoppingArchiveGroup {
+  date: string;
+  dayName: string;
+  displayDate: string;
+  items: ArchivedShoppingItem[];
+}

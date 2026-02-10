@@ -33,7 +33,6 @@ import { Plus, Pencil, Trash2, Tags, Scale } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { handleTitleCaseChange } from "@/lib/text";
 
-// Categories
 import {
   getCategories,
   addCategory,
@@ -43,7 +42,6 @@ import {
   Category,
 } from "@/database/categories";
 
-// Units
 import {
   getUnits,
   addUnit,
@@ -57,7 +55,6 @@ export function MasterDataPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("categories");
 
-  // Categories state
   const [categories, setCategories] = useState<Category[]>(getCategories);
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -67,14 +64,12 @@ export function MasterDataPage() {
     null,
   );
 
-  // Units state
   const [units, setUnits] = useState<Unit[]>(getUnits);
   const [unitFormOpen, setUnitFormOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [unitName, setUnitName] = useState("");
   const [unitToDelete, setUnitToDelete] = useState<Unit | null>(null);
 
-  // Category handlers
   const handleOpenCategoryForm = (category?: Category) => {
     if (category) {
       setEditingCategory(category);
@@ -152,7 +147,6 @@ export function MasterDataPage() {
     setCategoryToDelete(null);
   };
 
-  // Unit handlers
   const handleOpenUnitForm = (unit?: Unit) => {
     if (unit) {
       setEditingUnit(unit);
@@ -396,7 +390,9 @@ export function MasterDataPage() {
             >
               Batal
             </Button>
-            <Button className="flex-1" onClick={handleSaveCategory}>Simpan</Button>
+            <Button className="flex-1" onClick={handleSaveCategory}>
+              Simpan
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -421,10 +417,16 @@ export function MasterDataPage() {
             </div>
           </div>
           <div className="flex gap-3 pt-4">
-            <Button variant="outline" className="flex-1" onClick={() => setUnitFormOpen(false)}>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setUnitFormOpen(false)}
+            >
               Batal
             </Button>
-            <Button className="flex-1" onClick={handleSaveUnit}>Simpan</Button>
+            <Button className="flex-1" onClick={handleSaveUnit}>
+              Simpan
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -438,8 +440,8 @@ export function MasterDataPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Kategori?</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus kategori "{categoryToDelete?.name}"? 
-              Tindakan ini tidak dapat dibatalkan.
+              Apakah Anda yakin ingin menghapus kategori "
+              {categoryToDelete?.name}"? Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex gap-3 pt-4">
@@ -463,7 +465,7 @@ export function MasterDataPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Satuan?</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus satuan "{unitToDelete?.name}"? 
+              Apakah Anda yakin ingin menghapus satuan "{unitToDelete?.name}"?
               Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>

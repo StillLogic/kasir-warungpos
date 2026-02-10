@@ -4,9 +4,13 @@ export { SettingsPage } from "./SettingsPage";
 export { PricingPage } from "./PricingPage";
 export { CalculatorPage } from "./CalculatorPage";
 export { DebtsPage } from "./DebtsPage";
-export { EmployeesPage } from "./EmployeesPage";
-export { EmployeeEarningsPage } from "./EmployeeEarningsPage";
-export { EmployeeDebtsPage } from "./EmployeeDebtsPage";
-export { EmployeeRecordsPage } from "./EmployeeRecordsPage";
-export { ShoppingListPage } from "./ShoppingListPage";
 export { MasterDataPage } from "./MasterDataPage";
+
+export {
+  EmployeesPage,
+  EmployeeEarningsPage,
+  EmployeeDebtsPage,
+  EmployeeRecordsPage,
+} from "./employee";
+
+export { ShoppingListPage, ShoppingArchivePage } from "./shopping";

@@ -24,7 +24,7 @@ export function getStorageSize(): { used: number; formatted: string } {
       total += localStorage.getItem(key)?.length || 0;
     }
   }
-  const bytes = total * 2; // UTF-16 = 2 bytes per char
+  const bytes = total * 2;
 
   if (bytes < 1024) return { used: bytes, formatted: `${bytes} B` };
   if (bytes < 1048576)

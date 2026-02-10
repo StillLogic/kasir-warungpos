@@ -11,7 +11,7 @@ export interface EmployeeEarning {
   id: string;
   employeeId: string;
   employeeName: string;
-  transactionId?: string; // Link to transaction if commission
+  transactionId?: string;
   type: "salary" | "commission" | "bonus" | "other";
   description: string;
   amount: number;
@@ -39,17 +39,16 @@ export interface EmployeeDebtPayment {
   debtId: string;
   employeeId: string;
   amount: number;
-  method: "cash" | "salary_deduction"; // Tunai atau potong gaji
+  method: "cash" | "salary_deduction";
   createdAt: string;
 }
 
-// Settlement: Pembayaran untuk menyelesaikan saldo (surplus/minus)
 export interface EmployeeSettlement {
   id: string;
   employeeId: string;
   employeeName: string;
-  type: "admin_to_employee" | "employee_to_admin"; // Siapa yang bayar
-  amount: number; // Nominal pembayaran
+  type: "admin_to_employee" | "employee_to_admin";
+  amount: number;
   description: string;
   createdAt: string;
 }

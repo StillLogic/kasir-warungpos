@@ -16,7 +16,7 @@ export interface Product {
 export interface CartItem {
   product: Product;
   quantity: number;
-  priceType: 'retail' | 'wholesale';
+  priceType: "retail" | "wholesale";
   subtotal: number;
 }
 
@@ -28,8 +28,8 @@ export interface Transaction {
   change: number;
   createdAt: string;
   customerName?: string;
-  paymentType?: 'cash' | 'debt';  // cash = bayar langsung, debt = hutang
-  customerId?: string;            // ID pelanggan jika hutang
+  paymentType?: "cash" | "debt";
+  customerId?: string;
 }
 
-export type ProductFormData = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>;
+export type ProductFormData = Omit<Product, "id" | "createdAt" | "updatedAt">;

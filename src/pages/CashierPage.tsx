@@ -182,7 +182,6 @@ export function CashierPage() {
       description: `Pembayaran sebesar ${payment.toLocaleString("id-ID", { style: "currency", currency: "IDR" })} diterima`,
     });
 
-    // Hot reload products data from database
     setTimeout(() => {
       refreshProducts().then(setProducts);
     }, 300);
@@ -214,14 +213,12 @@ export function CashierPage() {
       description: `Hutang atas nama ${customer.name} sebesar ${cartTotal.toLocaleString("id-ID", { style: "currency", currency: "IDR" })} telah dicatat`,
     });
 
-    // Hot reload products data from database
     setTimeout(() => {
       refreshProducts().then(setProducts);
     }, 300);
   };
 
   const handleConfirmEmployeeDebt = async (employee: Employee) => {
-    // Create employee debt for each cart item
     cart.forEach((item) => {
       const price =
         item.priceType === "wholesale"
@@ -237,7 +234,6 @@ export function CashierPage() {
       });
     });
 
-    // Save transaction
     saveTransaction({
       items: cart,
       total: cartTotal,
@@ -256,7 +252,6 @@ export function CashierPage() {
       description: `Hutang atas nama ${employee.name} sebesar ${cartTotal.toLocaleString("id-ID", { style: "currency", currency: "IDR" })} telah dicatat`,
     });
 
-    // Hot reload products data from database
     setTimeout(() => {
       refreshProducts().then(setProducts);
     }, 300);

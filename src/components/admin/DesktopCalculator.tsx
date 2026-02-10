@@ -184,7 +184,6 @@ export function DesktopCalculator() {
     });
   };
 
-  // Expression display for showing pending operation
   const expressionDisplay = previousValue !== null && operator
     ? `${formatCurrency(previousValue)} ${operator}`
     : null;

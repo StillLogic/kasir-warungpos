@@ -101,13 +101,11 @@ export function deleteUnit(id: string): boolean {
 }
 
 export function isUnitInUse(unitName: string): boolean {
-  // Check in products
   const products = JSON.parse(localStorage.getItem("db_products") || "[]");
   if (products.some((p: { u: string }) => p.u === unitName)) {
     return true;
   }
 
-  // Check in shopping items
   const shoppingItems = JSON.parse(
     localStorage.getItem("db_shopping_items") || "[]",
   );

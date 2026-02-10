@@ -42,7 +42,6 @@ export function EmployeesPage() {
     null,
   );
 
-  // Form state
   const [formName, setFormName] = useState("");
   const [formPosition, setFormPosition] = useState("");
   const [formPhone, setFormPhone] = useState("");
@@ -234,7 +233,11 @@ export function EmployeesPage() {
             </div>
           </div>
           <div className="flex gap-3 pt-4">
-            <Button variant="outline" className="flex-1" onClick={() => setDialogOpen(false)}>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setDialogOpen(false)}
+            >
               Batal
             </Button>
             <Button className="flex-1" onClick={handleSubmit}>
