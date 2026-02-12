@@ -276,9 +276,7 @@ export function CashierPage() {
 
   return (
     <div className="flex gap-4 lg:gap-6 h-[calc(100vh-7rem)] overflow-hidden">
-      {/* Product Grid */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Search and Filter */}
         <div className="flex gap-2 sm:gap-3 mb-4 pr-2 pt-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -303,7 +301,6 @@ export function CashierPage() {
             </SelectContent>
           </Select>
 
-          {/* Mobile Cart Button */}
           {isMobile && (
             <Sheet open={cartOpen} onOpenChange={setCartOpen}>
               <SheetTrigger asChild>
@@ -338,7 +335,6 @@ export function CashierPage() {
           )}
         </div>
 
-        {/* Products */}
         <div
           className="flex-1 overflow-auto scrollbar-thin min-h-0"
           data-scrollable
@@ -367,7 +363,6 @@ export function CashierPage() {
         </div>
       </div>
 
-      {/* Cart Sidebar - Desktop Only */}
       {!isMobile && (
         <div className="w-80 lg:w-96 bg-card border border-border rounded-lg flex flex-col overflow-hidden shrink-0">
           <div className="p-4 border-b border-border">
@@ -377,7 +372,6 @@ export function CashierPage() {
         </div>
       )}
 
-      {/* Checkout Dialog */}
       <CheckoutDialog
         open={checkoutOpen}
         onClose={() => setCheckoutOpen(false)}
@@ -386,7 +380,6 @@ export function CashierPage() {
         items={cart}
       />
 
-      {/* Debt Dialog */}
       <DebtDialog
         open={debtDialogOpen}
         onClose={() => setDebtDialogOpen(false)}
@@ -396,7 +389,6 @@ export function CashierPage() {
         items={cart}
       />
 
-      {/* Receipt */}
       <Receipt
         transaction={lastTransaction}
         open={receiptOpen}

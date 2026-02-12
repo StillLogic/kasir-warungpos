@@ -12,6 +12,7 @@ import {
   clearPurchasedItems,
   checkAndAutoArchive,
   toggleAllItemsInCategory,
+  archivePurchasedItems,
 } from "@/database/shopping-list";
 import { getUnitNames } from "@/database/units";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ import {
   CheckSquare,
   XCircle,
   ShoppingCart,
+  Archive,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { handleTitleCaseChange } from "@/lib/text";
@@ -91,6 +93,7 @@ export function ShoppingListPage() {
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
@@ -480,9 +483,19 @@ export function ShoppingListPage() {
     toast({ title: "Berhasil", description: "Item sudah dibeli dihapus" });
   };
 
+  const handleArchivePurchased = () => {
+    const count = archivePurchasedItems();
+    setArchiveConfirmOpen(false);
+    refreshData();
+
+    toast({
+      title: "Berhasil",
+      description: `${count} item telah diarsipkan`,
+    });
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <ShoppingCart className="w-6 h-6" />
@@ -493,7 +506,6 @@ export function ShoppingListPage() {
         </p>
       </div>
 
-      {/* Search and Actions */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -507,14 +519,24 @@ export function ShoppingListPage() {
         </div>
         <div className="flex gap-2 flex-wrap">
           {purchasedItems > 0 && (
-            <Button
-              variant="outline"
-              onClick={() => setClearConfirmOpen(true)}
-              className="gap-2 text-destructive hover:text-destructive"
-            >
-              <Trash2 className="w-4 h-4" />
-              Hapus Dibeli ({purchasedItems})
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setArchiveConfirmOpen(true)}
+                className="gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                <Archive className="w-4 h-4" />
+                Arsipkan ({purchasedItems})
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setClearConfirmOpen(true)}
+                className="gap-2 text-destructive hover:text-destructive"
+              >
+                <Trash2 className="w-4 h-4" />
+                Hapus Dibeli ({purchasedItems})
+              </Button>
+            </>
           )}
           {categories.length > 0 && (
             <Button variant="outline" onClick={handleExportPDF}>
@@ -529,7 +551,6 @@ export function ShoppingListPage() {
         </div>
       </div>
 
-      {/* Categories list */}
       {categories.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
@@ -739,7 +760,6 @@ export function ShoppingListPage() {
         </div>
       )}
 
-      {/* Add Category Dialog */}
       <Dialog open={categoryFormOpen} onOpenChange={setCategoryFormOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -771,7 +791,6 @@ export function ShoppingListPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Item Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -859,7 +878,6 @@ export function ShoppingListPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Items Dialog */}
       <Dialog open={bulkFormOpen} onOpenChange={setBulkFormOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -977,7 +995,6 @@ export function ShoppingListPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1012,7 +1029,6 @@ export function ShoppingListPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Clear Purchased Confirmation Dialog */}
       <AlertDialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1028,6 +1044,30 @@ export function ShoppingListPage() {
               onClick={handleClearPurchased}
             >
               Hapus
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={archiveConfirmOpen}
+        onOpenChange={setArchiveConfirmOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Arsipkan Item Sudah Dibeli?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {purchasedItems} item yang sudah dibeli akan dipindahkan ke arsip
+              dan dapat dilihat di halaman Arsip Belanja.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-3 pt-4">
+            <AlertDialogCancel className="flex-1">Batal</AlertDialogCancel>
+            <AlertDialogAction
+              className="flex-1"
+              onClick={handleArchivePurchased}
+            >
+              Arsipkan
             </AlertDialogAction>
           </div>
         </AlertDialogContent>

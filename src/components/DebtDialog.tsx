@@ -127,7 +127,6 @@ export function DebtDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-4 flex-1 min-h-0">
-          {/* Summary */}
           <div className="bg-muted rounded-lg p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Jumlah Item</span>
@@ -141,7 +140,6 @@ export function DebtDialog({
             </div>
           </div>
 
-          {/* Tabs for Customer/Employee */}
           <Tabs
             value={activeTab}
             onValueChange={handleTabChange}
@@ -158,7 +156,6 @@ export function DebtDialog({
               </TabsTrigger>
             </TabsList>
 
-            {/* Customer Tab */}
             <TabsContent
               value="customer"
               className="flex-1 flex flex-col min-h-0 mt-4 space-y-4"
@@ -184,7 +181,6 @@ export function DebtDialog({
                     Tambah Pelanggan Baru
                   </Button>
 
-                  {/* Customer List */}
                   <ScrollArea className="flex-1 -mx-6 px-6">
                     <div className="space-y-2">
                       {filteredCustomers.length === 0 ? (
@@ -230,7 +226,6 @@ export function DebtDialog({
                   </ScrollArea>
                 </>
               ) : (
-                /* Add Customer Form */
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="customerName">Nama Pelanggan *</Label>
@@ -289,7 +284,6 @@ export function DebtDialog({
               )}
             </TabsContent>
 
-            {/* Employee Tab */}
             <TabsContent
               value="employee"
               className="flex-1 flex flex-col min-h-0 mt-4 space-y-4"
@@ -304,7 +298,6 @@ export function DebtDialog({
                 />
               </div>
 
-              {/* Employee List */}
               <ScrollArea className="flex-1 -mx-6 px-6">
                 <div className="space-y-2">
                   {filteredEmployees.length === 0 ? (
@@ -347,7 +340,6 @@ export function DebtDialog({
             </TabsContent>
           </Tabs>
 
-          {/* Actions */}
           {!showAddForm && (
             <div className="flex gap-3 pt-2">
               <Button

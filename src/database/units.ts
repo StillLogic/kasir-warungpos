@@ -1,4 +1,5 @@
 import { Unit } from "@/types/unit";
+import { generateId } from "./utils";
 
 const STORAGE_KEY = "db_units";
 
@@ -18,10 +19,6 @@ const DEFAULT_UNITS: string[] = [
   "Renteng",
   "Slop",
 ];
-
-function generateId(): string {
-  return Math.random().toString(36).substring(2, 10);
-}
 
 function initUnits(): Unit[] {
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -101,17 +98,14 @@ export function deleteUnit(id: string): boolean {
 }
 
 export function isUnitInUse(unitName: string): boolean {
-  const products = JSON.parse(localStorage.getItem("db_products") || "[]");
-  if (products.some((p: { u: string }) => p.u === unitName)) {
+  const { getProducts } = require("./products");
+  const products = getProducts();
+  if (products.some((p) => p.unit === unitName)) {
     return true;
   }
 
   const shoppingItems = JSON.parse(
     localStorage.getItem("db_shopping_items") || "[]",
   );
-  if (shoppingItems.some((i: { unit: string }) => i.unit === unitName)) {
-    return true;
-  }
-
-  return false;
+  return shoppingItems.some((i: { unit: string }) => i.unit === unitName);
 }

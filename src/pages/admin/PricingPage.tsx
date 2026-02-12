@@ -565,7 +565,6 @@ export function PricingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">Pengaturan Harga Jual</h2>
@@ -586,7 +585,6 @@ export function PricingPage() {
         </div>
       </div>
 
-      {/* Info Card */}
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
@@ -596,7 +594,6 @@ export function PricingPage() {
         </AlertDescription>
       </Alert>
 
-      {/* Add Markup Rules Section - Now at Top */}
       {(categoriesWithoutRules.length > 0 || !groupedRules["__all__"]) && (
         <Card>
           <CardHeader>
@@ -610,7 +607,6 @@ export function PricingPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {/* General rules option */}
               {!groupedRules["__all__"] && (
                 <button
                   onClick={() => handleOpenBatchDialog(null)}
@@ -624,7 +620,6 @@ export function PricingPage() {
                 </button>
               )}
 
-              {/* Categories without rules */}
               {categoriesWithoutRules.map((cat) => (
                 <button
                   key={cat.id}
@@ -643,7 +638,6 @@ export function PricingPage() {
         </Card>
       )}
 
-      {/* Empty state - when no categories exist */}
       {Object.keys(groupedRules).length === 0 &&
         categoriesWithoutRules.length === 0 &&
         !categories.length && (
@@ -660,7 +654,6 @@ export function PricingPage() {
           </Card>
         )}
 
-      {/* Categories with Markup Rules */}
       {Object.keys(groupedRules).length > 0 && (
         <div className="space-y-3">
           <h3 className="text-lg font-semibold">Daftar Aturan Markup</h3>
@@ -799,7 +792,6 @@ export function PricingPage() {
         </div>
       )}
 
-      {/* Single Rule Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -812,7 +804,6 @@ export function PricingPage() {
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
-              {/* Category Selection */}
               <div className="space-y-2">
                 <Label htmlFor="category">Berlaku Untuk</Label>
                 <Select
@@ -833,7 +824,6 @@ export function PricingPage() {
                 </Select>
               </div>
 
-              {/* Price Range */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="minPrice">Harga Minimum</Label>
@@ -875,7 +865,6 @@ export function PricingPage() {
                 </Label>
               </div>
 
-              {/* Markup Type Selection */}
               <div className="space-y-2">
                 <Label>Tipe Markup</Label>
                 <Select
@@ -892,7 +881,6 @@ export function PricingPage() {
                 </Select>
               </div>
 
-              {/* Markup Values */}
               {markupType === "percent" ? (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -949,7 +937,6 @@ export function PricingPage() {
                 </div>
               )}
 
-              {/* Preview */}
               {preview && (
                 <div className="p-3 rounded-lg bg-muted/50 text-sm">
                   <p className="font-medium mb-1">Contoh Kalkulasi:</p>
@@ -978,7 +965,6 @@ export function PricingPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Batch Create Dialog */}
       <Dialog open={batchDialogOpen} onOpenChange={setBatchDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -999,7 +985,6 @@ export function PricingPage() {
           </DialogHeader>
           <form onSubmit={handleBatchSubmit}>
             <div className="space-y-4 py-4">
-              {/* Markup Type Selection */}
               <div className="space-y-2">
                 <Label>Tipe Markup</Label>
                 <Select
@@ -1016,7 +1001,6 @@ export function PricingPage() {
                 </Select>
               </div>
 
-              {/* Tiers */}
               <div className="space-y-3">
                 <Label>Tingkatan Harga</Label>
                 {tiers.map((tier, index) => (
@@ -1026,7 +1010,6 @@ export function PricingPage() {
                         {index + 1}
                       </div>
                       <div className="flex-1 space-y-3">
-                        {/* Price Range */}
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1">
                             <Label className="text-xs">Harga Min</Label>
@@ -1073,7 +1056,6 @@ export function PricingPage() {
                           </Label>
                         </div>
 
-                        {/* Markup Values */}
                         <div className="grid grid-cols-2 gap-3">
                           {batchMarkupType === "percent" ? (
                             <>
@@ -1151,7 +1133,6 @@ export function PricingPage() {
                         </div>
                       </div>
 
-                      {/* Remove button */}
                       <Button
                         type="button"
                         variant="ghost"
@@ -1185,13 +1166,14 @@ export function PricingPage() {
               >
                 Batal
               </Button>
-              <Button type="submit" className="flex-1">Simpan {tiers.length} Aturan</Button>
+              <Button type="submit" className="flex-1">
+                Simpan {tiers.length} Aturan
+              </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1213,7 +1195,6 @@ export function PricingPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Bulk Update Confirmation */}
       <AlertDialog
         open={bulkUpdateDialogOpen}
         onOpenChange={setBulkUpdateDialogOpen}

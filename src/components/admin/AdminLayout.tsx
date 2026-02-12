@@ -164,7 +164,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
-      {/* Sidebar Header */}
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img
@@ -177,7 +176,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <ThemeToggle />
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navItems.slice(0, 5).map((item) => {
           const Icon = item.icon;
@@ -200,7 +198,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           );
         })}
 
-        {/* Shopping Menu with Submenu */}
         <Collapsible open={shoppingMenuOpen} onOpenChange={setShoppingMenuOpen}>
           <CollapsibleTrigger asChild>
             <button
@@ -247,7 +244,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Employee Menu with Submenu */}
         <Collapsible open={employeeMenuOpen} onOpenChange={setEmployeeMenuOpen}>
           <CollapsibleTrigger asChild>
             <button
@@ -316,7 +312,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         })}
       </nav>
 
-      {/* Back to Cashier */}
       <div className="p-3 border-t border-border">
         <Link
           to="/"
@@ -332,14 +327,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="h-dvh bg-background flex overflow-hidden animate-fade-in">
-      {/* Desktop Sidebar */}
       {!isMobile && (
         <aside className="w-64 bg-card border-r border-border shrink-0 animate-slide-in-left">
           <SidebarContent />
         </aside>
       )}
 
-      {/* Mobile Sidebar Overlay */}
       {isMobile && (
         <>
           <div
@@ -360,9 +353,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </>
       )}
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header */}
         <header className="bg-card border-b border-border shrink-0 h-14 flex items-center justify-between px-4">
           <h1 className="font-semibold text-lg truncate">
             {employeeSubItems.find((item) => location.pathname === item.path)
@@ -381,7 +372,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           )}
         </header>
 
-        {/* Page Content */}
         <main
           className="flex-1 overflow-auto p-4 lg:p-6 animate-fade-in"
           data-scrollable

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { ShoppingArchiveGroup } from "@/types/shopping-list";
+import { ShoppingArchiveByCategory } from "@/types/shopping-list";
 import {
-  getArchivedItemsGrouped,
+  getArchivedItemsByCategory,
   deleteArchivedItemsByDate,
   clearAllArchived,
   checkAndAutoArchive,
@@ -23,9 +23,9 @@ import { useToast } from "@/hooks/use-toast";
 
 export function ShoppingArchivePage() {
   const { toast } = useToast();
-  const [archivedGroups, setArchivedGroups] = useState<ShoppingArchiveGroup[]>(
-    [],
-  );
+  const [archivedByCategory, setArchivedByCategory] = useState<
+    ShoppingArchiveByCategory[]
+  >([]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [clearAllConfirmOpen, setClearAllConfirmOpen] = useState(false);
   const [dateToDelete, setDateToDelete] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export function ShoppingArchivePage() {
   }, []);
 
   const refreshData = () => {
-    setArchivedGroups(getArchivedItemsGrouped());
+    setArchivedByCategory(getArchivedItemsByCategory());
   };
 
   const handleDeleteArchivedGroup = () => {
@@ -63,7 +63,6 @@ export function ShoppingArchivePage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -74,7 +73,7 @@ export function ShoppingArchivePage() {
             Riwayat belanjaan yang sudah selesai
           </p>
         </div>
-        {archivedGroups.length > 0 && (
+        {archivedByCategory.length > 0 && (
           <Button
             variant="outline"
             onClick={() => setClearAllConfirmOpen(true)}
@@ -86,8 +85,7 @@ export function ShoppingArchivePage() {
         )}
       </div>
 
-      {/* Archive List */}
-      {archivedGroups.length === 0 ? (
+      {archivedByCategory.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <Archive className="w-12 h-12 mx-auto mb-4 opacity-20" />
@@ -98,54 +96,96 @@ export function ShoppingArchivePage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {archivedGroups.map((group) => (
-            <Card key={group.date}>
+        <div className="space-y-6">
+          {archivedByCategory.map((category) => (
+            <Card key={category.categoryId}>
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <span className="font-semibold">{group.dayName}</span>
-                    <span className="text-muted-foreground font-normal">
-                      {group.displayDate}
-                    </span>
-                    <Badge variant="secondary">{group.items.length}</Badge>
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={() => {
-                      setDateToDelete(group.date);
-                      setDeleteConfirmOpen(true);
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  {category.categoryName}
+                  <Badge variant="secondary">{category.totalItems}</Badge>
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {group.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-2 rounded border"
-                    >
-                      <div className="flex-1">
-                        <div className="font-medium">{item.productName}</div>
-                        {item.brand && (
-                          <div className="text-sm text-muted-foreground">
-                            {item.brand}
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground mr-4">
-                        {item.quantity} {item.unit}
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {item.categoryName}
-                      </Badge>
-                    </div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 px-3 font-medium text-muted-foreground">
+                          Nama Produk
+                        </th>
+                        <th className="text-left py-2 px-3 font-medium text-muted-foreground">
+                          Merk
+                        </th>
+                        <th className="text-center py-2 px-3 font-medium text-muted-foreground">
+                          Jumlah
+                        </th>
+                        <th className="text-right py-2 px-3 font-medium text-muted-foreground w-20"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {category.dateGroups.map((dateGroup, dateIdx) => (
+                        <>
+                          <tr
+                            key={`date-${dateGroup.date}`}
+                            className="bg-muted/50"
+                          >
+                            <td
+                              colSpan={3}
+                              className="py-2 px-3 font-medium text-sm"
+                            >
+                              <div className="flex items-center justify-center gap-2">
+                                <span className="font-semibold">
+                                  {dateGroup.dayName}
+                                </span>
+                                <span className="text-muted-foreground font-normal">
+                                  {dateGroup.displayDate}
+                                </span>
+                                <Badge variant="outline" className="text-xs">
+                                  {dateGroup.items.length}
+                                </Badge>
+                              </div>
+                            </td>
+                            <td className="py-2 px-3 text-right">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                onClick={() => {
+                                  setDateToDelete(dateGroup.date);
+                                  setDeleteConfirmOpen(true);
+                                }}
+                                title="Hapus arsip tanggal ini"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </td>
+                          </tr>
+                          {dateGroup.items.map((item, itemIdx) => (
+                            <tr
+                              key={item.id}
+                              className={`border-b last:border-b-0 hover:bg-muted/30 ${
+                                itemIdx === dateGroup.items.length - 1 &&
+                                dateIdx !== category.dateGroups.length - 1
+                                  ? "border-b-2"
+                                  : ""
+                              }`}
+                            >
+                              <td className="py-2 px-3 font-medium">
+                                {item.productName}
+                              </td>
+                              <td className="py-2 px-3 text-muted-foreground">
+                                {item.brand || "-"}
+                              </td>
+                              <td className="py-2 px-3 text-center text-muted-foreground">
+                                {item.quantity} {item.unit}
+                              </td>
+                              <td className="py-2 px-3"></td>
+                            </tr>
+                          ))}
+                        </>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </CardContent>
             </Card>
@@ -153,7 +193,6 @@ export function ShoppingArchivePage() {
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -179,7 +218,6 @@ export function ShoppingArchivePage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Clear All Confirmation Dialog */}
       <AlertDialog
         open={clearAllConfirmOpen}
         onOpenChange={setClearAllConfirmOpen}

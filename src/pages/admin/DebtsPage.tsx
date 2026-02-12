@@ -328,7 +328,6 @@ export function DebtsPage() {
   if (!selectedCustomer) {
     return (
       <div className="space-y-6">
-        {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card>
             <CardHeader className="pb-2">
@@ -348,7 +347,6 @@ export function DebtsPage() {
           </Card>
         </div>
 
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -359,7 +357,6 @@ export function DebtsPage() {
           />
         </div>
 
-        {/* Customer List */}
         {filteredCustomers.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -446,7 +443,6 @@ export function DebtsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={handleBack}>
           <ArrowLeft className="w-5 h-5" />
@@ -483,7 +479,6 @@ export function DebtsPage() {
         )}
       </div>
 
-      {/* Date Filter */}
       <div className="flex flex-wrap items-center gap-2">
         <Popover>
           <PopoverTrigger asChild>
@@ -552,7 +547,6 @@ export function DebtsPage() {
         )}
       </div>
 
-      {/* Total Summary - Top */}
       <div ref={printRef} className="space-y-4">
         <Card className="bg-destructive/5 border-destructive/20">
           <CardContent className="py-4">
@@ -570,7 +564,6 @@ export function DebtsPage() {
           </CardContent>
         </Card>
 
-        {/* Debt Table */}
         <Card>
           <div className="overflow-x-auto">
             <Table>
@@ -627,7 +620,6 @@ export function DebtsPage() {
         </Card>
       </div>
 
-      {/* Pay Dialog */}
       <Dialog open={payDialogOpen} onOpenChange={setPayDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>

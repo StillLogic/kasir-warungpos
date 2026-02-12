@@ -181,7 +181,6 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -268,9 +267,7 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      {/* Charts and Lists */}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Revenue Chart */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
@@ -317,7 +314,6 @@ export function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Top Products */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Produk Terlaris</CardTitle>
@@ -353,7 +349,6 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      {/* Low Stock Alert */}
       {(stats.lowStockProducts.length > 0 ||
         stats.outOfStockProducts.length > 0) && (
         <Card className="border-warning/50">

@@ -352,7 +352,6 @@ export function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold">Laporan</h1>
@@ -366,7 +365,6 @@ export function ReportsPage() {
         </Button>
       </div>
 
-      {/* Report Type Tabs */}
       <Tabs
         value={reportType}
         onValueChange={(v) => setReportType(v as ReportType)}
@@ -382,7 +380,6 @@ export function ReportsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Period Tabs */}
         <div className="mt-4">
           <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
             <TabsList>
@@ -393,9 +390,7 @@ export function ReportsPage() {
           </Tabs>
         </div>
 
-        {/* Sales Report */}
         <TabsContent value="sales" className="mt-6 space-y-6">
-          {/* Summary Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="pb-2">
@@ -450,7 +445,6 @@ export function ReportsPage() {
             </Card>
           </div>
 
-          {/* Revenue Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -501,7 +495,6 @@ export function ReportsPage() {
             </CardContent>
           </Card>
 
-          {/* Transactions Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -553,9 +546,7 @@ export function ReportsPage() {
           </Card>
         </TabsContent>
 
-        {/* Profit Report */}
         <TabsContent value="profit" className="mt-6 space-y-6">
-          {/* Profit Summary Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="pb-2">
@@ -614,7 +605,6 @@ export function ReportsPage() {
             </Card>
           </div>
 
-          {/* Profit vs Revenue Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -682,7 +672,6 @@ export function ReportsPage() {
             </CardContent>
           </Card>
 
-          {/* Margin Trend Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">

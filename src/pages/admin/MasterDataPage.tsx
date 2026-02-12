@@ -234,7 +234,6 @@ export function MasterDataPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Categories Tab */}
         <TabsContent value="categories" className="space-y-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
@@ -294,7 +293,6 @@ export function MasterDataPage() {
           </Card>
         </TabsContent>
 
-        {/* Units Tab */}
         <TabsContent value="units" className="space-y-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
@@ -349,7 +347,6 @@ export function MasterDataPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Category Form Dialog */}
       <Dialog open={categoryFormOpen} onOpenChange={setCategoryFormOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -397,7 +394,6 @@ export function MasterDataPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Unit Form Dialog */}
       <Dialog open={unitFormOpen} onOpenChange={setUnitFormOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -431,7 +427,6 @@ export function MasterDataPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Category Confirmation */}
       <AlertDialog
         open={!!categoryToDelete}
         onOpenChange={() => setCategoryToDelete(null)}
@@ -456,7 +451,6 @@ export function MasterDataPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete Unit Confirmation */}
       <AlertDialog
         open={!!unitToDelete}
         onOpenChange={() => setUnitToDelete(null)}

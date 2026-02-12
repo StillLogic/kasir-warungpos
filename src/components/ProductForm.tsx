@@ -51,8 +51,6 @@ interface ProductFormProps {
   product?: Product | null;
 }
 
-
-
 export function ProductForm({
   open,
   onClose,
@@ -256,7 +254,6 @@ export function ProductForm({
             </div>
           </div>
 
-          {/* Cost Price with Auto-Calculate Info */}
           <div className="space-y-2">
             <Label htmlFor="costPrice" className="flex items-center gap-2">
               <Calculator className="h-4 w-4" />

@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Tag, AlertTriangle } from 'lucide-react';
-import { toTitleCase } from '@/lib/text';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect } from "react";
+import { Plus, Pencil, Trash2, Tag, AlertTriangle } from "lucide-react";
+import { toTitleCase } from "@/lib/text";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +20,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -28,9 +28,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { toast } from '@/hooks/use-toast';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
 import {
   Category,
   getCategories,
@@ -38,7 +38,7 @@ import {
   updateCategory,
   deleteCategory,
   isCategoryInUse,
-} from '@/database/categories';
+} from "@/database/categories";
 
 interface CategoryManagerProps {
   open: boolean;
@@ -46,15 +46,21 @@ interface CategoryManagerProps {
   onCategoriesChange?: () => void;
 }
 
-export function CategoryManager({ open, onClose, onCategoriesChange }: CategoryManagerProps) {
+export function CategoryManager({
+  open,
+  onClose,
+  onCategoriesChange,
+}: CategoryManagerProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
-  const [name, setName] = useState('');
-  const [prefix, setPrefix] = useState('');
-  const [error, setError] = useState('');
+  const [deletingCategory, setDeletingCategory] = useState<Category | null>(
+    null,
+  );
+  const [name, setName] = useState("");
+  const [prefix, setPrefix] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -73,37 +79,37 @@ export function CategoryManager({ open, onClose, onCategoriesChange }: CategoryM
       setPrefix(category.prefix);
     } else {
       setEditingCategory(null);
-      setName('');
-      setPrefix('');
+      setName("");
+      setPrefix("");
     }
-    setError('');
+    setError("");
     setFormOpen(true);
   };
 
   const handleCloseForm = () => {
     setFormOpen(false);
     setEditingCategory(null);
-    setName('');
-    setPrefix('');
-    setError('');
+    setName("");
+    setPrefix("");
+    setError("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (!name.trim()) {
-      setError('Nama kategori wajib diisi');
+      setError("Nama kategori wajib diisi");
       return;
     }
 
     if (!prefix.trim() || prefix.length < 2) {
-      setError('Prefix minimal 2 karakter');
+      setError("Prefix minimal 2 karakter");
       return;
     }
 
     if (prefix.length > 3) {
-      setError('Prefix maksimal 3 karakter');
+      setError("Prefix maksimal 3 karakter");
       return;
     }
 
@@ -113,7 +119,7 @@ export function CategoryManager({ open, onClose, onCategoriesChange }: CategoryM
       result = updateCategory(editingCategory.id, name.trim(), prefix.trim());
       if (result) {
         toast({
-          title: 'Kategori Diperbarui',
+          title: "Kategori Diperbarui",
           description: `Kategori "${result.name}" berhasil diperbarui`,
         });
       }
@@ -121,14 +127,14 @@ export function CategoryManager({ open, onClose, onCategoriesChange }: CategoryM
       result = addCategory(name.trim(), prefix.trim());
       if (result) {
         toast({
-          title: 'Kategori Ditambahkan',
+          title: "Kategori Ditambahkan",
           description: `Kategori "${result.name}" berhasil ditambahkan`,
         });
       }
     }
 
     if (!result) {
-      setError('Nama atau prefix kategori sudah digunakan');
+      setError("Nama atau prefix kategori sudah digunakan");
       return;
     }
 
@@ -147,9 +153,9 @@ export function CategoryManager({ open, onClose, onCategoriesChange }: CategoryM
 
     if (isCategoryInUse(deletingCategory.name)) {
       toast({
-        title: 'Tidak Dapat Menghapus',
-        description: 'Kategori masih digunakan oleh produk',
-        variant: 'destructive',
+        title: "Tidak Dapat Menghapus",
+        description: "Kategori masih digunakan oleh produk",
+        variant: "destructive",
       });
       setDeleteDialogOpen(false);
       setDeletingCategory(null);
@@ -159,16 +165,16 @@ export function CategoryManager({ open, onClose, onCategoriesChange }: CategoryM
     const success = deleteCategory(deletingCategory.id);
     if (success) {
       toast({
-        title: 'Kategori Dihapus',
+        title: "Kategori Dihapus",
         description: `Kategori "${deletingCategory.name}" berhasil dihapus`,
       });
       loadCategories();
       onCategoriesChange?.();
     } else {
       toast({
-        title: 'Gagal Menghapus',
-        description: 'Minimal harus ada satu kategori',
-        variant: 'destructive',
+        title: "Gagal Menghapus",
+        description: "Minimal harus ada satu kategori",
+        variant: "destructive",
       });
     }
 
@@ -258,12 +264,11 @@ export function CategoryManager({ open, onClose, onCategoriesChange }: CategoryM
         </DialogContent>
       </Dialog>
 
-      {/* Add/Edit Form Dialog */}
       <Dialog open={formOpen} onOpenChange={handleCloseForm}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>
-              {editingCategory ? 'Edit Kategori' : 'Tambah Kategori'}
+              {editingCategory ? "Edit Kategori" : "Tambah Kategori"}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -294,24 +299,29 @@ export function CategoryManager({ open, onClose, onCategoriesChange }: CategoryM
               </p>
             )}
             <div className="flex gap-3">
-              <Button type="button" variant="outline" className="flex-1" onClick={handleCloseForm}>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={handleCloseForm}
+              >
                 Batal
               </Button>
               <Button type="submit" className="flex-1">
-                {editingCategory ? 'Simpan' : 'Tambah'}
+                {editingCategory ? "Simpan" : "Tambah"}
               </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Kategori?</AlertDialogTitle>
             <AlertDialogDescription>
-              Kategori "{deletingCategory?.name}" akan dihapus. Tindakan ini tidak dapat dibatalkan.
+              Kategori "{deletingCategory?.name}" akan dihapus. Tindakan ini
+              tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

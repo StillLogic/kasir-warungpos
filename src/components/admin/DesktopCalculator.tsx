@@ -8,7 +8,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Copy, Delete, Info, Plus, Minus, X, Divide, Equal, RotateCcw } from "lucide-react";
+import {
+  Copy,
+  Delete,
+  Info,
+  Plus,
+  Minus,
+  X,
+  Divide,
+  Equal,
+  RotateCcw,
+} from "lucide-react";
 import { formatCurrency, roundToThousand } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
 import { getMarkupForPrice, getMarkupRules } from "@/database/markup";
@@ -169,7 +179,7 @@ export function DesktopCalculator() {
 
     const inputValue = parseFloat(display) || 0;
     const result = calculate(previousValue, inputValue, operator);
-    
+
     setDisplay(String(Math.round(result)));
     setPreviousValue(null);
     setOperator(null);
@@ -184,30 +194,60 @@ export function DesktopCalculator() {
     });
   };
 
-  const expressionDisplay = previousValue !== null && operator
-    ? `${formatCurrency(previousValue)} ${operator}`
-    : null;
+  const expressionDisplay =
+    previousValue !== null && operator
+      ? `${formatCurrency(previousValue)} ${operator}`
+      : null;
 
   const numpadButtons = [
     { label: "7", action: () => handleNumber("7") },
     { label: "8", action: () => handleNumber("8") },
     { label: "9", action: () => handleNumber("9") },
-    { label: <Divide className="w-5 h-5" />, action: () => handleOperator("÷"), variant: "secondary" as const },
+    {
+      label: <Divide className="w-5 h-5" />,
+      action: () => handleOperator("÷"),
+      variant: "secondary" as const,
+    },
     { label: "4", action: () => handleNumber("4") },
     { label: "5", action: () => handleNumber("5") },
     { label: "6", action: () => handleNumber("6") },
-    { label: <X className="w-5 h-5" />, action: () => handleOperator("×"), variant: "secondary" as const },
+    {
+      label: <X className="w-5 h-5" />,
+      action: () => handleOperator("×"),
+      variant: "secondary" as const,
+    },
     { label: "1", action: () => handleNumber("1") },
     { label: "2", action: () => handleNumber("2") },
     { label: "3", action: () => handleNumber("3") },
-    { label: <Minus className="w-5 h-5" />, action: () => handleOperator("-"), variant: "secondary" as const },
+    {
+      label: <Minus className="w-5 h-5" />,
+      action: () => handleOperator("-"),
+      variant: "secondary" as const,
+    },
     { label: "0", action: () => handleNumber("0") },
     { label: "00", action: handleDoubleZero, variant: "outline" as const },
     { label: "000", action: handleTripleZero, variant: "outline" as const },
-    { label: <Plus className="w-5 h-5" />, action: () => handleOperator("+"), variant: "secondary" as const },
-    { label: <Delete className="w-5 h-5" />, action: handleBackspace, variant: "outline" as const },
-    { label: <RotateCcw className="w-5 h-5" />, action: handleClear, variant: "outline" as const },
-    { label: <Equal className="w-5 h-5" />, action: handleEquals, variant: "default" as const, span: 2 },
+    {
+      label: <Plus className="w-5 h-5" />,
+      action: () => handleOperator("+"),
+      variant: "secondary" as const,
+    },
+    {
+      label: <Delete className="w-5 h-5" />,
+      action: handleBackspace,
+      variant: "outline" as const,
+    },
+    {
+      label: <RotateCcw className="w-5 h-5" />,
+      action: handleClear,
+      variant: "outline" as const,
+    },
+    {
+      label: <Equal className="w-5 h-5" />,
+      action: handleEquals,
+      variant: "default" as const,
+      span: 2,
+    },
   ];
 
   return (
@@ -222,11 +262,8 @@ export function DesktopCalculator() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Result Section - Left */}
         <div className="space-y-4">
-          {/* Results */}
           <div className="grid grid-cols-2 gap-3">
-            {/* Retail */}
             <button
               onClick={() => markup && copyToClipboard(retailPrice, "Eceran")}
               disabled={!markup || cost <= 0}
@@ -253,9 +290,10 @@ export function DesktopCalculator() {
               </div>
             </button>
 
-            {/* Wholesale */}
             <button
-              onClick={() => markup && copyToClipboard(wholesalePrice, "Grosir")}
+              onClick={() =>
+                markup && copyToClipboard(wholesalePrice, "Grosir")
+              }
               disabled={!markup || cost <= 0}
               className={cn(
                 "p-4 rounded-lg text-left transition-colors",
@@ -281,7 +319,6 @@ export function DesktopCalculator() {
             </button>
           </div>
 
-          {/* Applied Rule Info */}
           {cost > 0 && (
             <div className="p-3 rounded-lg bg-muted/50 space-y-1">
               <div className="flex items-center gap-2 text-sm font-medium">
@@ -318,7 +355,6 @@ export function DesktopCalculator() {
             </div>
           )}
 
-          {/* Markup Rules Reference */}
           <div className="p-4 rounded-lg border bg-card">
             <h4 className="font-medium mb-3 text-sm">Daftar Aturan Markup</h4>
             {markupRules.length > 0 ? (
@@ -344,11 +380,13 @@ export function DesktopCalculator() {
                       <div className="text-right text-xs">
                         {rule.markupType === "fixed" ? (
                           <p>
-                            +{formatCurrency(rule.retailMarkupFixed || 0)} / +{formatCurrency(rule.wholesaleMarkupFixed || 0)}
+                            +{formatCurrency(rule.retailMarkupFixed || 0)} / +
+                            {formatCurrency(rule.wholesaleMarkupFixed || 0)}
                           </p>
                         ) : (
                           <p>
-                            {rule.retailMarkupPercent}% / {rule.wholesaleMarkupPercent}%
+                            {rule.retailMarkupPercent}% /{" "}
+                            {rule.wholesaleMarkupPercent}%
                           </p>
                         )}
                       </div>
@@ -369,9 +407,7 @@ export function DesktopCalculator() {
           </div>
         </div>
 
-        {/* Input Section - Right */}
         <div className="space-y-4">
-          {/* Category Selector */}
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="h-10">
               <SelectValue placeholder="Kategori" />
@@ -386,7 +422,6 @@ export function DesktopCalculator() {
             </SelectContent>
           </Select>
 
-          {/* Cost Display */}
           <div className="bg-muted/50 rounded-lg p-4">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm text-muted-foreground">Harga Modal</span>
@@ -401,7 +436,6 @@ export function DesktopCalculator() {
             </div>
           </div>
 
-          {/* Numpad */}
           <div className="grid grid-cols-4 gap-2">
             {numpadButtons.map((btn, idx) => (
               <Button

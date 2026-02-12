@@ -2,7 +2,8 @@ import {
   ShoppingCategory,
   ShoppingItem,
   ArchivedShoppingItem,
-  ShoppingArchiveGroup,
+  ShoppingArchiveByCategory,
+  ArchivedItemsByDate,
 } from "@/types/shopping-list";
 import { generateId } from "./utils";
 
@@ -10,6 +11,31 @@ const SHOPPING_CATEGORIES_KEY = "db_shopping_categories";
 const SHOPPING_ITEMS_KEY = "db_shopping_items";
 const SHOPPING_ARCHIVE_KEY = "db_shopping_archive";
 const SHOPPING_LAST_CHECK_KEY = "db_shopping_last_check_date";
+
+const DAY_NAMES = [
+  "Minggu",
+  "Senin",
+  "Selasa",
+  "Rabu",
+  "Kamis",
+  "Jumat",
+  "Sabtu",
+];
+
+const MONTH_NAMES = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
 
 export function getShoppingCategories(): ShoppingCategory[] {
   try {
@@ -127,65 +153,6 @@ export function archivePurchasedItems(): number {
   return purchasedItems.length;
 }
 
-export function getArchivedItemsGrouped(): ShoppingArchiveGroup[] {
-  const archived = getArchivedItems();
-  const groups = new Map<string, ArchivedShoppingItem[]>();
-
-  archived.forEach((item) => {
-    const date = new Date(item.archivedAt);
-    const dateKey = date.toISOString().split("T")[0];
-
-    if (!groups.has(dateKey)) {
-      groups.set(dateKey, []);
-    }
-    groups.get(dateKey)!.push(item);
-  });
-
-  const result: ShoppingArchiveGroup[] = [];
-
-  groups.forEach((items, dateKey) => {
-    const date = new Date(dateKey + "T00:00:00");
-    const dayNames = [
-      "Minggu",
-      "Senin",
-      "Selasa",
-      "Rabu",
-      "Kamis",
-      "Jumat",
-      "Sabtu",
-    ];
-    const monthNames = [
-      "Januari",
-      "Februari",
-      "Maret",
-      "April",
-      "Mei",
-      "Juni",
-      "Juli",
-      "Agustus",
-      "September",
-      "Oktober",
-      "November",
-      "Desember",
-    ];
-
-    const dayName = dayNames[date.getDay()];
-    const displayDate = `${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
-
-    result.push({
-      date: dateKey,
-      dayName,
-      displayDate,
-      items: items.sort(
-        (a, b) =>
-          new Date(b.archivedAt).getTime() - new Date(a.archivedAt).getTime(),
-      ),
-    });
-  });
-
-  return result.sort((a, b) => b.date.localeCompare(a.date));
-}
-
 export function deleteArchivedItemsByDate(date: string): void {
   const archived = getArchivedItems();
   const filtered = archived.filter((item) => {
@@ -228,4 +195,62 @@ export function toggleAllItemsInCategory(
     item.categoryId === categoryId ? { ...item, isPurchased: purchased } : item,
   );
   localStorage.setItem(SHOPPING_ITEMS_KEY, JSON.stringify(items));
+}
+
+export function getArchivedItemsByCategory(): ShoppingArchiveByCategory[] {
+  const archived = getArchivedItems();
+  const categoryMap = new Map<string, Map<string, ArchivedShoppingItem[]>>();
+
+  archived.forEach((item) => {
+    if (!categoryMap.has(item.categoryId)) {
+      categoryMap.set(item.categoryId, new Map());
+    }
+
+    const categoryDates = categoryMap.get(item.categoryId)!;
+    const date = new Date(item.archivedAt);
+    const dateKey = date.toISOString().split("T")[0];
+
+    if (!categoryDates.has(dateKey)) {
+      categoryDates.set(dateKey, []);
+    }
+    categoryDates.get(dateKey)!.push(item);
+  });
+
+  const result: ShoppingArchiveByCategory[] = [];
+
+  categoryMap.forEach((dateGroups, categoryId) => {
+    const dateGroupsArray: ArchivedItemsByDate[] = [];
+    let totalItems = 0;
+
+    dateGroups.forEach((items, dateKey) => {
+      const date = new Date(dateKey + "T00:00:00");
+      const dayName = DAY_NAMES[date.getDay()];
+      const displayDate = `${date.getDate()} ${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
+
+      dateGroupsArray.push({
+        date: dateKey,
+        dayName,
+        displayDate,
+        items: items.sort(
+          (a, b) =>
+            new Date(b.archivedAt).getTime() - new Date(a.archivedAt).getTime(),
+        ),
+      });
+      totalItems += items.length;
+    });
+
+    dateGroupsArray.sort((a, b) => b.date.localeCompare(a.date));
+
+    const firstItem = dateGroupsArray[0]?.items[0];
+    if (firstItem) {
+      result.push({
+        categoryId,
+        categoryName: firstItem.categoryName,
+        dateGroups: dateGroupsArray,
+        totalItems,
+      });
+    }
+  });
+
+  return result.sort((a, b) => a.categoryName.localeCompare(b.categoryName));
 }

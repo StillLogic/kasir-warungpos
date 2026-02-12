@@ -8,7 +8,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Copy, Delete, Info, Plus, Minus, X, Divide, Equal } from "lucide-react";
+import {
+  Copy,
+  Delete,
+  Info,
+  Plus,
+  Minus,
+  X,
+  Divide,
+  Equal,
+} from "lucide-react";
 import { formatCurrency, roundToThousand } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
 import { getMarkupForPrice, getMarkupRules } from "@/database/markup";
@@ -168,7 +177,7 @@ export function MobileCalculator() {
 
     const inputValue = parseFloat(display) || 0;
     const result = calculate(previousValue, inputValue, operator);
-    
+
     setDisplay(String(Math.round(result)));
     setPreviousValue(null);
     setOperator(null);
@@ -183,37 +192,61 @@ export function MobileCalculator() {
     });
   };
 
-  const expressionDisplay = previousValue !== null && operator
-    ? `${formatCurrency(previousValue)} ${operator}`
-    : null;
+  const expressionDisplay =
+    previousValue !== null && operator
+      ? `${formatCurrency(previousValue)} ${operator}`
+      : null;
 
   const numpadButtons = [
     { label: "7", action: () => handleNumber("7") },
     { label: "8", action: () => handleNumber("8") },
     { label: "9", action: () => handleNumber("9") },
-    { label: <Divide className="w-5 h-5" />, action: () => handleOperator("÷"), variant: "secondary" as const },
+    {
+      label: <Divide className="w-5 h-5" />,
+      action: () => handleOperator("÷"),
+      variant: "secondary" as const,
+    },
     { label: "4", action: () => handleNumber("4") },
     { label: "5", action: () => handleNumber("5") },
     { label: "6", action: () => handleNumber("6") },
-    { label: <X className="w-5 h-5" />, action: () => handleOperator("×"), variant: "secondary" as const },
+    {
+      label: <X className="w-5 h-5" />,
+      action: () => handleOperator("×"),
+      variant: "secondary" as const,
+    },
     { label: "1", action: () => handleNumber("1") },
     { label: "2", action: () => handleNumber("2") },
     { label: "3", action: () => handleNumber("3") },
-    { label: <Minus className="w-5 h-5" />, action: () => handleOperator("-"), variant: "secondary" as const },
+    {
+      label: <Minus className="w-5 h-5" />,
+      action: () => handleOperator("-"),
+      variant: "secondary" as const,
+    },
     { label: "0", action: () => handleNumber("0") },
     { label: "00", action: handleDoubleZero, variant: "outline" as const },
     { label: "000", action: handleTripleZero, variant: "outline" as const },
-    { label: <Plus className="w-5 h-5" />, action: () => handleOperator("+"), variant: "secondary" as const },
-    { label: <Delete className="w-5 h-5" />, action: handleBackspace, variant: "outline" as const },
+    {
+      label: <Plus className="w-5 h-5" />,
+      action: () => handleOperator("+"),
+      variant: "secondary" as const,
+    },
+    {
+      label: <Delete className="w-5 h-5" />,
+      action: handleBackspace,
+      variant: "outline" as const,
+    },
     { label: "C", action: handleClear, variant: "outline" as const },
-    { label: <Equal className="w-5 h-5" />, action: handleEquals, variant: "default" as const, span: 2 },
+    {
+      label: <Equal className="w-5 h-5" />,
+      action: handleEquals,
+      variant: "default" as const,
+      span: 2,
+    },
   ];
 
   return (
     <div className="flex flex-col h-full max-h-[calc(100dvh-3.5rem)]">
-      {/* Display Section */}
       <div className="bg-card border-b border-border p-4 space-y-3">
-        {/* Category Selector */}
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger className="h-9 text-sm">
             <SelectValue placeholder="Kategori" />
@@ -228,7 +261,6 @@ export function MobileCalculator() {
           </SelectContent>
         </Select>
 
-        {/* Cost Display */}
         <div className="bg-muted/50 rounded-lg p-3">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs text-muted-foreground">Harga Modal</span>
@@ -243,16 +275,15 @@ export function MobileCalculator() {
           </div>
         </div>
 
-        {/* Applied Rule Info */}
         {cost > 0 && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
             <Info className="w-3 h-3 shrink-0" />
             {appliedRule ? (
               <span className="truncate">
-                Markup: {appliedRule.markupType === "fixed" 
+                Markup:{" "}
+                {appliedRule.markupType === "fixed"
                   ? `+${formatCurrency(appliedRule.retailMarkupFixed || 0)} / +${formatCurrency(appliedRule.wholesaleMarkupFixed || 0)}`
-                  : `${appliedRule.retailMarkupPercent}% / ${appliedRule.wholesaleMarkupPercent}%`
-                }
+                  : `${appliedRule.retailMarkupPercent}% / ${appliedRule.wholesaleMarkupPercent}%`}
                 {appliedRule.categoryName && ` (${appliedRule.categoryName})`}
               </span>
             ) : (
@@ -264,9 +295,7 @@ export function MobileCalculator() {
         )}
       </div>
 
-      {/* Results Section */}
       <div className="grid grid-cols-2 gap-2 p-3 bg-background">
-        {/* Retail */}
         <button
           onClick={() => markup && copyToClipboard(retailPrice, "Eceran")}
           disabled={!markup || cost <= 0}
@@ -292,7 +321,6 @@ export function MobileCalculator() {
           </div>
         </button>
 
-        {/* Wholesale */}
         <button
           onClick={() => markup && copyToClipboard(wholesalePrice, "Grosir")}
           disabled={!markup || cost <= 0}
@@ -319,7 +347,6 @@ export function MobileCalculator() {
         </button>
       </div>
 
-      {/* Numpad */}
       <div className="flex-1 p-3 pt-0">
         <div className="grid grid-cols-4 gap-2 h-full">
           {numpadButtons.map((btn, idx) => (

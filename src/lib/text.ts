@@ -17,30 +17,12 @@ export function toTitleCase(str: string): string {
     .join(" ");
 }
 
-export function toUpperCase(str: string): string {
-  if (!str) return str;
-  return str.toUpperCase();
-}
-
 export function handleTitleCaseChange(
   e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   setter: (value: string) => void,
 ) {
   const cursorPosition = e.target.selectionStart || 0;
   const newValue = toTitleCase(e.target.value);
-  setter(newValue);
-
-  setTimeout(() => {
-    e.target.setSelectionRange(cursorPosition, cursorPosition);
-  }, 0);
-}
-
-export function handleUpperCaseChange(
-  e: React.ChangeEvent<HTMLInputElement>,
-  setter: (value: string) => void,
-) {
-  const cursorPosition = e.target.selectionStart || 0;
-  const newValue = toUpperCase(e.target.value);
   setter(newValue);
 
   setTimeout(() => {

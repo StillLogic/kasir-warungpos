@@ -26,3 +26,17 @@ export interface ShoppingArchiveGroup {
   displayDate: string;
   items: ArchivedShoppingItem[];
 }
+
+export interface ArchivedItemsByDate {
+  date: string;
+  dayName: string;
+  displayDate: string;
+  items: ArchivedShoppingItem[];
+}
+
+export interface ShoppingArchiveByCategory {
+  categoryId: string;
+  categoryName: string;
+  dateGroups: ArchivedItemsByDate[];
+  totalItems: number;
+}

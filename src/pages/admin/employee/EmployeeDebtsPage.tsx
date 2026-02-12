@@ -155,7 +155,6 @@ export function EmployeeDebtsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header & Filters */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between">
           <div className="relative flex-1 max-w-md">
@@ -192,7 +191,6 @@ export function EmployeeDebtsPage() {
         </div>
       </div>
 
-      {/* Debts Table by Employee */}
       {debtsByEmployee.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
@@ -206,7 +204,6 @@ export function EmployeeDebtsPage() {
           {debtsByEmployee.map((employeeData) => (
             <Card key={employeeData.employeeId}>
               <CardContent className="pt-4">
-                {/* Employee Header */}
                 <div className="flex items-center justify-between mb-4 pb-3 border-b">
                   <h3 className="font-semibold text-lg">
                     {employeeData.employeeName}
@@ -216,7 +213,6 @@ export function EmployeeDebtsPage() {
                   </span>
                 </div>
 
-                {/* Debts Table */}
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -276,7 +272,6 @@ export function EmployeeDebtsPage() {
         </div>
       )}
 
-      {/* Add Debt Dialog */}
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -331,7 +326,6 @@ export function EmployeeDebtsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -1,3 +1,5 @@
+import { generateId } from "./utils";
+
 export interface Category {
   id: string;
   name: string;
@@ -16,10 +18,6 @@ const DEFAULT_CATEGORIES: Omit<Category, "id" | "createdAt">[] = [
   { name: "Sembako", prefix: "SMB" },
   { name: "Lainnya", prefix: "LNY" },
 ];
-
-function generateId(): string {
-  return Math.random().toString(36).substring(2, 10);
-}
 
 function initCategories(): Category[] {
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -128,6 +126,7 @@ export function deleteCategory(id: string): boolean {
 }
 
 export function isCategoryInUse(categoryName: string): boolean {
-  const products = JSON.parse(localStorage.getItem("db_products") || "[]");
-  return products.some((p: { c: string }) => p.c === categoryName);
+  const { getProducts } = require("./products");
+  const products = getProducts();
+  return products.some((p) => p.category === categoryName);
 }

@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react';
-import { CartItem } from '@/types/pos';
-import { formatCurrency } from '@/lib/format';
-import { Button } from '@/components/ui/button';
-import { PriceInput } from '@/components/ui/price-input';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect } from "react";
+import { CartItem } from "@/types/pos";
+import { formatCurrency } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { PriceInput } from "@/components/ui/price-input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 
 interface CheckoutDialogProps {
   open: boolean;
@@ -21,27 +21,32 @@ interface CheckoutDialogProps {
 
 const quickAmounts = [5000, 10000, 20000, 50000, 100000];
 
-export function CheckoutDialog({ open, onClose, onConfirm, total, items }: CheckoutDialogProps) {
-  const [paymentStr, setPaymentStr] = useState<string>('');
+export function CheckoutDialog({
+  open,
+  onClose,
+  onConfirm,
+  total,
+  items,
+}: CheckoutDialogProps) {
+  const [paymentStr, setPaymentStr] = useState<string>("");
   const payment = parseInt(paymentStr) || 0;
   const change = payment - total;
 
-  // Reset payment when dialog opens with new total
   useEffect(() => {
     if (open) {
-      setPaymentStr(total > 0 ? String(total) : '');
+      setPaymentStr(total > 0 ? String(total) : "");
     }
   }, [open, total]);
 
   const handleConfirm = () => {
     if (payment >= total) {
       onConfirm(payment);
-      setPaymentStr('');
+      setPaymentStr("");
     }
   };
 
   const handleQuickAmount = (amount: number) => {
-    setPaymentStr(prev => String((parseInt(prev) || 0) + amount));
+    setPaymentStr((prev) => String((parseInt(prev) || 0) + amount));
   };
 
   return (
@@ -52,11 +57,12 @@ export function CheckoutDialog({ open, onClose, onConfirm, total, items }: Check
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Summary */}
           <div className="bg-muted rounded-lg p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Jumlah Item</span>
-              <span>{items.reduce((sum, item) => sum + item.quantity, 0)} item</span>
+              <span>
+                {items.reduce((sum, item) => sum + item.quantity, 0)} item
+              </span>
             </div>
             <div className="flex justify-between text-lg font-bold">
               <span>Total Belanja</span>
@@ -64,7 +70,6 @@ export function CheckoutDialog({ open, onClose, onConfirm, total, items }: Check
             </div>
           </div>
 
-          {/* Payment Input */}
           <div className="space-y-2">
             <Label htmlFor="payment">Jumlah Bayar</Label>
             <PriceInput
@@ -77,7 +82,6 @@ export function CheckoutDialog({ open, onClose, onConfirm, total, items }: Check
             />
           </div>
 
-          {/* Quick Amounts */}
           <div className="flex flex-wrap gap-2">
             {quickAmounts.map((amount) => (
               <Button
@@ -98,11 +102,12 @@ export function CheckoutDialog({ open, onClose, onConfirm, total, items }: Check
             </Button>
           </div>
 
-          {/* Change */}
           <div className="bg-accent rounded-lg p-4">
             <div className="flex justify-between items-center">
               <span className="text-accent-foreground">Kembalian</span>
-              <span className={`text-2xl font-bold ${change >= 0 ? 'text-primary' : 'text-destructive'}`}>
+              <span
+                className={`text-2xl font-bold ${change >= 0 ? "text-primary" : "text-destructive"}`}
+              >
                 {formatCurrency(Math.max(0, change))}
               </span>
             </div>
@@ -113,13 +118,12 @@ export function CheckoutDialog({ open, onClose, onConfirm, total, items }: Check
             )}
           </div>
 
-          {/* Actions */}
           <div className="flex gap-3">
             <Button variant="outline" className="flex-1" onClick={onClose}>
               Batal
             </Button>
-            <Button 
-              className="flex-1" 
+            <Button
+              className="flex-1"
               onClick={handleConfirm}
               disabled={change < 0}
             >

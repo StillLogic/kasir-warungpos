@@ -225,7 +225,6 @@ export function EmployeeRecordsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header & Filters */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-between">
           <div className="relative flex-1 max-w-md">
@@ -270,7 +269,6 @@ export function EmployeeRecordsPage() {
         </div>
       </div>
 
-      {/* Records List by Employee */}
       {recordsByEmployee.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
@@ -284,7 +282,6 @@ export function EmployeeRecordsPage() {
           {recordsByEmployee.map((employeeData) => (
             <Card key={employeeData.employeeId}>
               <CardContent className="pt-4">
-                {/* Employee Header */}
                 <div className="flex items-center justify-between mb-4 pb-3 border-b">
                   <h3 className="font-semibold text-lg">
                     {employeeData.employeeName}
@@ -324,7 +321,6 @@ export function EmployeeRecordsPage() {
                   })()}
                 </div>
 
-                {/* Records Table */}
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -405,7 +401,6 @@ export function EmployeeRecordsPage() {
         </div>
       )}
 
-      {/* Settlement Confirmation Dialog */}
       <Dialog
         open={settlementDialogOpen}
         onOpenChange={setSettlementDialogOpen}
