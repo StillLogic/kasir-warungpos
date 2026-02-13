@@ -126,7 +126,8 @@ export function deleteCategory(id: string): boolean {
 }
 
 export function isCategoryInUse(categoryName: string): boolean {
-  const { getProducts } = require("./products");
-  const products = getProducts();
-  return products.some((p) => p.category === categoryName);
+  const stored = localStorage.getItem("db_products");
+  if (!stored) return false;
+  const products = JSON.parse(stored);
+  return products.some((p: { category: string }) => p.category === categoryName);
 }
