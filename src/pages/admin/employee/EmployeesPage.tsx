@@ -30,6 +30,7 @@ import {
   deleteEmployee,
 } from "@/database/employees";
 import { Employee } from "@/types/employee";
+import { sortAlpha } from "@/lib/sorting";
 
 export function EmployeesPage() {
   const { toast } = useToast();
@@ -46,10 +47,13 @@ export function EmployeesPage() {
   const [formPosition, setFormPosition] = useState("");
   const [formPhone, setFormPhone] = useState("");
 
-  const filteredEmployees = employees.filter(
-    (e) =>
-      e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.position.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredEmployees = sortAlpha(
+    employees.filter(
+      (e) =>
+        e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        e.position.toLowerCase().includes(searchQuery.toLowerCase()),
+    ),
+    "name",
   );
 
   const refreshEmployees = () => {

@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Archive } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { compareAlpha } from "@/lib/sorting";
 
 export function ShoppingArchivePage() {
   const { toast } = useToast();
@@ -42,7 +43,14 @@ export function ShoppingArchivePage() {
   }, []);
 
   const refreshData = () => {
-    setArchivedByCategory(getArchivedItemsByCategory());
+    const data = getArchivedItemsByCategory();
+    data.sort((a, b) => compareAlpha(a.categoryName, b.categoryName));
+    for (const cat of data) {
+      for (const dg of cat.dateGroups) {
+        dg.items.sort((a, b) => compareAlpha(a.productName, b.productName));
+      }
+    }
+    setArchivedByCategory(data);
   };
 
   const handleDeleteArchivedGroup = () => {

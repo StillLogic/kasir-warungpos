@@ -50,12 +50,13 @@ import {
   isUnitInUse,
 } from "@/database/units";
 import { Unit } from "@/types/unit";
+import { sortAlpha } from "@/lib/sorting";
 
 export function MasterDataPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("categories");
 
-  const [categories, setCategories] = useState<Category[]>(getCategories);
+  const [categories, setCategories] = useState<Category[]>(() => sortAlpha(getCategories(), "name"));
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [categoryName, setCategoryName] = useState("");
@@ -64,7 +65,7 @@ export function MasterDataPage() {
     null,
   );
 
-  const [units, setUnits] = useState<Unit[]>(getUnits);
+  const [units, setUnits] = useState<Unit[]>(() => sortAlpha(getUnits(), "name"));
   const [unitFormOpen, setUnitFormOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [unitName, setUnitName] = useState("");
@@ -116,7 +117,7 @@ export function MasterDataPage() {
         : "Kategori ditambahkan",
     });
     setCategoryFormOpen(false);
-    setCategories(getCategories());
+    setCategories(sortAlpha(getCategories(), "name"));
   };
 
   const handleDeleteCategory = () => {
@@ -136,7 +137,7 @@ export function MasterDataPage() {
     const success = deleteCategory(categoryToDelete.id);
     if (success) {
       toast({ title: "Berhasil", description: "Kategori dihapus" });
-      setCategories(getCategories());
+      setCategories(sortAlpha(getCategories(), "name"));
     } else {
       toast({
         title: "Error",
@@ -189,7 +190,7 @@ export function MasterDataPage() {
       description: editingUnit ? "Satuan diperbarui" : "Satuan ditambahkan",
     });
     setUnitFormOpen(false);
-    setUnits(getUnits());
+    setUnits(sortAlpha(getUnits(), "name"));
   };
 
   const handleDeleteUnit = () => {
@@ -209,7 +210,7 @@ export function MasterDataPage() {
     const success = deleteUnit(unitToDelete.id);
     if (success) {
       toast({ title: "Berhasil", description: "Satuan dihapus" });
-      setUnits(getUnits());
+      setUnits(sortAlpha(getUnits(), "name"));
     } else {
       toast({
         title: "Error",

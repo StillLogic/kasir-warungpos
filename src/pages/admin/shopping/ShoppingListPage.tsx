@@ -59,6 +59,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { handleTitleCaseChange } from "@/lib/text";
 import { cn } from "@/lib/utils";
+import { sortAlpha, sortShoppingItems } from "@/lib/sorting";
 
 interface BulkItemInput {
   id: string;
@@ -245,7 +246,8 @@ export function ShoppingListPage() {
   };
 
   const filteredCategories = useMemo(() => {
-    if (!searchQuery) return categories;
+    const sorted = sortAlpha(categories, "name");
+    if (!searchQuery) return sorted;
     const lowerQuery = searchQuery.toLowerCase();
     const matchingCategoryIds = new Set(
       items
@@ -256,7 +258,7 @@ export function ShoppingListPage() {
         )
         .map((i) => i.categoryId),
     );
-    return categories.filter(
+    return sorted.filter(
       (c) =>
         c.name.toLowerCase().includes(lowerQuery) ||
         matchingCategoryIds.has(c.id),
@@ -580,10 +582,7 @@ export function ShoppingListPage() {
                 )
               : categoryItems;
 
-            const sortedItems = [...filteredItems].sort((a, b) => {
-              if (a.isPurchased === b.isPurchased) return 0;
-              return a.isPurchased ? 1 : -1;
-            });
+            const sortedItems = sortShoppingItems(filteredItems);
 
             const allPurchased =
               categoryItems.length > 0 &&
