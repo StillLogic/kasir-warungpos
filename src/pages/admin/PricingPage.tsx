@@ -73,6 +73,7 @@ import { getCategories, Category } from "@/database/categories";
 import { formatCurrency, roundToThousand } from "@/lib/format";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { compareAlpha } from "@/lib/sorting";
 
 interface TierInput {
   id: string;
@@ -163,7 +164,14 @@ export function PricingPage() {
       groups[key].rules.sort((a, b) => a.minPrice - b.minPrice);
     }
 
-    return groups;
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+      if (a === "__all__") return -1;
+      if (b === "__all__") return 1;
+      return compareAlpha(groups[a].categoryName, groups[b].categoryName);
+    });
+    const sorted: typeof groups = {};
+    for (const key of sortedKeys) sorted[key] = groups[key];
+    return sorted;
   }, [rules, categories]);
 
   const categoriesWithoutRules = useMemo(() => {

@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { sortProducts } from "@/lib/sorting";
 
 export function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -97,14 +98,14 @@ export function ProductsPage() {
     };
   }, []);
 
-  const filteredProducts = products
-    .filter(
+  const filteredProducts = sortProducts(
+    products.filter(
       (p) =>
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.sku.toLowerCase().includes(search.toLowerCase()) ||
         p.category.toLowerCase().includes(search.toLowerCase()),
-    )
-    .sort((a, b) => a.stock - b.stock);
+    ),
+  );
 
   const allSelected =
     filteredProducts.length > 0 &&

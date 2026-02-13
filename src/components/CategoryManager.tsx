@@ -39,6 +39,7 @@ import {
   deleteCategory,
   isCategoryInUse,
 } from "@/database/categories";
+import { sortAlpha } from "@/lib/sorting";
 
 interface CategoryManagerProps {
   open: boolean;
@@ -69,7 +70,7 @@ export function CategoryManager({
   }, [open]);
 
   const loadCategories = () => {
-    setCategories(getCategories());
+    setCategories(sortAlpha(getCategories(), "name"));
   };
 
   const handleOpenForm = (category?: Category) => {

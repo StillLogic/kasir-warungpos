@@ -56,6 +56,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { sortAlpha } from "@/lib/sorting";
 
 interface CustomerDebtSummary {
   customerId: string;
@@ -314,9 +315,10 @@ export function DebtsPage() {
   }, [customerDebts, selectedCustomer, dateFrom, dateTo]);
 
   const filteredCustomers = useMemo(() => {
-    if (!search.trim()) return customers;
+    const sorted = sortAlpha(customers, "customerName");
+    if (!search.trim()) return sorted;
     const lowerSearch = search.toLowerCase();
-    return customers.filter((c) =>
+    return sorted.filter((c) =>
       c.customerName.toLowerCase().includes(lowerSearch),
     );
   }, [search, customers]);
