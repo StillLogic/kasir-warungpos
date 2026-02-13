@@ -104,7 +104,7 @@ export function ProductsPage() {
         p.sku.toLowerCase().includes(search.toLowerCase()) ||
         p.category.toLowerCase().includes(search.toLowerCase()),
     )
-    .sort((a, b) => a.stock - b.stock);
+    .sort((a, b) => a.stock - b.stock || a.name.localeCompare(b.name));
 
   const allSelected =
     filteredProducts.length > 0 &&
