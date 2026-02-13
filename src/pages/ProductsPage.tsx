@@ -40,6 +40,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
+import { useSearchInput } from "@/hooks/use-search-input";
 import {
   Plus,
   Search,
@@ -60,7 +61,6 @@ import { sortProducts } from "@/lib/sorting";
 export function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
@@ -73,6 +73,19 @@ export function ProductsPage() {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
+
+  const {
+    searchQuery: search,
+    setSearchQuery: setSearch,
+    isSearchDisabled,
+  } = useSearchInput([
+    formOpen,
+    deleteTarget !== null,
+    stockAdjust !== null,
+    bulkDeleteOpen,
+    importOpen,
+    categoryManagerOpen,
+  ]);
 
   useEffect(() => {
     let mounted = true;
@@ -253,6 +266,7 @@ export function ProductsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
+            disabled={isSearchDisabled}
           />
         </div>
         {selectedIds.size > 0 && (

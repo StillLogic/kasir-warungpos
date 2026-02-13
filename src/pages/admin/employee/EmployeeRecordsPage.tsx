@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { PriceInput } from "@/components/ui/price-input";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchInput } from "@/hooks/use-search-input";
 import { formatCurrency } from "@/lib/format";
 import {
   getEmployees,
@@ -52,12 +53,15 @@ type RecordItem = {
 export function EmployeeRecordsPage() {
   const { toast } = useToast();
   const [employees] = useState<Employee[]>(() => getEmployees());
-  const [searchQuery, setSearchQuery] = useState("");
   const [filterEmployee, setFilterEmployee] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [refreshKey, setRefreshKey] = useState(0);
 
   const [settlementDialogOpen, setSettlementDialogOpen] = useState(false);
+
+  const { searchQuery, setSearchQuery, isSearchDisabled } = useSearchInput([
+    settlementDialogOpen,
+  ]);
   const [selectedEmployee, setSelectedEmployee] = useState<{
     id: string;
     name: string;
@@ -235,6 +239,7 @@ export function EmployeeRecordsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
               maxLength={50}
+              disabled={isSearchDisabled}
             />
           </div>
         </div>

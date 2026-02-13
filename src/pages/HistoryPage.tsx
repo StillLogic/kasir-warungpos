@@ -26,13 +26,19 @@ import {
   Calendar,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useSearchInput } from "@/hooks/use-search-input";
 
 export function HistoryPage() {
   const [transactions] = useState<Transaction[]>(() => getTransactions());
-  const [search, setSearch] = useState("");
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
+
+  const {
+    searchQuery: search,
+    setSearchQuery: setSearch,
+    isSearchDisabled,
+  } = useSearchInput([receiptOpen]);
 
   const todayTransactions = getTodayTransactions();
   const todayRevenue = getTodayRevenue();
@@ -126,6 +132,7 @@ export function HistoryPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-10"
+          disabled={isSearchDisabled}
         />
       </div>
 

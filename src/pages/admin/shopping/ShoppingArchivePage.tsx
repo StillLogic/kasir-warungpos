@@ -18,9 +18,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Archive } from "lucide-react";
+import { Trash2, Archive, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { compareAlpha } from "@/lib/sorting";
+import { cn } from "@/lib/utils";
 
 export function ShoppingArchivePage() {
   const { toast } = useToast();
@@ -30,6 +31,9 @@ export function ShoppingArchivePage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [clearAllConfirmOpen, setClearAllConfirmOpen] = useState(false);
   const [dateToDelete, setDateToDelete] = useState<string | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
+    new Set(),
+  );
 
   useEffect(() => {
     const archivedCount = checkAndAutoArchive();
@@ -51,6 +55,20 @@ export function ShoppingArchivePage() {
       }
     }
     setArchivedByCategory(data);
+    // Set all categories as collapsed by default
+    setCollapsedCategories(new Set(data.map((c) => c.categoryId)));
+  };
+
+  const toggleCollapse = (categoryId: string) => {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
   };
 
   const handleDeleteArchivedGroup = () => {
@@ -107,95 +125,109 @@ export function ShoppingArchivePage() {
         <div className="space-y-6">
           {archivedByCategory.map((category) => (
             <Card key={category.categoryId}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  {category.categoryName}
-                  <Badge variant="secondary">{category.totalItems}</Badge>
-                </CardTitle>
+              <CardHeader className="p-3">
+                <button
+                  onClick={() => toggleCollapse(category.categoryId)}
+                  className="flex items-center gap-2 w-full text-left hover:opacity-70 transition-opacity"
+                >
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform",
+                      collapsedCategories.has(category.categoryId) &&
+                        "-rotate-90",
+                    )}
+                  />
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    {category.categoryName}
+                    <Badge variant="secondary">{category.totalItems}</Badge>
+                  </CardTitle>
+                </button>
               </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2 px-3 font-medium text-muted-foreground">
-                          Nama Produk
-                        </th>
-                        <th className="text-left py-2 px-3 font-medium text-muted-foreground">
-                          Merk
-                        </th>
-                        <th className="text-center py-2 px-3 font-medium text-muted-foreground">
-                          Jumlah
-                        </th>
-                        <th className="text-right py-2 px-3 font-medium text-muted-foreground w-20"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {category.dateGroups.map((dateGroup, dateIdx) => (
-                        <>
-                          <tr
-                            key={`date-${dateGroup.date}`}
-                            className="bg-muted/50"
-                          >
-                            <td
-                              colSpan={3}
-                              className="py-2 px-3 font-medium text-sm"
-                            >
-                              <div className="flex items-center justify-center gap-2">
-                                <span className="font-semibold">
-                                  {dateGroup.dayName}
-                                </span>
-                                <span className="text-muted-foreground font-normal">
-                                  {dateGroup.displayDate}
-                                </span>
-                                <Badge variant="outline" className="text-xs">
-                                  {dateGroup.items.length}
-                                </Badge>
-                              </div>
-                            </td>
-                            <td className="py-2 px-3 text-right">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-destructive hover:text-destructive"
-                                onClick={() => {
-                                  setDateToDelete(dateGroup.date);
-                                  setDeleteConfirmOpen(true);
-                                }}
-                                title="Hapus arsip tanggal ini"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            </td>
-                          </tr>
-                          {dateGroup.items.map((item, itemIdx) => (
+              {!collapsedCategories.has(category.categoryId) && (
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto flex justify-center">
+                    <table className="text-sm" style={{ width: "95%" }}>
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2 px-3 font-medium text-muted-foreground">
+                            Nama Produk
+                          </th>
+                          <th className="text-left py-2 px-3 font-medium text-muted-foreground">
+                            Merk
+                          </th>
+                          <th className="text-center py-2 px-3 font-medium text-muted-foreground">
+                            Jumlah
+                          </th>
+                          <th className="text-right py-2 px-3 font-medium text-muted-foreground w-20"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {category.dateGroups.map((dateGroup, dateIdx) => (
+                          <>
                             <tr
-                              key={item.id}
-                              className={`border-b last:border-b-0 hover:bg-muted/30 ${
-                                itemIdx === dateGroup.items.length - 1 &&
-                                dateIdx !== category.dateGroups.length - 1
-                                  ? "border-b-2"
-                                  : ""
-                              }`}
+                              key={`date-${dateGroup.date}`}
+                              className="bg-muted/50"
                             >
-                              <td className="py-2 px-3 font-medium">
-                                {item.productName}
+                              <td
+                                colSpan={3}
+                                className="py-2 px-3 font-medium text-sm"
+                              >
+                                <div className="flex items-center justify-center gap-2">
+                                  <span className="font-semibold">
+                                    {dateGroup.dayName}
+                                  </span>
+                                  <span className="text-muted-foreground font-normal">
+                                    {dateGroup.displayDate}
+                                  </span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {dateGroup.items.length}
+                                  </Badge>
+                                </div>
                               </td>
-                              <td className="py-2 px-3 text-muted-foreground">
-                                {item.brand || "-"}
+                              <td className="py-2 px-3 text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-destructive hover:text-destructive"
+                                  onClick={() => {
+                                    setDateToDelete(dateGroup.date);
+                                    setDeleteConfirmOpen(true);
+                                  }}
+                                  title="Hapus arsip tanggal ini"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
                               </td>
-                              <td className="py-2 px-3 text-center text-muted-foreground">
-                                {item.quantity} {item.unit}
-                              </td>
-                              <td className="py-2 px-3"></td>
                             </tr>
-                          ))}
-                        </>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
+                            {dateGroup.items.map((item, itemIdx) => (
+                              <tr
+                                key={item.id}
+                                className={`border-b last:border-b-0 hover:bg-muted/30 ${
+                                  itemIdx === dateGroup.items.length - 1 &&
+                                  dateIdx !== category.dateGroups.length - 1
+                                    ? "border-b-2"
+                                    : ""
+                                }`}
+                              >
+                                <td className="py-2 px-3 font-medium">
+                                  {item.productName}
+                                </td>
+                                <td className="py-2 px-3 text-muted-foreground">
+                                  {item.brand || "-"}
+                                </td>
+                                <td className="py-2 px-3 text-center text-muted-foreground">
+                                  {item.quantity} {item.unit}
+                                </td>
+                                <td className="py-2 px-3"></td>
+                              </tr>
+                            ))}
+                          </>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              )}
             </Card>
           ))}
         </div>

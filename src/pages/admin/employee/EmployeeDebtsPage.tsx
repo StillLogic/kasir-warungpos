@@ -31,6 +31,7 @@ import { Label } from "@/components/ui/label";
 import { PriceInput } from "@/components/ui/price-input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchInput } from "@/hooks/use-search-input";
 import { formatCurrency } from "@/lib/format";
 import {
   getEmployees,
@@ -46,15 +47,19 @@ export function EmployeeDebtsPage() {
   const { toast } = useToast();
   const [employees] = useState<Employee[]>(() => getEmployees());
   const [debts, setDebts] = useState<EmployeeDebt[]>(() => getEmployeeDebts());
-  const [searchQuery, setSearchQuery] = useState("");
   const [filterEmployee, setFilterEmployee] = useState<string>("all");
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const { searchQuery, setSearchQuery, isSearchDisabled } = useSearchInput([
+    addDialogOpen,
+    deleteDialogOpen,
+  ]);
   const [formEmployeeId, setFormEmployeeId] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formAmount, setFormAmount] = useState("");
 
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [debtToDelete, setDebtToDelete] = useState<EmployeeDebt | null>(null);
 
   const filteredDebts = useMemo(() => {
@@ -165,6 +170,7 @@ export function EmployeeDebtsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
               maxLength={50}
+              disabled={isSearchDisabled}
             />
           </div>
           <Button onClick={() => setAddDialogOpen(true)}>

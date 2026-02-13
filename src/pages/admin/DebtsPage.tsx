@@ -45,6 +45,7 @@ import {
   getCustomerPayments,
 } from "@/database/debts";
 import { toast } from "@/hooks/use-toast";
+import { useSearchInput } from "@/hooks/use-search-input";
 import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -78,12 +79,18 @@ interface DebtTableRow {
 
 export function DebtsPage() {
   const [customers, setCustomers] = useState<CustomerDebtSummary[]>([]);
-  const [search, setSearch] = useState("");
   const [selectedCustomer, setSelectedCustomer] =
     useState<CustomerDebtSummary | null>(null);
   const [customerDebts, setCustomerDebts] = useState<Debt[]>([]);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [payDialogOpen, setPayDialogOpen] = useState(false);
+
+  const {
+    searchQuery: search,
+    setSearchQuery: setSearch,
+    isSearchDisabled,
+  } = useSearchInput([payDialogOpen]);
+
   const isMobile = useIsMobile();
   const printRef = useRef<HTMLDivElement>(null);
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
@@ -356,6 +363,7 @@ export function DebtsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
+            disabled={isSearchDisabled}
           />
         </div>
 

@@ -30,12 +30,12 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSearchInput } from "@/hooks/use-search-input";
 
 export function CashierPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [debtDialogOpen, setDebtDialogOpen] = useState(false);
@@ -45,6 +45,12 @@ export function CashierPage() {
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const isMobile = useIsMobile();
+
+  const {
+    searchQuery: search,
+    setSearchQuery: setSearch,
+    isSearchDisabled,
+  } = useSearchInput([checkoutOpen, debtDialogOpen, receiptOpen, cartOpen]);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -285,6 +291,7 @@ export function CashierPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
+              disabled={isSearchDisabled}
             />
           </div>
           <Select value={category} onValueChange={setCategory}>

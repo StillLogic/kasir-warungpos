@@ -32,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { PriceInput } from "@/components/ui/price-input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchInput } from "@/hooks/use-search-input";
 import { formatCurrency } from "@/lib/format";
 import {
   getEmployees,
@@ -49,11 +50,15 @@ export function EmployeeEarningsPage() {
   const [earnings, setEarnings] = useState<EmployeeEarning[]>(() =>
     getEarnings(),
   );
-  const [searchQuery, setSearchQuery] = useState("");
   const [filterEmployee, setFilterEmployee] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const { searchQuery, setSearchQuery, isSearchDisabled } = useSearchInput([
+    dialogOpen,
+    deleteDialogOpen,
+  ]);
   const [earningToDelete, setEarningToDelete] =
     useState<EmployeeEarning | null>(null);
 
@@ -204,6 +209,7 @@ export function EmployeeEarningsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
               maxLength={50}
+              disabled={isSearchDisabled}
             />
           </div>
           <Button onClick={openAddDialog}>

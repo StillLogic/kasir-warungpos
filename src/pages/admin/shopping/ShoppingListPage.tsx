@@ -57,6 +57,7 @@ import {
   Archive,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchInput } from "@/hooks/use-search-input";
 import { handleTitleCaseChange } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import { sortAlpha, sortShoppingItems } from "@/lib/sorting";
@@ -76,7 +77,6 @@ export function ShoppingListPage() {
   );
   const [items, setItems] = useState<ShoppingItem[]>(getShoppingItems);
   const [units, setUnits] = useState<string[]>(getUnitNames);
-  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const archivedCount = checkAndAutoArchive();
@@ -95,6 +95,15 @@ export function ShoppingListPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
+
+  const { searchQuery, setSearchQuery, isSearchDisabled } = useSearchInput([
+    formOpen,
+    bulkFormOpen,
+    categoryFormOpen,
+    deleteConfirmOpen,
+    clearConfirmOpen,
+    archiveConfirmOpen,
+  ]);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
@@ -517,6 +526,7 @@ export function ShoppingListPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
             maxLength={50}
+            disabled={isSearchDisabled}
           />
         </div>
         <div className="flex gap-2 flex-wrap">

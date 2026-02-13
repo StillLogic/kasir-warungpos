@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchInput } from "@/hooks/use-search-input";
 import { toTitleCase, formatPhoneNumber } from "@/lib/text";
 import {
   getEmployees,
@@ -35,9 +36,13 @@ import { sortAlpha } from "@/lib/sorting";
 export function EmployeesPage() {
   const { toast } = useToast();
   const [employees, setEmployees] = useState<Employee[]>(() => getEmployees());
-  const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const { searchQuery, setSearchQuery, isSearchDisabled } = useSearchInput([
+    dialogOpen,
+    deleteDialogOpen,
+  ]);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(
     null,
@@ -129,6 +134,7 @@ export function EmployeesPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
             maxLength={50}
+            disabled={isSearchDisabled}
           />
         </div>
         <Button onClick={openAddDialog}>
