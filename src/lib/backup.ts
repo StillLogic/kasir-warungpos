@@ -1,5 +1,7 @@
 import { getDB } from "@/database/db";
 import { ProductRecord, TransactionRecord } from "@/database/types";
+import { gzip, gunzip } from "fflate";
+import { encrypt, decrypt } from "./encryption";
 
 export interface BackupData {
   version: number;
@@ -20,6 +22,8 @@ export interface BackupData {
     employeeSettlements: unknown[];
     shoppingCategories: unknown[];
     shoppingItems: unknown[];
+    shoppingArchive: unknown[];
+    shoppingLastCheckDate: string | null;
     markupRules: unknown[];
     storeSettings: unknown;
   };
@@ -27,6 +31,31 @@ export interface BackupData {
 
 const BACKUP_VERSION = 2;
 const APP_VERSION = "1.1.0";
+
+function stringToUint8Array(str: string): Uint8Array {
+  return new TextEncoder().encode(str);
+}
+
+function uint8ArrayToString(arr: Uint8Array): string {
+  return new TextDecoder().decode(arr);
+}
+
+function uint8ArrayToBase64(arr: Uint8Array): string {
+  let binary = "";
+  for (let i = 0; i < arr.length; i++) {
+    binary += String.fromCharCode(arr[i]);
+  }
+  return btoa(binary);
+}
+
+function base64ToUint8Array(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const arr = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    arr[i] = binary.charCodeAt(i);
+  }
+  return arr;
+}
 
 export async function exportBackup(): Promise<Blob> {
   const db = await getDB();
@@ -63,6 +92,12 @@ export async function exportBackup(): Promise<Blob> {
   const shoppingItems = JSON.parse(
     localStorage.getItem("db_shopping_items") || "[]",
   );
+  const shoppingArchive = JSON.parse(
+    localStorage.getItem("db_shopping_archive") || "[]",
+  );
+  const shoppingLastCheckDate = localStorage.getItem(
+    "db_shopping_last_check_date",
+  );
 
   const markupRules = JSON.parse(
     localStorage.getItem("warungpos_markup_rules") || "[]",
@@ -90,13 +125,26 @@ export async function exportBackup(): Promise<Blob> {
       employeeSettlements,
       shoppingCategories,
       shoppingItems,
+      shoppingArchive,
+      shoppingLastCheckDate,
       markupRules,
       storeSettings,
     },
   };
 
-  const jsonString = JSON.stringify(backup, null, 2);
-  return new Blob([jsonString], { type: "application/json" });
+  const jsonString = JSON.stringify(backup);
+
+  const compressed = await new Promise<Uint8Array>((resolve, reject) => {
+    gzip(stringToUint8Array(jsonString), { level: 9 }, (err, data) => {
+      if (err) reject(err);
+      else resolve(data);
+    });
+  });
+
+  const base64Compressed = uint8ArrayToBase64(compressed);
+  const encrypted = encrypt(base64Compressed);
+
+  return new Blob([encrypted], { type: "application/octet-stream" });
 }
 
 export async function downloadBackup(): Promise<void> {
@@ -105,7 +153,7 @@ export async function downloadBackup(): Promise<void> {
   const link = document.createElement("a");
 
   const date = new Date().toISOString().split("T")[0];
-  link.download = `warungpos-backup-${date}.json`;
+  link.download = `warungpos-backup-${date}.wbak`;
   link.href = url;
   link.click();
 
@@ -137,8 +185,26 @@ export async function importBackup(file: File): Promise<{
   itemCounts?: Record<string, number>;
 }> {
   try {
-    const text = await file.text();
-    const data = JSON.parse(text);
+    let data: BackupData;
+
+    if (file.name.endsWith(".wbak")) {
+      const encryptedText = await file.text();
+      const decryptedBase64 = decrypt(encryptedText);
+      const compressed = base64ToUint8Array(decryptedBase64);
+
+      const decompressed = await new Promise<Uint8Array>((resolve, reject) => {
+        gunzip(compressed, (err, data) => {
+          if (err) reject(err);
+          else resolve(data);
+        });
+      });
+
+      const jsonString = uint8ArrayToString(decompressed);
+      data = JSON.parse(jsonString);
+    } else {
+      const text = await file.text();
+      data = JSON.parse(text);
+    }
 
     if (!validateBackup(data)) {
       return { success: false, message: "Format file backup tidak valid" };
@@ -255,6 +321,27 @@ export async function importBackup(file: File): Promise<{
         JSON.stringify(data.data.shoppingItems),
       );
       itemCounts.shoppingItems = (data.data.shoppingItems as unknown[]).length;
+    }
+
+    if (data.data.shoppingArchive) {
+      localStorage.setItem(
+        "db_shopping_archive",
+        JSON.stringify(data.data.shoppingArchive),
+      );
+      itemCounts.shoppingArchive = (
+        data.data.shoppingArchive as unknown[]
+      ).length;
+    }
+
+    if (data.data.shoppingLastCheckDate !== undefined) {
+      if (data.data.shoppingLastCheckDate) {
+        localStorage.setItem(
+          "db_shopping_last_check_date",
+          data.data.shoppingLastCheckDate as string,
+        );
+      } else {
+        localStorage.removeItem("db_shopping_last_check_date");
+      }
     }
 
     if (data.data.markupRules) {

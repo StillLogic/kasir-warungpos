@@ -81,10 +81,10 @@ export function BackupRestore() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.name.endsWith(".json")) {
+      if (!file.name.endsWith(".wbak") && !file.name.endsWith(".json")) {
         toast({
           title: "Format File Salah",
-          description: "Pilih file backup dengan format .json",
+          description: "Pilih file backup dengan format .wbak atau .json",
           variant: "destructive",
         });
         return;
@@ -140,8 +140,8 @@ export function BackupRestore() {
             Backup & Restore Data
           </CardTitle>
           <CardDescription>
-            Backup data secara rutin untuk mencegah kehilangan data. Disarankan
-            backup setiap hari atau setelah transaksi penting.
+            Backup data secara rutin untuk mencegah kehilangan data. File backup
+            terenkripsi dan terkompresi untuk keamanan dan efisiensi penyimpanan.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -213,7 +213,7 @@ export function BackupRestore() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".json"
+              accept=".wbak,.json"
               onChange={handleFileSelect}
               className="hidden"
             />
@@ -232,6 +232,7 @@ export function BackupRestore() {
                   </li>
                   <li>Jangan hapus cache browser jika belum backup data</li>
                   <li>Simpan file backup di beberapa tempat berbeda</li>
+                  <li>File .wbak terenkripsi, hanya bisa dibuka dengan aplikasi ini</li>
                 </ul>
               </div>
             </div>
