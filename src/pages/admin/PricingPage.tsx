@@ -113,7 +113,7 @@ export function PricingPage() {
 
   useEffect(() => {
     loadRules();
-    setCategories(getCategories());
+    setCategories(getCategories().sort((a, b) => a.name.localeCompare(b.name)));
   }, []);
 
   const loadRules = () => {
