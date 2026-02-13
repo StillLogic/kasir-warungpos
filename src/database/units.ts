@@ -98,10 +98,12 @@ export function deleteUnit(id: string): boolean {
 }
 
 export function isUnitInUse(unitName: string): boolean {
-  const { getProducts } = require("./products");
-  const products = getProducts();
-  if (products.some((p) => p.unit === unitName)) {
-    return true;
+  const stored = localStorage.getItem("db_products");
+  if (stored) {
+    const products = JSON.parse(stored);
+    if (products.some((p: { unit: string }) => p.unit === unitName)) {
+      return true;
+    }
   }
 
   const shoppingItems = JSON.parse(
