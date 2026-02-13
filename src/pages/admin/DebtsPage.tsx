@@ -314,10 +314,9 @@ export function DebtsPage() {
   }, [customerDebts, selectedCustomer, dateFrom, dateTo]);
 
   const filteredCustomers = useMemo(() => {
-    const sorted = [...customers].sort((a, b) => a.customerName.localeCompare(b.customerName));
-    if (!search.trim()) return sorted;
+    if (!search.trim()) return customers;
     const lowerSearch = search.toLowerCase();
-    return sorted.filter((c) =>
+    return customers.filter((c) =>
       c.customerName.toLowerCase().includes(lowerSearch),
     );
   }, [search, customers]);

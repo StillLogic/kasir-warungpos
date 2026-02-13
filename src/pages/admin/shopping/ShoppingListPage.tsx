@@ -245,8 +245,7 @@ export function ShoppingListPage() {
   };
 
   const filteredCategories = useMemo(() => {
-    const sorted = [...categories].sort((a, b) => a.name.localeCompare(b.name));
-    if (!searchQuery) return sorted;
+    if (!searchQuery) return categories;
     const lowerQuery = searchQuery.toLowerCase();
     const matchingCategoryIds = new Set(
       items
@@ -257,7 +256,7 @@ export function ShoppingListPage() {
         )
         .map((i) => i.categoryId),
     );
-    return sorted.filter(
+    return categories.filter(
       (c) =>
         c.name.toLowerCase().includes(lowerQuery) ||
         matchingCategoryIds.has(c.id),

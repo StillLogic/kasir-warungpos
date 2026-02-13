@@ -69,7 +69,7 @@ export function CategoryManager({
   }, [open]);
 
   const loadCategories = () => {
-    setCategories(getCategories().sort((a, b) => a.name.localeCompare(b.name)));
+    setCategories(getCategories());
   };
 
   const handleOpenForm = (category?: Category) => {
