@@ -42,7 +42,7 @@ export function getUnits(): Unit[] {
 }
 
 export function getUnitNames(): string[] {
-  return getUnits().map((u) => u.name);
+  return getUnits().map((u) => u.name).sort((a, b) => a.localeCompare(b, "id", { sensitivity: "base" }));
 }
 
 export function addUnit(name: string): Unit | null {
