@@ -920,12 +920,11 @@ export function ShoppingListPage() {
                     <Input
                       placeholder="Nama produk"
                       value={item.productName}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        const upperValue =
-                          value.charAt(0).toUpperCase() + value.slice(1);
-                        updateBulkItem(item.id, "productName", upperValue);
-                      }}
+                      onChange={(e) =>
+                        handleTitleCaseChange(e, (value) =>
+                          updateBulkItem(item.id, "productName", value),
+                        )
+                      }
                       maxLength={100}
                     />
                   </div>
@@ -934,12 +933,11 @@ export function ShoppingListPage() {
                     <Input
                       placeholder="Merk (opsional)"
                       value={item.brand}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        const upperValue =
-                          value.charAt(0).toUpperCase() + value.slice(1);
-                        updateBulkItem(item.id, "brand", upperValue);
-                      }}
+                      onChange={(e) =>
+                        handleTitleCaseChange(e, (value) =>
+                          updateBulkItem(item.id, "brand", value),
+                        )
+                      }
                       maxLength={50}
                     />
                   </div>

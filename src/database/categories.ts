@@ -42,7 +42,7 @@ export function getCategories(): Category[] {
 }
 
 export function getCategoryNames(): string[] {
-  return getCategories().map((c) => c.name);
+  return getCategories().map((c) => c.name).sort((a, b) => a.localeCompare(b, "id", { sensitivity: "base" }));
 }
 
 export function getCategoryPrefixes(): Record<string, string> {
