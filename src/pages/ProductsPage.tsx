@@ -448,7 +448,6 @@ export function ProductsPage() {
         product={editingProduct}
       />
 
-
       <ImportProductDialog
         open={importOpen}
         onClose={() => setImportOpen(false)}
