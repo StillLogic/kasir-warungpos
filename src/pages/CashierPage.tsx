@@ -281,16 +281,16 @@ export function CashierPage() {
   );
 
   return (
-    <div className="flex gap-4 lg:gap-6 h-[calc(100vh-7rem)] overflow-hidden">
+    <div className="flex gap-4 lg:gap-6 h-[calc(100vh-5.5rem)] overflow-hidden px-2 pt-2">
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="flex gap-2 sm:gap-3 mb-4 pr-2 pt-3">
+        <div className="flex gap-2 sm:gap-3 mb-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
             <Input
               placeholder="Cari produk..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
+              className="pl-10 focus-visible:ring-offset-0"
               disabled={isSearchDisabled}
             />
           </div>
@@ -314,7 +314,7 @@ export function CashierPage() {
                 <Button
                   variant="default"
                   size="icon"
-                  className="shrink-0 relative mr-2"
+                  className="shrink-0 relative"
                 >
                   <ShoppingCart className="w-5 h-5" />
                   {cartItemsCount > 0 && (
@@ -357,7 +357,7 @@ export function CashierPage() {
               <p className="text-sm">Tambahkan produk di menu Produk</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 pb-4 pr-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}

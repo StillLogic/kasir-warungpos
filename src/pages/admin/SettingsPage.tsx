@@ -167,8 +167,8 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr,auto]">
-      <div className="space-y-6 max-w-2xl">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr),380px]">
+      <div className="space-y-6">
         <BackupRestore />
 
         <Card>
@@ -182,56 +182,58 @@ export function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="storeName">Nama Toko</Label>
-              <Input
-                id="storeName"
-                value={settings.storeName}
-                onChange={(e) =>
-                  updateSettings("storeName", toTitleCase(e.target.value))
-                }
-                placeholder="Nama toko Anda"
-                maxLength={50}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="storeAddress">Alamat</Label>
-              <Textarea
-                id="storeAddress"
-                value={settings.storeAddress}
-                onChange={(e) =>
-                  updateSettings("storeAddress", toTitleCase(e.target.value))
-                }
-                placeholder="Alamat lengkap toko"
-                rows={2}
-                maxLength={200}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="storePhone">Nomor Telepon</Label>
-              <Input
-                id="storePhone"
-                value={settings.storePhone}
-                onChange={(e) =>
-                  updateSettings(
-                    "storePhone",
-                    e.target.value.replace(/[^\d+\-\s]/g, ""),
-                  )
-                }
-                onBlur={() => {
-                  if (settings.storePhone.trim()) {
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="space-y-2 lg:col-span-2">
+                <Label htmlFor="storeName">Nama Toko</Label>
+                <Input
+                  id="storeName"
+                  value={settings.storeName}
+                  onChange={(e) =>
+                    updateSettings("storeName", toTitleCase(e.target.value))
+                  }
+                  placeholder="Nama toko Anda"
+                  maxLength={50}
+                />
+              </div>
+              <div className="space-y-2 lg:col-span-2">
+                <Label htmlFor="storeAddress">Alamat</Label>
+                <Textarea
+                  id="storeAddress"
+                  value={settings.storeAddress}
+                  onChange={(e) =>
+                    updateSettings("storeAddress", toTitleCase(e.target.value))
+                  }
+                  placeholder="Alamat lengkap toko"
+                  rows={2}
+                  maxLength={200}
+                />
+              </div>
+              <div className="space-y-2 lg:col-span-2">
+                <Label htmlFor="storePhone">Nomor Telepon</Label>
+                <Input
+                  id="storePhone"
+                  value={settings.storePhone}
+                  onChange={(e) =>
                     updateSettings(
                       "storePhone",
-                      formatPhoneNumber(settings.storePhone),
-                    );
+                      e.target.value.replace(/[^\d+\-\s]/g, ""),
+                    )
                   }
-                }}
-                placeholder="08xxxxxxxxxx"
-                maxLength={20}
-              />
-              <p className="text-xs text-muted-foreground">
-                Otomatis diformat ke +62
-              </p>
+                  onBlur={() => {
+                    if (settings.storePhone.trim()) {
+                      updateSettings(
+                        "storePhone",
+                        formatPhoneNumber(settings.storePhone),
+                      );
+                    }
+                  }}
+                  placeholder="08xxxxxxxxxx"
+                  maxLength={20}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Otomatis diformat ke +62
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -247,65 +249,67 @@ export function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <Label>Ukuran Kertas Thermal</Label>
-              <RadioGroup
-                value={settings.paperWidth}
-                onValueChange={(value) => updateSettings("paperWidth", value)}
-                className="flex gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="58" id="paper-58" />
-                  <Label
-                    htmlFor="paper-58"
-                    className="font-normal cursor-pointer"
-                  >
-                    58mm (kecil)
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="80" id="paper-80" />
-                  <Label
-                    htmlFor="paper-80"
-                    className="font-normal cursor-pointer"
-                  >
-                    80mm (standar)
-                  </Label>
-                </div>
-              </RadioGroup>
-              <p className="text-xs text-muted-foreground">
-                Pilih sesuai lebar kertas printer thermal Anda
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="showLogo">Tampilkan Logo</Label>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <Label>Ukuran Kertas Thermal</Label>
+                <RadioGroup
+                  value={settings.paperWidth}
+                  onValueChange={(value) => updateSettings("paperWidth", value)}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="58" id="paper-58" />
+                    <Label
+                      htmlFor="paper-58"
+                      className="font-normal cursor-pointer"
+                    >
+                      58mm (kecil)
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="80" id="paper-80" />
+                    <Label
+                      htmlFor="paper-80"
+                      className="font-normal cursor-pointer"
+                    >
+                      80mm (standar)
+                    </Label>
+                  </div>
+                </RadioGroup>
                 <p className="text-xs text-muted-foreground">
-                  Tampilkan logo di nota
+                  Pilih sesuai lebar kertas printer thermal Anda
                 </p>
               </div>
-              <Switch
-                id="showLogo"
-                checked={settings.showLogo}
-                onCheckedChange={(checked) =>
-                  updateSettings("showLogo", checked)
-                }
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="receiptFooter">Pesan Footer Nota</Label>
-              <Textarea
-                id="receiptFooter"
-                value={settings.receiptFooter}
-                onChange={(e) =>
-                  updateSettings("receiptFooter", e.target.value)
-                }
-                placeholder="Pesan yang ditampilkan di bawah nota"
-                rows={2}
-                maxLength={100}
-              />
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="showLogo">Tampilkan Logo</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Tampilkan logo di nota
+                  </p>
+                </div>
+                <Switch
+                  id="showLogo"
+                  checked={settings.showLogo}
+                  onCheckedChange={(checked) =>
+                    updateSettings("showLogo", checked)
+                  }
+                />
+              </div>
+
+              <div className="space-y-2 lg:col-span-2">
+                <Label htmlFor="receiptFooter">Pesan Footer Nota</Label>
+                <Textarea
+                  id="receiptFooter"
+                  value={settings.receiptFooter}
+                  onChange={(e) =>
+                    updateSettings("receiptFooter", e.target.value)
+                  }
+                  placeholder="Pesan yang ditampilkan di bawah nota"
+                  rows={2}
+                  maxLength={100}
+                />
+              </div>
             </div>
 
             <Button
@@ -361,18 +365,9 @@ export function SettingsPage() {
             )}
           </CardContent>
         </Card>
-
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full sm:w-auto"
-        >
-          <Save className="w-4 h-4 mr-2" />
-          {saving ? "Menyimpan..." : "Simpan Pengaturan"}
-        </Button>
       </div>
 
-      <div className="lg:sticky lg:top-4 lg:self-start">
+      <div className="lg:sticky lg:top-4 lg:self-start space-y-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -385,6 +380,11 @@ export function SettingsPage() {
             <ReceiptPreview settings={settings} />
           </CardContent>
         </Card>
+
+        <Button onClick={handleSave} disabled={saving} className="w-full">
+          <Save className="w-4 h-4 mr-2" />
+          {saving ? "Menyimpan..." : "Simpan Pengaturan"}
+        </Button>
       </div>
     </div>
   );
