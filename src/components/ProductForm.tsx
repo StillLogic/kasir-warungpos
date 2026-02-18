@@ -115,7 +115,7 @@ export function ProductForm({
       const generatedSKUs: string[] = [];
       const initialProducts = [];
 
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 1; i++) {
         const sku = generateSKUWithExisting(defaultCategory, generatedSKUs);
         generatedSKUs.push(sku);
         initialProducts.push({

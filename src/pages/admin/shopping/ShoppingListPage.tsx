@@ -330,20 +330,6 @@ export function ShoppingListPage() {
         quantity: "",
         unit: units[0] || "Pcs",
       },
-      {
-        id: crypto.randomUUID(),
-        productName: "",
-        brand: "",
-        quantity: "",
-        unit: units[0] || "Pcs",
-      },
-      {
-        id: crypto.randomUUID(),
-        productName: "",
-        brand: "",
-        quantity: "",
-        unit: units[0] || "Pcs",
-      },
     ]);
     setBulkFormOpen(true);
   };
