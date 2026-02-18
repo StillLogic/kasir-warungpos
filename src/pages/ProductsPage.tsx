@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Product, ProductFormData } from "@/types/pos";
 import {
-  getProducts,
   addProduct,
   updateProduct,
   deleteProduct,
@@ -151,6 +150,15 @@ export function ProductsPage() {
     toast({
       title: "Produk Ditambahkan",
       description: `${data.name} berhasil ditambahkan`,
+    });
+  };
+
+  const handleBulkAddProducts = (productsData: ProductFormData[]) => {
+    const newProducts = productsData.map((p) => addProduct(p));
+    setProducts((prev) => [...prev, ...newProducts]);
+    toast({
+      title: "Produk Ditambahkan",
+      description: `${newProducts.length} produk berhasil ditambahkan`,
     });
   };
 
@@ -445,6 +453,7 @@ export function ProductsPage() {
           setEditingProduct(null);
         }}
         onSubmit={editingProduct ? handleEditProduct : handleAddProduct}
+        onSubmitBulk={handleBulkAddProducts}
         product={editingProduct}
       />
 
