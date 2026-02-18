@@ -10,6 +10,7 @@ import {
 } from "@/database";
 import { formatCurrency } from "@/lib/format";
 import { ProductForm } from "@/components/ProductForm";
+import { BulkProductForm } from "@/components/BulkProductForm";
 import { ImportProductDialog } from "@/components/ImportProductDialog";
 import { CategoryManager } from "@/components/CategoryManager";
 import { CSVProduct } from "@/lib/csv";
@@ -72,6 +73,7 @@ export function ProductsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [bulkFormOpen, setBulkFormOpen] = useState(false);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
 
   const {
@@ -84,6 +86,7 @@ export function ProductsPage() {
     stockAdjust !== null,
     bulkDeleteOpen,
     importOpen,
+    bulkFormOpen,
     categoryManagerOpen,
   ]);
 
@@ -250,6 +253,10 @@ export function ProductsPage() {
           <Button variant="outline" onClick={() => setImportOpen(true)}>
             <Upload className="w-4 h-4 mr-2" />
             Import CSV
+          </Button>
+          <Button variant="outline" onClick={() => setBulkFormOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Tambah Massal
           </Button>
           <Button onClick={() => setFormOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
@@ -446,6 +453,19 @@ export function ProductsPage() {
         }}
         onSubmit={editingProduct ? handleEditProduct : handleAddProduct}
         product={editingProduct}
+      />
+
+      <BulkProductForm
+        open={bulkFormOpen}
+        onClose={() => setBulkFormOpen(false)}
+        onSubmit={(products) => {
+          const newProducts = products.map((p) => addProduct(p));
+          setProducts((prev) => [...prev, ...newProducts]);
+          toast({
+            title: "Produk Ditambahkan",
+            description: `${newProducts.length} produk berhasil ditambahkan`,
+          });
+        }}
       />
 
       <ImportProductDialog
