@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { Product, ProductFormData } from "@/types/pos";
 import { generateSKU } from "@/lib/sku";
 import { getCategoryNames, getCategories } from "@/database/categories";
@@ -29,8 +29,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calculator, Info } from "lucide-react";
+import { Calculator, Info, Plus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 const productSchema = z.object({
   name: z.string().min(1, "Nama produk wajib diisi"),
@@ -58,6 +60,9 @@ export function ProductForm({
   product,
 }: ProductFormProps) {
   const isEditing = !!product;
+  const { toast } = useToast();
+  const [addedCount, setAddedCount] = useState(0);
+  const continueRef = useRef(false);
   const [markupInfo, setMarkupInfo] = useState<{
     retail: number;
     wholesale: number;
@@ -176,11 +181,42 @@ export function ProductForm({
 
   const handleFormSubmit = (data: ProductFormData) => {
     onSubmit(data);
-    reset();
-    setCostPriceStr("");
-    setRetailPriceStr("");
-    setWholesalePriceStr("");
-    onClose();
+
+    if (!isEditing && continueRef.current) {
+      // Reset form but keep dialog open, preserve category & unit
+      const currentCategory = data.category;
+      const currentUnit = data.unit;
+      const currentWholesaleMinQty = data.wholesaleMinQty;
+      reset({
+        name: "",
+        sku: "",
+        category: currentCategory,
+        costPrice: 0,
+        retailPrice: 0,
+        wholesalePrice: 0,
+        wholesaleMinQty: currentWholesaleMinQty,
+        stock: 0,
+        unit: currentUnit,
+      });
+      setCostPriceStr("");
+      setRetailPriceStr("");
+      setWholesalePriceStr("");
+      setMarkupInfo(null);
+      setAddedCount((c) => c + 1);
+      continueRef.current = false;
+
+      toast({
+        title: "Produk Ditambahkan",
+        description: `${data.name} berhasil ditambahkan. Lanjutkan menambah produk berikutnya.`,
+      });
+    } else {
+      reset();
+      setCostPriceStr("");
+      setRetailPriceStr("");
+      setWholesalePriceStr("");
+      setAddedCount(0);
+      onClose();
+    }
   };
 
   const handleClose = () => {
@@ -189,6 +225,7 @@ export function ProductForm({
     setCostPriceStr("");
     setRetailPriceStr("");
     setWholesalePriceStr("");
+    setAddedCount(0);
     onClose();
   };
 
@@ -198,6 +235,11 @@ export function ProductForm({
         <DialogHeader>
           <DialogTitle>
             {product ? "Edit Produk" : "Tambah Produk Baru"}
+            {!isEditing && addedCount > 0 && (
+              <span className="text-sm font-normal text-muted-foreground ml-2">
+                ({addedCount} ditambahkan)
+              </span>
+            )}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
@@ -361,7 +403,7 @@ export function ProductForm({
             )}
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className={cn("flex gap-3 pt-4", !isEditing && "flex-col sm:flex-row")}>
             <Button
               type="button"
               variant="outline"
@@ -370,8 +412,19 @@ export function ProductForm({
             >
               Batal
             </Button>
+            {!isEditing && (
+              <Button
+                type="submit"
+                variant="secondary"
+                className="flex-1"
+                onClick={() => { continueRef.current = true; }}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Simpan & Tambah Lagi
+              </Button>
+            )}
             <Button type="submit" className="flex-1">
-              {product ? "Simpan Perubahan" : "Tambah Produk"}
+              {product ? "Simpan Perubahan" : "Simpan & Selesai"}
             </Button>
           </div>
         </form>
