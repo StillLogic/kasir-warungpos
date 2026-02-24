@@ -55,7 +55,6 @@ export function ShoppingArchivePage() {
       }
     }
     setArchivedByCategory(data);
-    // Set all categories as collapsed by default
     setCollapsedCategories(new Set(data.map((c) => c.categoryId)));
   };
 

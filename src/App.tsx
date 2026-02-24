@@ -10,12 +10,10 @@ import { PWAUpdateNotification } from "./components/PWAUpdateNotification";
 import { migrateFromLocalStorage } from "./database";
 import { Loader2 } from "lucide-react";
 
-// Lazy-loaded pages
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const CashierIndex = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Lazy-loaded admin pages
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout").then(m => ({ default: m.AdminLayout })));
 const DashboardPage = lazy(() => import("./pages/admin/DashboardPage").then(m => ({ default: m.DashboardPage })));
 const ProductsPage = lazy(() => import("./pages/ProductsPage").then(m => ({ default: m.ProductsPage })));
