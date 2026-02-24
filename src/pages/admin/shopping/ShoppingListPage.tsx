@@ -610,37 +610,38 @@ export function ShoppingListPage() {
             disabled={isSearchDisabled}
           />
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {purchasedItems > 0 && (
-            <>
-              <Button
-                variant="outline"
-                onClick={() => setArchiveConfirmOpen(true)}
-                className="gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-              >
-                <Archive className="w-4 h-4" />
-                Arsipkan ({purchasedItems})
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setClearConfirmOpen(true)}
-                className="gap-2 text-destructive hover:text-destructive"
-              >
-                <Trash2 className="w-4 h-4" />
-                Hapus Dibeli ({purchasedItems})
-              </Button>
-            </>
-          )}
-          {categories.length > 0 && (
-            <Button variant="outline" onClick={handleExportPDF}>
-              <FileDown className="h-4 w-4 mr-2" />
-              Export PDF
-            </Button>
-          )}
+        <div className="flex gap-2">
           <Button variant="outline" onClick={() => setCategoryFormOpen(true)}>
             <FolderPlus className="h-4 w-4 mr-2" />
             Kategori
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {purchasedItems > 0 && (
+                <>
+                  <DropdownMenuItem onClick={() => setArchiveConfirmOpen(true)}>
+                    <Archive className="w-4 h-4 mr-2 text-blue-600" />
+                    Arsipkan ({purchasedItems})
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setClearConfirmOpen(true)} className="text-destructive focus:text-destructive">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Hapus Dibeli ({purchasedItems})
+                  </DropdownMenuItem>
+                </>
+              )}
+              {categories.length > 0 && (
+                <DropdownMenuItem onClick={handleExportPDF}>
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Export PDF
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
