@@ -598,8 +598,8 @@ export function ShoppingListPage() {
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex gap-2 items-center">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Cari item atau kategori..."
@@ -610,39 +610,50 @@ export function ShoppingListPage() {
             disabled={isSearchDisabled}
           />
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setCategoryFormOpen(true)}>
-            <FolderPlus className="h-4 w-4 mr-2" />
-            Kategori
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {purchasedItems > 0 && (
-                <>
-                  <DropdownMenuItem onClick={() => setArchiveConfirmOpen(true)}>
-                    <Archive className="w-4 h-4 mr-2 text-blue-600" />
-                    Arsipkan ({purchasedItems})
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setClearConfirmOpen(true)} className="text-destructive focus:text-destructive">
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Hapus Dibeli ({purchasedItems})
-                  </DropdownMenuItem>
-                </>
-              )}
-              {categories.length > 0 && (
-                <DropdownMenuItem onClick={handleExportPDF}>
-                  <FileDown className="w-4 h-4 mr-2" />
-                  Export PDF
+        <Button
+          variant="outline"
+          size="icon"
+          className="sm:hidden shrink-0"
+          onClick={() => setCategoryFormOpen(true)}
+          title="Tambah Kategori"
+        >
+          <FolderPlus className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          className="hidden sm:inline-flex"
+          onClick={() => setCategoryFormOpen(true)}
+        >
+          <FolderPlus className="h-4 w-4 mr-2" />
+          Kategori
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="shrink-0">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {purchasedItems > 0 && (
+              <>
+                <DropdownMenuItem onClick={() => setArchiveConfirmOpen(true)}>
+                  <Archive className="w-4 h-4 mr-2 text-blue-600" />
+                  Arsipkan ({purchasedItems})
                 </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+                <DropdownMenuItem onClick={() => setClearConfirmOpen(true)} className="text-destructive focus:text-destructive">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Hapus Dibeli ({purchasedItems})
+                </DropdownMenuItem>
+              </>
+            )}
+            {categories.length > 0 && (
+              <DropdownMenuItem onClick={handleExportPDF}>
+                <FileDown className="w-4 h-4 mr-2" />
+                Export PDF
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {categories.length === 0 ? (
