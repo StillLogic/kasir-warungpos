@@ -671,7 +671,11 @@ export function ShoppingListPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => handleToggleAllInCategory(category.id)}
+                            onClick={() => {
+                              toggleAllItemsInCategory(category.id, false);
+                              refreshData();
+                              toast({ title: "Semua item dibatalkan" });
+                            }}
                             title="Batalkan semua centang"
                           >
                             <XCircle className="w-4 h-4 text-orange-500" />
