@@ -85,9 +85,9 @@ const App = () => {
                 <Route path="/admin/master-data" element={<AdminRoute><MasterDataPage /></AdminRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <InstallPWA />
             </Suspense>
           </BrowserRouter>
-          <InstallPWA />
           <PWAUpdateNotification />
         </TooltipProvider>
       </QueryClientProvider>
