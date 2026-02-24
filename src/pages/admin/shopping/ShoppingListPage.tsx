@@ -98,10 +98,9 @@ export function ShoppingListPage() {
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
-  const [itemsToMove, setItemsToMove] = useState<ShoppingItem[]>([]);
+  const [itemToMove, setItemToMove] = useState<ShoppingItem | null>(null);
   const [moveCategoryId, setMoveCategoryId] = useState("");
   const [moveNewCategoryName, setMoveNewCategoryName] = useState("");
-  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
 
   const { searchQuery, setSearchQuery, isSearchDisabled } = useSearchInput([
     formOpen,
@@ -499,16 +498,15 @@ export function ShoppingListPage() {
     });
   };
 
-  const openMoveDialog = (itemOrItems: ShoppingItem | ShoppingItem[]) => {
-    const arr = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
-    setItemsToMove(arr);
+  const openMoveDialog = (item: ShoppingItem) => {
+    setItemToMove(item);
     setMoveCategoryId("");
     setMoveNewCategoryName("");
     setMoveDialogOpen(true);
   };
 
-  const handleMoveItems = () => {
-    if (itemsToMove.length === 0) return;
+  const handleMoveItem = () => {
+    if (!itemToMove) return;
 
     let targetCategoryId = moveCategoryId;
     let targetCategoryName = "";
@@ -531,22 +529,18 @@ export function ShoppingListPage() {
       targetCategoryName = cat.name;
     }
 
-    itemsToMove.forEach((item) => {
-      updateShoppingItem(item.id, {
-        categoryId: targetCategoryId,
-        categoryName: targetCategoryName,
-      });
+    updateShoppingItem(itemToMove.id, {
+      categoryId: targetCategoryId,
+      categoryName: targetCategoryName,
     });
 
     setMoveDialogOpen(false);
-    setItemsToMove([]);
-    setSelectedItemIds(new Set());
-    
+    setItemToMove(null);
     refreshData();
 
     toast({
       title: "Berhasil",
-      description: `${itemsToMove.length} item dipindahkan ke ${targetCategoryName}`,
+      description: `Item dipindahkan ke ${targetCategoryName}`,
     });
   };
 
@@ -575,17 +569,6 @@ export function ShoppingListPage() {
           />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {selectedItemIds.size > 0 && (
-            <Button
-              onClick={() => {
-                openMoveDialog(items.filter((i) => selectedItemIds.has(i.id)));
-              }}
-              className="gap-2"
-            >
-              <ArrowRightLeft className="w-4 h-4" />
-              Pindahkan ({selectedItemIds.size})
-            </Button>
-          )}
           {purchasedItems > 0 && (
             <>
               <Button
@@ -754,7 +737,7 @@ export function ShoppingListPage() {
                                   item.isPurchased &&
                                     "bg-green-50 dark:bg-green-950/30",
                                 )}
-                               >
+                              >
                                 <td className="py-1.5 px-2 text-center">
                                   <Checkbox
                                     checked={item.isPurchased}
@@ -765,40 +748,18 @@ export function ShoppingListPage() {
                                 </td>
                                 <td
                                   className={cn(
-                                    "py-1.5 pr-1 pl-0 font-medium cursor-pointer",
+                                    "py-1.5 pr-1 pl-0 font-medium",
                                     item.isPurchased &&
                                       "line-through text-muted-foreground",
-                                    selectedItemIds.has(item.id) &&
-                                      "text-primary",
                                   )}
-                                  onClick={() => {
-                                    const next = new Set(selectedItemIds);
-                                    if (next.has(item.id)) {
-                                      next.delete(item.id);
-                                    } else {
-                                      next.add(item.id);
-                                    }
-                                    setSelectedItemIds(next);
-                                  }}
                                 >
                                   {item.productName}
                                 </td>
                                 <td
                                   className={cn(
-                                    "py-1.5 pr-1 pl-0 text-muted-foreground cursor-pointer",
+                                    "py-1.5 pr-1 pl-0 text-muted-foreground",
                                     item.isPurchased && "line-through",
-                                    selectedItemIds.has(item.id) &&
-                                      "text-primary",
                                   )}
-                                  onClick={() => {
-                                    const next = new Set(selectedItemIds);
-                                    if (next.has(item.id)) {
-                                      next.delete(item.id);
-                                    } else {
-                                      next.add(item.id);
-                                    }
-                                    setSelectedItemIds(next);
-                                  }}
                                 >
                                   {item.brand || "-"}
                                 </td>
@@ -812,19 +773,6 @@ export function ShoppingListPage() {
                                 </td>
                                 <td className="py-1.5 px-1">
                                   <div className="flex gap-1 justify-end">
-                                    {selectedItemIds.has(item.id) && (
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8"
-                                        onClick={() => openMoveDialog(
-                                          items.filter((i) => selectedItemIds.has(i.id)),
-                                        )}
-                                        title="Pindah kategori"
-                                      >
-                                        <ArrowRightLeft className="w-4 h-4 text-primary" />
-                                      </Button>
-                                    )}
                                     <Button
                                       variant="ghost"
                                       size="icon"
@@ -832,6 +780,15 @@ export function ShoppingListPage() {
                                       onClick={() => openEditItemDialog(item)}
                                     >
                                       <Pencil className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => openMoveDialog(item)}
+                                      title="Pindah kategori"
+                                    >
+                                      <ArrowRightLeft className="w-4 h-4" />
                                     </Button>
                                     <Button
                                       variant="ghost"
@@ -1153,27 +1110,21 @@ export function ShoppingListPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-
-
       <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ArrowRightLeft className="w-5 h-5" />
-              Pindah Kategori ({itemsToMove.length} item)
+              Pindah Kategori
             </DialogTitle>
           </DialogHeader>
-          {itemsToMove.length > 0 && (
+          {itemToMove && (
             <div className="space-y-4">
-              <div className="p-3 rounded-lg bg-muted text-sm max-h-32 overflow-y-auto space-y-1">
-                {itemsToMove.map((item) => (
-                  <div key={item.id}>
-                    <span className="font-medium">{item.productName}</span>
-                    {item.brand && (
-                      <span className="text-muted-foreground"> — {item.brand}</span>
-                    )}
-                  </div>
-                ))}
+              <div className="p-3 rounded-lg bg-muted text-sm">
+                <span className="font-medium">{itemToMove.productName}</span>
+                {itemToMove.brand && (
+                  <span className="text-muted-foreground"> — {itemToMove.brand}</span>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -1183,7 +1134,10 @@ export function ShoppingListPage() {
                     <SelectValue placeholder="Pilih kategori tujuan..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {sortAlpha(categories, "name").map((cat) => (
+                    {sortAlpha(
+                      categories.filter((c) => c.id !== itemToMove.categoryId),
+                      "name",
+                    ).map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>
                         {cat.name}
                       </SelectItem>
@@ -1225,7 +1179,7 @@ export function ShoppingListPage() {
             </Button>
             <Button
               className="flex-1"
-              onClick={handleMoveItems}
+              onClick={handleMoveItem}
               disabled={!moveCategoryId}
             >
               Pindahkan
