@@ -58,7 +58,7 @@ const benefits = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen text-foreground">
+    <div className="min-h-screen text-foreground overflow-x-hidden">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-xl">
         <div className="w-full flex items-center justify-between h-14 px-4 lg:px-8">
