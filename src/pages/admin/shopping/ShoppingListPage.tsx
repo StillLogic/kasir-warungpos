@@ -45,6 +45,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Plus,
   Trash2,
   FolderPlus,
@@ -57,6 +63,7 @@ import {
   ShoppingCart,
   Archive,
   ArrowRightLeft,
+  MoreVertical,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchInput } from "@/hooks/use-search-input";
@@ -834,7 +841,7 @@ export function ShoppingListPage() {
                                   {item.quantity} {item.unit}
                                 </td>
                                 <td className="py-1.5 px-1">
-                                  <div className="flex gap-1 justify-end">
+                                  <div className="flex gap-0.5 justify-end">
                                     <Button
                                       variant="ghost"
                                       size="icon"
@@ -854,38 +861,43 @@ export function ShoppingListPage() {
                                         <CheckSquare className="w-3.5 h-3.5 text-green-600" />
                                       )}
                                     </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7"
-                                      onClick={() => {
-                                        setSelectedItems(new Set([item.id]));
-                                        setMoveCategorySourceId(item.categoryId);
-                                        openBulkMoveDialog();
-                                      }}
-                                      title="Pindah kategori"
-                                    >
-                                      <ArrowRightLeft className="w-3.5 h-3.5 text-primary" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7"
-                                      onClick={() => openEditItemDialog(item)}
-                                    >
-                                      <Pencil className="w-3.5 h-3.5" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7 text-destructive hover:text-destructive"
-                                      onClick={() => {
-                                        setItemToDelete(item.id);
-                                        setDeleteConfirmOpen(true);
-                                      }}
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </Button>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7"
+                                        >
+                                          <MoreVertical className="w-3.5 h-3.5" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => openEditItemDialog(item)}>
+                                          <Pencil className="w-4 h-4 mr-2" />
+                                          Edit
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() => {
+                                            setSelectedItems(new Set([item.id]));
+                                            setMoveCategorySourceId(item.categoryId);
+                                            openBulkMoveDialog();
+                                          }}
+                                        >
+                                          <ArrowRightLeft className="w-4 h-4 mr-2" />
+                                          Pindah Kategori
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          className="text-destructive focus:text-destructive"
+                                          onClick={() => {
+                                            setItemToDelete(item.id);
+                                            setDeleteConfirmOpen(true);
+                                          }}
+                                        >
+                                          <Trash2 className="w-4 h-4 mr-2" />
+                                          Hapus
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
                                   </div>
                                 </td>
                               </tr>
