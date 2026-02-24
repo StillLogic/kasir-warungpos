@@ -8,7 +8,7 @@ import { useEffect, lazy, Suspense } from "react";
 import { InstallPWA } from "./components/InstallPWA";
 import { PWAUpdateNotification } from "./components/PWAUpdateNotification";
 import { migrateFromLocalStorage } from "./database";
-import { Loader2 } from "lucide-react";
+
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const CashierIndex = lazy(() => import("./pages/Index"));
@@ -35,8 +35,11 @@ const queryClient = new QueryClient();
 
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center min-h-[50vh]">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    <div className="fixed inset-0 flex items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-10 h-10 rounded-full border-[3px] border-muted border-t-primary animate-spin" />
+        <span className="text-sm text-muted-foreground font-medium">Memuat...</span>
+      </div>
     </div>
   );
 }
