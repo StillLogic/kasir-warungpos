@@ -63,7 +63,7 @@ export default function LandingPage() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-xl">
         <div className="w-full flex items-center justify-between h-14 px-4 lg:px-8">
           <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="WarungPOS Logo" className="w-8 h-8 rounded-lg" loading="lazy" />
+            <img src="/favicon.png" alt="WarungPOS Logo" className="w-8 h-8 rounded-lg" width={32} height={32} loading="lazy" />
             <span className="font-bold text-lg">WarungPOS</span>
           </div>
           <div className="flex items-center gap-2">
@@ -180,7 +180,7 @@ export default function LandingPage() {
       <footer className="py-6 px-4 bg-gradient-to-b from-background to-muted/30 border-t border-border/40">
         <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="WarungPOS" className="w-5 h-5 rounded" loading="lazy" />
+            <img src="/favicon.png" alt="WarungPOS" className="w-5 h-5 rounded" width={20} height={20} loading="lazy" />
             <span>© {new Date().getFullYear()} WarungPOS</span>
           </div>
           <nav className="flex gap-4">
