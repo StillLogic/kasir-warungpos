@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import html2canvas from "html2canvas";
+
 import { formatCurrency } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
@@ -53,6 +53,7 @@ export function ReceiptPreview({ settings }: ReceiptPreviewProps) {
     if (!receiptRef.current) return;
 
     try {
+      const { default: html2canvas } = await import("html2canvas");
       const canvas = await html2canvas(receiptRef.current, {
         backgroundColor: "#ffffff",
         scale: 2,

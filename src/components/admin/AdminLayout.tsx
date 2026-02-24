@@ -167,9 +167,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img
-            src="/favicon.png"
+            src="/favicon.webp"
             alt="WarungPOS Logo"
             className="w-8 h-8 rounded-lg"
+            width={32}
+            height={32}
+            loading="eager"
           />
           <span className="font-semibold">Admin Panel</span>
         </div>
@@ -326,9 +329,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="h-dvh bg-background flex overflow-hidden animate-fade-in">
+    <div className="h-dvh bg-background flex overflow-hidden">
       {!isMobile && (
-        <aside className="w-64 bg-card border-r border-border shrink-0 animate-slide-in-left">
+        <aside className="w-64 bg-card border-r border-border shrink-0">
           <SidebarContent />
         </aside>
       )}
@@ -373,7 +376,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         <main
-          className="flex-1 overflow-auto p-4 lg:p-6 animate-fade-in"
+          className="flex-1 overflow-auto p-4 lg:p-6"
           data-scrollable
         >
           {children}

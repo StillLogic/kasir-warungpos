@@ -22,9 +22,12 @@ export function Layout({ children }: LayoutProps) {
         <div className="w-full flex items-center justify-between h-14 px-4 lg:px-6">
           <div className="flex items-center gap-2">
             <img
-              src="/favicon.png"
+              src="/favicon.webp"
               alt="WarungPOS Logo"
               className="w-8 h-8 rounded-lg"
+              width={32}
+              height={32}
+              loading="eager"
             />
             <span className="font-semibold text-lg">WarungPOS</span>
           </div>
