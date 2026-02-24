@@ -81,7 +81,7 @@ export default function LandingPage() {
 
       <main>
         {/* Hero — gradient from background to muted */}
-        <section className="relative pt-28 pb-20 sm:pt-36 sm:pb-28 px-4">
+        <section className="relative pt-24 pb-16 sm:pt-36 sm:pb-28 px-4">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-full max-w-[800px] aspect-square rounded-full bg-primary/[0.03] blur-[120px]" />
           </div>
@@ -90,24 +90,24 @@ export default function LandingPage() {
               <WifiOff className="w-3.5 h-3.5" />
               Bisa digunakan offline
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-[1.1]">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-5 sm:mb-6 leading-[1.1]">
               Kasir{" "}
               <span className="text-primary">Gratis</span>
               <br className="hidden sm:block" />
               {" "}untuk Warung & Toko
             </h1>
-            <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto mb-10 leading-relaxed">
+            <p className="text-sm sm:text-lg text-muted-foreground max-w-xl mx-auto mb-8 sm:mb-10 leading-relaxed">
               Kelola produk, stok, transaksi, dan hutang dengan mudah.
               Tanpa biaya, tanpa ribet, langsung pakai.
             </p>
-            <div className="flex flex-row gap-3 justify-center">
-              <Button size="lg" asChild className="text-base h-12 px-8">
+            <div className="flex flex-row gap-2 sm:gap-3 justify-center">
+              <Button size="lg" asChild className="text-sm sm:text-base h-11 sm:h-12 px-5 sm:px-8">
                 <Link to="/cashier">
                   Mulai Sekarang
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="text-base h-12 px-8">
+              <Button size="lg" variant="outline" asChild className="text-sm sm:text-base h-11 sm:h-12 px-5 sm:px-8">
                 <Link to="/admin">
                   <Store className="w-4 h-4 mr-2" />
                   Dashboard
@@ -118,11 +118,11 @@ export default function LandingPage() {
         </section>
 
         {/* Features — gradient from muted to background */}
-        <section className="py-16 sm:py-20 px-4">
+        <section className="py-12 sm:py-20 px-4">
           <div className="w-full max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-3">Fitur Lengkap</h2>
-              <p className="text-muted-foreground">Semua yang dibutuhkan untuk mengelola toko Anda.</p>
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-xl sm:text-3xl font-bold mb-2 sm:mb-3">Fitur Lengkap</h2>
+              <p className="text-muted-foreground text-sm sm:text-base">Semua yang dibutuhkan untuk mengelola toko Anda.</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
               {features.map((f) => (
@@ -142,13 +142,13 @@ export default function LandingPage() {
         </section>
 
         {/* Benefits — gradient from background to primary tinted */}
-        <section className="py-16 sm:py-20 px-4 bg-gradient-to-b from-background to-primary/5">
+        <section className="py-12 sm:py-20 px-4 bg-gradient-to-b from-background to-primary/5">
           <div className="w-full max-w-4xl mx-auto">
-            <div className="text-center mb-10">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-3">Kenapa WarungPOS?</h2>
-              <p className="text-muted-foreground">Dirancang khusus untuk UMKM Indonesia.</p>
+            <div className="text-center mb-8 sm:mb-10">
+              <h2 className="text-xl sm:text-3xl font-bold mb-2 sm:mb-3">Kenapa WarungPOS?</h2>
+              <p className="text-muted-foreground text-sm sm:text-base">Dirancang khusus untuk UMKM Indonesia.</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
               {benefits.map((b) => (
                 <div key={b} className="flex items-center gap-3 p-4 rounded-xl bg-card/60 backdrop-blur-sm border border-border/40">
                   <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
@@ -160,13 +160,13 @@ export default function LandingPage() {
         </section>
 
         {/* CTA — gradient primary */}
-        <section className="py-16 sm:py-20 px-4 bg-gradient-to-br from-primary to-primary/80">
+        <section className="py-12 sm:py-20 px-4 bg-gradient-to-br from-primary to-primary/80">
           <div className="w-full max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-primary-foreground">Siap Mengelola Toko Anda?</h2>
-            <p className="text-primary-foreground/75 mb-8">
+            <h2 className="text-xl sm:text-3xl font-bold mb-3 sm:mb-4 text-primary-foreground">Siap Mengelola Toko Anda?</h2>
+            <p className="text-primary-foreground/75 mb-6 sm:mb-8 text-sm sm:text-base">
               Langsung gunakan tanpa daftar, tanpa login. Data tersimpan aman di perangkat Anda.
             </p>
-            <Button size="lg" variant="secondary" asChild className="text-base h-12 px-8">
+            <Button size="lg" variant="secondary" asChild className="text-sm sm:text-base h-11 sm:h-12 px-6 sm:px-8">
               <Link to="/cashier">
                 Buka Kasir Sekarang
                 <ArrowRight className="w-4 h-4 ml-2" />
