@@ -576,36 +576,65 @@ export function ShoppingListPage() {
           />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {purchasedItems > 0 && (
+          {selectionMode ? (
             <>
+              <Badge variant="secondary" className="h-9 px-3 text-sm">
+                {selectedItemIds.size} item dipilih
+              </Badge>
               <Button
-                variant="outline"
-                onClick={() => setArchiveConfirmOpen(true)}
-                className="gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                disabled={selectedItemIds.size === 0}
+                onClick={() => {
+                  openMoveDialog(items.filter((i) => selectedItemIds.has(i.id)));
+                }}
+                className="gap-2"
               >
-                <Archive className="w-4 h-4" />
-                Arsipkan ({purchasedItems})
+                <ArrowRightLeft className="w-4 h-4" />
+                Pindahkan
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setClearConfirmOpen(true)}
-                className="gap-2 text-destructive hover:text-destructive"
+                onClick={() => {
+                  setSelectionMode(false);
+                  setSelectedItemIds(new Set());
+                }}
               >
-                <Trash2 className="w-4 h-4" />
-                Hapus Dibeli ({purchasedItems})
+                Batal
+              </Button>
+            </>
+          ) : (
+            <>
+              {purchasedItems > 0 && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => setArchiveConfirmOpen(true)}
+                    className="gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    <Archive className="w-4 h-4" />
+                    Arsipkan ({purchasedItems})
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setClearConfirmOpen(true)}
+                    className="gap-2 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Hapus Dibeli ({purchasedItems})
+                  </Button>
+                </>
+              )}
+              {categories.length > 0 && (
+                <Button variant="outline" onClick={handleExportPDF}>
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Export PDF
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => setCategoryFormOpen(true)}>
+                <FolderPlus className="h-4 w-4 mr-2" />
+                Kategori
               </Button>
             </>
           )}
-          {categories.length > 0 && (
-            <Button variant="outline" onClick={handleExportPDF}>
-              <FileDown className="h-4 w-4 mr-2" />
-              Export PDF
-            </Button>
-          )}
-          <Button variant="outline" onClick={() => setCategoryFormOpen(true)}>
-            <FolderPlus className="h-4 w-4 mr-2" />
-            Kategori
-          </Button>
         </div>
       </div>
 
@@ -666,80 +695,65 @@ export function ShoppingListPage() {
                       </CardTitle>
                     </button>
                     <div className="flex gap-1">
-                      {selectionMode && (() => {
-                        const selectableItems = categoryItems.filter((i) => !selectedItemIds.has(i.id));
-                        const selectedInCategory = categoryItems.filter((i) => selectedItemIds.has(i.id));
-                        return (
-                          <>
-                            {selectedInCategory.length > 0 && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => {
-                                  openMoveDialog(
-                                    items.filter((i) => selectedItemIds.has(i.id)),
-                                  );
-                                }}
-                                title="Pindahkan yang dipilih"
-                              >
-                                <ArrowRightLeft className="w-4 h-4 text-primary" />
-                              </Button>
-                            )}
+                      {selectionMode ? (
+                        categoryItems.length > 0 && (() => {
+                          const allSelected = categoryItems.every((i) => selectedItemIds.has(i.id));
+                          return (
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
                               onClick={() => {
                                 const next = new Set(selectedItemIds);
-                                if (selectableItems.length > 0) {
-                                  categoryItems.forEach((i) => next.add(i.id));
-                                } else {
+                                if (allSelected) {
                                   categoryItems.forEach((i) => next.delete(i.id));
+                                } else {
+                                  categoryItems.forEach((i) => next.add(i.id));
                                 }
                                 setSelectedItemIds(next);
                               }}
-                              title={selectableItems.length > 0 ? "Pilih semua" : "Batal pilih semua"}
+                              title={allSelected ? "Batal pilih semua" : "Pilih semua"}
                             >
-                              {selectableItems.length > 0 ? (
-                                <CheckSquare className="w-4 h-4" />
-                              ) : (
+                              {allSelected ? (
                                 <XCircle className="w-4 h-4" />
+                              ) : (
+                                <CheckSquare className="w-4 h-4" />
                               )}
                             </Button>
+                          );
+                        })()
+                      ) : (
+                        categoryItems.length > 0 && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleToggleAllInCategory(category.id)}
+                              title={
+                                allPurchased ? "Batalkan semua" : "Centang semua"
+                              }
+                            >
+                              {allPurchased ? (
+                                <XCircle className="w-4 h-4 text-orange-500" />
+                              ) : (
+                                <CheckSquare className="w-4 h-4 text-green-600" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                setSelectionMode(true);
+                                setSelectedItemIds(new Set());
+                              }}
+                              title="Pilih untuk pindah"
+                            >
+                              <ArrowRightLeft className="w-4 h-4" />
+                            </Button>
                           </>
-                        );
-                      })()}
-                      {!selectionMode && categoryItems.length > 0 && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleToggleAllInCategory(category.id)}
-                            title={
-                              allPurchased ? "Batalkan semua" : "Centang semua"
-                            }
-                          >
-                            {allPurchased ? (
-                              <XCircle className="w-4 h-4 text-orange-500" />
-                            ) : (
-                              <CheckSquare className="w-4 h-4 text-green-600" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => {
-                              setSelectionMode(true);
-                              setSelectedItemIds(new Set());
-                            }}
-                            title="Pilih untuk pindah"
-                          >
-                            <ArrowRightLeft className="w-4 h-4" />
-                          </Button>
-                        </>
+                        )
                       )}
                       <Button
                         variant="ghost"
@@ -1183,33 +1197,7 @@ export function ShoppingListPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {selectionMode && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-background border rounded-lg shadow-lg p-3 flex items-center gap-3">
-          <span className="text-sm font-medium">
-            {selectedItemIds.size} item dipilih
-          </span>
-          <Button
-            size="sm"
-            disabled={selectedItemIds.size === 0}
-            onClick={() => {
-              openMoveDialog(items.filter((i) => selectedItemIds.has(i.id)));
-            }}
-          >
-            <ArrowRightLeft className="w-4 h-4 mr-1" />
-            Pindahkan
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setSelectionMode(false);
-              setSelectedItemIds(new Set());
-            }}
-          >
-            Batal
-          </Button>
-        </div>
-      )}
+
 
       <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen}>
         <DialogContent className="sm:max-w-md">
