@@ -53,6 +53,7 @@ import {
   FileDown,
   Pencil,
   CheckSquare,
+  XCircle,
   ShoppingCart,
   Archive,
   ArrowRightLeft,
@@ -492,10 +493,13 @@ export function ShoppingListPage() {
     );
   };
 
-  const handleMarkSelectedAsPurchased = (categoryId: string) => {
+  const handleToggleSelectedPurchased = (categoryId: string) => {
     const selected = getSelectedInCategory(categoryId);
+    const allPurchased = selected.every((i) => i.isPurchased);
     selected.forEach((item) => {
-      if (!item.isPurchased) {
+      if (allPurchased && item.isPurchased) {
+        toggleShoppingItemPurchased(item.id);
+      } else if (!allPurchased && !item.isPurchased) {
         toggleShoppingItemPurchased(item.id);
       }
     });
@@ -505,7 +509,12 @@ export function ShoppingListPage() {
       return next;
     });
     refreshData();
-    toast({ title: "Berhasil", description: `${selected.length} item ditandai sudah dibeli` });
+    toast({
+      title: "Berhasil",
+      description: allPurchased
+        ? `${selected.length} item dikembalikan ke belum dibeli`
+        : `${selected.length} item ditandai sudah dibeli`,
+    });
   };
 
   const handleClearPurchased = () => {
@@ -686,15 +695,25 @@ export function ShoppingListPage() {
                     <div className="flex gap-1 items-center">
                       {getSelectedInCategory(category.id).length > 0 && (
                         <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleMarkSelectedAsPurchased(category.id)}
-                            title="Tandai sudah dibeli"
-                          >
-                            <CheckSquare className="w-4 h-4 text-green-600" />
-                          </Button>
+                          {(() => {
+                            const selected = getSelectedInCategory(category.id);
+                            const allPurchased = selected.every((i) => i.isPurchased);
+                            return (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleToggleSelectedPurchased(category.id)}
+                                title={allPurchased ? "Batalkan sudah dibeli" : "Tandai sudah dibeli"}
+                              >
+                                {allPurchased ? (
+                                  <XCircle className="w-4 h-4 text-orange-500" />
+                                ) : (
+                                  <CheckSquare className="w-4 h-4 text-green-600" />
+                                )}
+                              </Button>
+                            );
+                          })()}
                           <Button
                             variant="ghost"
                             size="icon"
