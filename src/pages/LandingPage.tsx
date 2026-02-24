@@ -118,7 +118,7 @@ export default function LandingPage() {
         </section>
 
         {/* Features — gradient from muted to background */}
-        <section className="py-16 sm:py-20 px-4 bg-gradient-to-b from-muted/60 via-muted/30 to-background">
+        <section className="py-16 sm:py-20 px-4">
           <div className="w-full max-w-6xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-2xl sm:text-3xl font-bold mb-3">Fitur Lengkap</h2>
