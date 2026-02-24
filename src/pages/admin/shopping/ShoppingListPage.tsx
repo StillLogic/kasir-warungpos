@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UnitSelect } from "@/components/UnitSelect";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +56,7 @@ import {
   XCircle,
   ShoppingCart,
   Archive,
+  ArrowRightLeft,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchInput } from "@/hooks/use-search-input";
@@ -95,6 +97,10 @@ export function ShoppingListPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [itemToMove, setItemToMove] = useState<ShoppingItem | null>(null);
+  const [moveCategoryId, setMoveCategoryId] = useState("");
+  const [moveNewCategoryName, setMoveNewCategoryName] = useState("");
 
   const { searchQuery, setSearchQuery, isSearchDisabled } = useSearchInput([
     formOpen,
@@ -103,6 +109,7 @@ export function ShoppingListPage() {
     deleteConfirmOpen,
     clearConfirmOpen,
     archiveConfirmOpen,
+    moveDialogOpen,
   ]);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
@@ -491,6 +498,52 @@ export function ShoppingListPage() {
     });
   };
 
+  const openMoveDialog = (item: ShoppingItem) => {
+    setItemToMove(item);
+    setMoveCategoryId("");
+    setMoveNewCategoryName("");
+    setMoveDialogOpen(true);
+  };
+
+  const handleMoveItem = () => {
+    if (!itemToMove) return;
+
+    let targetCategoryId = moveCategoryId;
+    let targetCategoryName = "";
+
+    if (moveCategoryId === "__new__") {
+      if (!moveNewCategoryName.trim()) {
+        toast({
+          title: "Error",
+          description: "Nama kategori baru harus diisi",
+          variant: "destructive",
+        });
+        return;
+      }
+      const newCat = createShoppingCategory(moveNewCategoryName.trim());
+      targetCategoryId = newCat.id;
+      targetCategoryName = newCat.name;
+    } else {
+      const cat = categories.find((c) => c.id === moveCategoryId);
+      if (!cat) return;
+      targetCategoryName = cat.name;
+    }
+
+    updateShoppingItem(itemToMove.id, {
+      categoryId: targetCategoryId,
+      categoryName: targetCategoryName,
+    });
+
+    setMoveDialogOpen(false);
+    setItemToMove(null);
+    refreshData();
+
+    toast({
+      title: "Berhasil",
+      description: `Item dipindahkan ke ${targetCategoryName}`,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -731,6 +784,15 @@ export function ShoppingListPage() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => openMoveDialog(item)}
+                                      title="Pindah kategori"
+                                    >
+                                      <ArrowRightLeft className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
                                       className="h-8 w-8 text-destructive hover:text-destructive"
                                       onClick={() => {
                                         setItemToDelete(item.id);
@@ -838,23 +900,14 @@ export function ShoppingListPage() {
               </div>
               <div className="space-y-2">
                 <Label>Satuan *</Label>
-                <Select
+                <UnitSelect
                   value={formData.unit}
-                  onValueChange={(value: string) =>
+                  units={units}
+                  onValueChange={(value) =>
                     setFormData({ ...formData, unit: value })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {units.map((unit) => (
-                      <SelectItem key={unit} value={unit}>
-                        {unit}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onUnitsChanged={refreshData}
+                />
               </div>
             </div>
           </div>
@@ -943,21 +996,12 @@ export function ShoppingListPage() {
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Satuan</Label>
-                    <Select
+                    <UnitSelect
                       value={item.unit}
+                      units={units}
                       onValueChange={(v) => updateBulkItem(item.id, "unit", v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {units.map((unit) => (
-                          <SelectItem key={unit} value={unit}>
-                            {unit}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      onUnitsChanged={refreshData}
+                    />
                   </div>
                 </div>
               </div>
@@ -1065,6 +1109,84 @@ export function ShoppingListPage() {
           </div>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowRightLeft className="w-5 h-5" />
+              Pindah Kategori
+            </DialogTitle>
+          </DialogHeader>
+          {itemToMove && (
+            <div className="space-y-4">
+              <div className="p-3 rounded-lg bg-muted text-sm">
+                <span className="font-medium">{itemToMove.productName}</span>
+                {itemToMove.brand && (
+                  <span className="text-muted-foreground"> — {itemToMove.brand}</span>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Pindah ke Kategori *</Label>
+                <Select value={moveCategoryId} onValueChange={setMoveCategoryId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih kategori tujuan..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortAlpha(
+                      categories.filter((c) => c.id !== itemToMove.categoryId),
+                      "name",
+                    ).map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem
+                      value="__new__"
+                      className="text-primary font-medium border-t mt-1 pt-2"
+                    >
+                      <span className="flex items-center gap-2">
+                        <FolderPlus className="w-3 h-3" />
+                        Kategori Baru...
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {moveCategoryId === "__new__" && (
+                <div className="space-y-2">
+                  <Label>Nama Kategori Baru *</Label>
+                  <Input
+                    placeholder="Contoh: Minuman, Snack"
+                    value={moveNewCategoryName}
+                    onChange={(e) => handleTitleCaseChange(e, setMoveNewCategoryName)}
+                    maxLength={50}
+                    autoFocus
+                  />
+                </div>
+              )}
+            </div>
+          )}
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setMoveDialogOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={handleMoveItem}
+              disabled={!moveCategoryId}
+            >
+              Pindahkan
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
