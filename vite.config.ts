@@ -45,6 +45,8 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         skipWaiting: false,
         clientsClaim: true,
+        navigateFallback: "/index.html",
+        navigateFallbackAllowlist: [/^\/(?!api\/).*/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
