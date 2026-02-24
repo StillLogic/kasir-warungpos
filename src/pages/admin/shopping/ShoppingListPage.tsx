@@ -52,7 +52,7 @@ import {
   ChevronDown,
   FileDown,
   Pencil,
-  CheckSquare,
+  
   XCircle,
   ShoppingCart,
   Archive,
@@ -640,9 +640,8 @@ export function ShoppingListPage() {
 
             const sortedItems = sortShoppingItems(filteredItems);
 
-            const allPurchased =
-              categoryItems.length > 0 &&
-              categoryItems.every((i) => i.isPurchased);
+
+
 
             return (
               <Card key={category.id}>
@@ -666,24 +665,17 @@ export function ShoppingListPage() {
                       </CardTitle>
                     </button>
                     <div className="flex gap-1">
-                      {categoryItems.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleToggleAllInCategory(category.id)}
-                          title={
-                            allPurchased ? "Batalkan semua" : "Centang semua"
-                          }
-                        >
-                          {allPurchased ? (
-                            <XCircle className="w-4 h-4 text-orange-500" />
-                          ) : (
-                            <CheckSquare className="w-4 h-4 text-green-600" />
-                          )}
-                        </Button>
-                      )}
                       {getPurchasedInCategory(category.id).length > 0 && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleToggleAllInCategory(category.id)}
+                            title="Batalkan semua centang"
+                          >
+                            <XCircle className="w-4 h-4 text-orange-500" />
+                          </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -696,6 +688,7 @@ export function ShoppingListPage() {
                         >
                           <ArrowRightLeft className="w-4 h-4 text-primary" />
                         </Button>
+                        </>
                       )}
                       <Button
                         variant="ghost"
@@ -736,7 +729,17 @@ export function ShoppingListPage() {
                         >
                           <thead>
                             <tr className="border-b">
-                              <th className="w-10 py-1.5 px-2 text-center"></th>
+                              <th className="w-10 py-1.5 px-2 text-center">
+                                <Checkbox
+                                  checked={
+                                    categoryItems.length > 0 &&
+                                    categoryItems.every((i) => i.isPurchased)
+                                  }
+                                  onCheckedChange={() =>
+                                    handleToggleAllInCategory(category.id)
+                                  }
+                                />
+                              </th>
                               <th className="w-[30%] text-left py-1.5 pr-1 pl-0 font-medium text-muted-foreground">
                                 Nama Produk
                               </th>
