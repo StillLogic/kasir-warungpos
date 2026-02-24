@@ -240,34 +240,15 @@ export function ProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Manajemen Produk</h1>
-          <p className="text-muted-foreground">
-            Kelola produk dan stok warung Anda
-          </p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button
-            variant="outline"
-            onClick={() => setCategoryManagerOpen(true)}
-          >
-            <Tag className="w-4 h-4 mr-2" />
-            Kategori
-          </Button>
-          <Button variant="outline" onClick={() => setImportOpen(true)}>
-            <Upload className="w-4 h-4 mr-2" />
-            Import CSV
-          </Button>
-          <Button onClick={() => setFormOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Tambah Produk
-          </Button>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold">Manajemen Produk</h1>
+        <p className="text-muted-foreground">
+          Kelola produk dan stok warung Anda
+        </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="relative max-w-md flex-1">
+      <div className="flex gap-2 items-center">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Cari produk, SKU, atau kategori..."
@@ -278,11 +259,40 @@ export function ProductsPage() {
           />
         </div>
         {selectedIds.size > 0 && (
-          <Button variant="destructive" onClick={() => setBulkDeleteOpen(true)}>
+          <Button variant="destructive" size="icon" className="shrink-0 sm:hidden" onClick={() => setBulkDeleteOpen(true)} title={`Hapus ${selectedIds.size} produk`}>
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        )}
+        {selectedIds.size > 0 && (
+          <Button variant="destructive" className="hidden sm:inline-flex shrink-0" onClick={() => setBulkDeleteOpen(true)}>
             <Trash2 className="w-4 h-4 mr-2" />
             Hapus {selectedIds.size} Produk
           </Button>
         )}
+        <Button onClick={() => setFormOpen(true)} size="icon" className="shrink-0 sm:hidden" title="Tambah Produk">
+          <Plus className="w-4 h-4" />
+        </Button>
+        <Button onClick={() => setFormOpen(true)} className="hidden sm:inline-flex shrink-0">
+          <Plus className="w-4 h-4 mr-2" />
+          Tambah Produk
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="shrink-0">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setCategoryManagerOpen(true)}>
+              <Tag className="w-4 h-4 mr-2" />
+              Kategori
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setImportOpen(true)}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import CSV
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="bg-card border border-border rounded-lg overflow-hidden">
