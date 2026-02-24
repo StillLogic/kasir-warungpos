@@ -838,21 +838,53 @@ export function ShoppingListPage() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-8 w-8"
-                                      onClick={() => openEditItemDialog(item)}
+                                      className="h-7 w-7"
+                                      onClick={() => {
+                                        toggleShoppingItemPurchased(item.id);
+                                        refreshData();
+                                        toast({
+                                          title: item.isPurchased ? "Item dikembalikan" : "Item ditandai dibeli",
+                                        });
+                                      }}
+                                      title={item.isPurchased ? "Batalkan dibeli" : "Tandai dibeli"}
                                     >
-                                      <Pencil className="w-4 h-4" />
+                                      {item.isPurchased ? (
+                                        <XCircle className="w-3.5 h-3.5 text-orange-500" />
+                                      ) : (
+                                        <CheckSquare className="w-3.5 h-3.5 text-green-600" />
+                                      )}
                                     </Button>
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-8 w-8 text-destructive hover:text-destructive"
+                                      className="h-7 w-7"
+                                      onClick={() => {
+                                        setSelectedItems(new Set([item.id]));
+                                        setMoveCategorySourceId(item.categoryId);
+                                        openBulkMoveDialog();
+                                      }}
+                                      title="Pindah kategori"
+                                    >
+                                      <ArrowRightLeft className="w-3.5 h-3.5 text-primary" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={() => openEditItemDialog(item)}
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-destructive hover:text-destructive"
                                       onClick={() => {
                                         setItemToDelete(item.id);
                                         setDeleteConfirmOpen(true);
                                       }}
                                     >
-                                      <Trash2 className="w-4 h-4" />
+                                      <Trash2 className="w-3.5 h-3.5" />
                                     </Button>
                                   </div>
                                 </td>
