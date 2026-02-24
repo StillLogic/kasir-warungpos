@@ -60,7 +60,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen text-foreground">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-xl border-b border-border/50">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-xl">
         <div className="w-full flex items-center justify-between h-14 px-4 lg:px-8">
           <div className="flex items-center gap-2">
             <img src="/favicon.png" alt="WarungPOS Logo" className="w-8 h-8 rounded-lg" loading="lazy" />
