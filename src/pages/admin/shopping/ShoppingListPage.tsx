@@ -9,7 +9,7 @@ import {
   updateShoppingItem,
   deleteShoppingItem,
   toggleShoppingItemPurchased,
-  clearPurchasedItems,
+  
   checkAndAutoArchive,
   
   archivePurchasedItems,
@@ -524,11 +524,13 @@ export function ShoppingListPage() {
     });
   };
 
-  const handleClearPurchased = () => {
-    clearPurchasedItems();
+  const handleDeleteSelected = () => {
+    const selected = items.filter((i) => selectedItems.has(i.id));
+    selected.forEach((item) => deleteShoppingItem(item.id));
     setClearConfirmOpen(false);
+    setSelectedItems(new Set());
     refreshData();
-    toast({ title: "Berhasil", description: "Item sudah dibeli dihapus" });
+    toast({ title: "Berhasil", description: `${selected.length} item dihapus` });
   };
 
   const handleArchivePurchased = () => {
@@ -634,17 +636,17 @@ export function ShoppingListPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {selectedItems.size > 0 && (
+              <DropdownMenuItem onClick={() => setClearConfirmOpen(true)} className="text-destructive focus:text-destructive">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Hapus Dipilih ({selectedItems.size})
+              </DropdownMenuItem>
+            )}
             {purchasedItems > 0 && (
-              <>
-                <DropdownMenuItem onClick={() => setArchiveConfirmOpen(true)}>
-                  <Archive className="w-4 h-4 mr-2 text-blue-600" />
-                  Arsipkan ({purchasedItems})
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setClearConfirmOpen(true)} className="text-destructive focus:text-destructive">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Hapus Dibeli ({purchasedItems})
-                </DropdownMenuItem>
-              </>
+              <DropdownMenuItem onClick={() => setArchiveConfirmOpen(true)}>
+                <Archive className="w-4 h-4 mr-2 text-blue-600" />
+                Arsipkan ({purchasedItems})
+              </DropdownMenuItem>
             )}
             {categories.length > 0 && (
               <DropdownMenuItem onClick={handleExportPDF}>
@@ -1178,16 +1180,16 @@ export function ShoppingListPage() {
       <AlertDialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Item Sudah Dibeli?</AlertDialogTitle>
+            <AlertDialogTitle>Hapus {selectedItems.size} Item Dipilih?</AlertDialogTitle>
             <AlertDialogDescription>
-              {purchasedItems} item yang sudah dibeli akan dihapus.
+              Item yang dipilih akan dihapus dari daftar belanja.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex gap-3 pt-4">
             <AlertDialogCancel className="flex-1">Batal</AlertDialogCancel>
             <AlertDialogAction
               className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleClearPurchased}
+              onClick={handleDeleteSelected}
             >
               Hapus
             </AlertDialogAction>
