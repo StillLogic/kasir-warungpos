@@ -98,7 +98,7 @@ export function ShoppingListPage() {
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [moveCategorySourceId, setMoveCategorySourceId] = useState("");
   const [moveCategoryId, setMoveCategoryId] = useState("");
   const [moveNewCategoryName, setMoveNewCategoryName] = useState("");
 
@@ -498,18 +498,9 @@ export function ShoppingListPage() {
     });
   };
 
-  const toggleSelectItem = (itemId: string) => {
-    setSelectedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(itemId)) next.delete(itemId);
-      else next.add(itemId);
-      return next;
-    });
-  };
-
-  const getSelectedInCategory = (categoryId: string) => {
+  const getPurchasedInCategory = (categoryId: string) => {
     return items.filter(
-      (i) => i.categoryId === categoryId && selectedItems.has(i.id),
+      (i) => i.categoryId === categoryId && i.isPurchased,
     );
   };
 
@@ -520,7 +511,7 @@ export function ShoppingListPage() {
   };
 
   const handleMoveItems = () => {
-    const itemsToMove = items.filter((i) => selectedItems.has(i.id));
+    const itemsToMove = items.filter((i) => i.isPurchased && i.categoryId === moveCategorySourceId);
     if (itemsToMove.length === 0) return;
 
     let targetCategoryId = moveCategoryId;
@@ -552,7 +543,6 @@ export function ShoppingListPage() {
     });
 
     setMoveDialogOpen(false);
-    setSelectedItems(new Set());
     refreshData();
 
     toast({
@@ -693,13 +683,16 @@ export function ShoppingListPage() {
                           )}
                         </Button>
                       )}
-                      {getSelectedInCategory(category.id).length > 0 && (
+                      {getPurchasedInCategory(category.id).length > 0 && (
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => openBulkMoveDialog()}
-                          title={`Pindah ${getSelectedInCategory(category.id).length} item`}
+                          onClick={() => {
+                            setMoveCategorySourceId(category.id);
+                            openBulkMoveDialog();
+                          }}
+                          title={`Pindah ${getPurchasedInCategory(category.id).length} item`}
                         >
                           <ArrowRightLeft className="w-4 h-4 text-primary" />
                         </Button>
@@ -753,7 +746,6 @@ export function ShoppingListPage() {
                               <th className="w-[15%] text-left py-1.5 pr-1 pl-0 font-medium text-muted-foreground">
                                 Jumlah
                               </th>
-                              <th className="w-8 py-1.5 px-1"></th>
                               <th className="w-20 py-1.5 px-1"></th>
                             </tr>
                           </thead>
@@ -799,14 +791,6 @@ export function ShoppingListPage() {
                                   )}
                                 >
                                   {item.quantity} {item.unit}
-                                </td>
-                                <td className="py-1.5 px-1 text-center">
-                                  <Checkbox
-                                    checked={selectedItems.has(item.id)}
-                                    onCheckedChange={() =>
-                                      toggleSelectItem(item.id)
-                                    }
-                                  />
                                 </td>
                                 <td className="py-1.5 px-1">
                                   <div className="flex gap-1 justify-end">
@@ -1147,7 +1131,7 @@ export function ShoppingListPage() {
             </DialogTitle>
           </DialogHeader>
           {(() => {
-            const selected = items.filter((i) => selectedItems.has(i.id));
+            const selected = items.filter((i) => i.isPurchased && i.categoryId === moveCategorySourceId);
             return (
               <div className="space-y-4">
                 <div className="p-3 rounded-lg bg-muted text-sm">
