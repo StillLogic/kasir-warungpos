@@ -4,7 +4,7 @@
 
 **Aplikasi Point of Sale (POS) gratis, offline, dan modern** berbasis web yang dirancang khusus untuk warung, toko retail, dan UMKM di Indonesia. Dibangun sebagai Progressive Web App (PWA) sehingga bisa diinstall di HP maupun laptop tanpa perlu koneksi internet.
 
-🔗 **Demo**: [kasir-warungpos.lovable.app](https://kasir-warungpos.lovable.app)
+🔗 **Demo**: [warungpos.stilllogic.my.id](https://warungpos.stilllogic.my.id)
 
 ## ✨ Keunggulan
 
@@ -93,7 +93,7 @@
 
 ### Akses Langsung
 
-Buka [kasir-warungpos.lovable.app](https://kasir-warungpos.lovable.app) di browser. Tidak perlu daftar atau login.
+Buka [warungpos.stilllogic.my.id](https://warungpos.stilllogic.my.id) di browser. Tidak perlu daftar atau login.
 
 ### Install sebagai Aplikasi (PWA)
 
@@ -113,21 +113,21 @@ Buka [kasir-warungpos.lovable.app](https://kasir-warungpos.lovable.app) di brows
 
 ### Navigasi
 
-| Halaman | Akses | Fungsi |
-|---------|-------|--------|
-| Landing Page | `/` | Halaman utama publik (SEO) |
-| Kasir | `/cashier` | Transaksi penjualan |
-| Dashboard | `/admin` | Overview penjualan & stok |
-| Produk | `/admin/products` | Kelola produk & stok |
-| Harga Jual | `/admin/pricing` | Aturan markup |
-| Kalkulator | `/admin/calculator` | Hitung harga jual |
-| Hutang | `/admin/debts` | Hutang pelanggan |
-| Belanja | `/admin/shopping-list` | Daftar belanja |
-| Karyawan | `/admin/employees` | Data karyawan |
-| Riwayat | `/admin/history` | Riwayat transaksi |
-| Laporan | `/admin/reports` | Laporan keuangan |
-| Master Data | `/admin/master-data` | Kategori & satuan |
-| Pengaturan | `/admin/settings` | Konfigurasi toko & backup |
+| Halaman      | Akses                  | Fungsi                     |
+| ------------ | ---------------------- | -------------------------- |
+| Landing Page | `/`                    | Halaman utama publik (SEO) |
+| Kasir        | `/cashier`             | Transaksi penjualan        |
+| Dashboard    | `/admin`               | Overview penjualan & stok  |
+| Produk       | `/admin/products`      | Kelola produk & stok       |
+| Harga Jual   | `/admin/pricing`       | Aturan markup              |
+| Kalkulator   | `/admin/calculator`    | Hitung harga jual          |
+| Hutang       | `/admin/debts`         | Hutang pelanggan           |
+| Belanja      | `/admin/shopping-list` | Daftar belanja             |
+| Karyawan     | `/admin/employees`     | Data karyawan              |
+| Riwayat      | `/admin/history`       | Riwayat transaksi          |
+| Laporan      | `/admin/reports`       | Laporan keuangan           |
+| Master Data  | `/admin/master-data`   | Kategori & satuan          |
+| Pengaturan   | `/admin/settings`      | Konfigurasi toko & backup  |
 
 ## 💾 Backup & Restore Data
 
@@ -150,18 +150,18 @@ Buka [kasir-warungpos.lovable.app](https://kasir-warungpos.lovable.app) di brows
 
 ## 🚀 Teknologi
 
-| Kategori | Teknologi |
-|----------|-----------|
-| UI Framework | React 18, TypeScript |
-| Build Tool | Vite + PWA Plugin |
-| Styling | Tailwind CSS, shadcn/ui |
-| Database | IndexedDB (idb) |
-| Routing | React Router v6 |
-| Charts | Recharts |
-| Icons | Lucide React |
-| Export | html2canvas |
-| Kompresi | fflate |
-| Enkripsi | crypto-js |
+| Kategori     | Teknologi               |
+| ------------ | ----------------------- |
+| UI Framework | React 18, TypeScript    |
+| Build Tool   | Vite + PWA Plugin       |
+| Styling      | Tailwind CSS, shadcn/ui |
+| Database     | IndexedDB (idb)         |
+| Routing      | React Router v6         |
+| Charts       | Recharts                |
+| Icons        | Lucide React            |
+| Export       | html2canvas             |
+| Kompresi     | fflate                  |
+| Enkripsi     | crypto-js               |
 
 ## 📐 Struktur Project
 
