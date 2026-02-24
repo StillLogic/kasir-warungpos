@@ -11,7 +11,7 @@ import {
   toggleShoppingItemPurchased,
   clearPurchasedItems,
   checkAndAutoArchive,
-  toggleAllItemsInCategory,
+  
   archivePurchasedItems,
 } from "@/database/shopping-list";
 import { getUnitNames } from "@/database/units";
@@ -97,6 +97,7 @@ export function ShoppingListPage() {
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [moveCategorySourceId, setMoveCategorySourceId] = useState("");
   const [moveCategoryId, setMoveCategoryId] = useState("");
   const [moveNewCategoryName, setMoveNewCategoryName] = useState("");
@@ -462,27 +463,55 @@ export function ShoppingListPage() {
     toast({ title: "Berhasil", description: "Item dihapus" });
   };
 
-  const handleTogglePurchased = (id: string) => {
-    toggleShoppingItemPurchased(id);
-    refreshData();
-  };
 
   const handleToggleAllInCategory = (categoryId: string) => {
     const categoryItems = items.filter((i) => i.categoryId === categoryId);
-    const allPurchased = categoryItems.every((i) => i.isPurchased);
-    toggleAllItemsInCategory(categoryId, !allPurchased);
-    refreshData();
-
-    toast({
-      title: allPurchased ? "Semua item dibatalkan" : "Semua item dicentang",
+    const allSelected = categoryItems.length > 0 && categoryItems.every((i) => selectedItems.has(i.id));
+    setSelectedItems((prev) => {
+      const next = new Set(prev);
+      categoryItems.forEach((i) => {
+        if (allSelected) next.delete(i.id);
+        else next.add(i.id);
+      });
+      return next;
     });
+  };
+
+  const toggleSelectItem = (itemId: string) => {
+    setSelectedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
+  };
+
+  const getSelectedInCategory = (categoryId: string) => {
+    return items.filter(
+      (i) => i.categoryId === categoryId && selectedItems.has(i.id),
+    );
+  };
+
+  const handleMarkSelectedAsPurchased = (categoryId: string) => {
+    const selected = getSelectedInCategory(categoryId);
+    selected.forEach((item) => {
+      if (!item.isPurchased) {
+        toggleShoppingItemPurchased(item.id);
+      }
+    });
+    setSelectedItems((prev) => {
+      const next = new Set(prev);
+      selected.forEach((i) => next.delete(i.id));
+      return next;
+    });
+    refreshData();
+    toast({ title: "Berhasil", description: `${selected.length} item ditandai sudah dibeli` });
   };
 
   const handleClearPurchased = () => {
     clearPurchasedItems();
     setClearConfirmOpen(false);
     refreshData();
-
     toast({ title: "Berhasil", description: "Item sudah dibeli dihapus" });
   };
 
@@ -490,17 +519,7 @@ export function ShoppingListPage() {
     const count = archivePurchasedItems();
     setArchiveConfirmOpen(false);
     refreshData();
-
-    toast({
-      title: "Berhasil",
-      description: `${count} item telah diarsipkan`,
-    });
-  };
-
-  const getPurchasedInCategory = (categoryId: string) => {
-    return items.filter(
-      (i) => i.categoryId === categoryId && i.isPurchased,
-    );
+    toast({ title: "Berhasil", description: `${count} item telah diarsipkan` });
   };
 
   const openBulkMoveDialog = () => {
@@ -510,7 +529,7 @@ export function ShoppingListPage() {
   };
 
   const handleMoveItems = () => {
-    const itemsToMove = items.filter((i) => i.isPurchased && i.categoryId === moveCategorySourceId);
+    const itemsToMove = items.filter((i) => selectedItems.has(i.id) && i.categoryId === moveCategorySourceId);
     if (itemsToMove.length === 0) return;
 
     let targetCategoryId = moveCategoryId;
@@ -542,6 +561,7 @@ export function ShoppingListPage() {
     });
 
     setMoveDialogOpen(false);
+    setSelectedItems(new Set());
     refreshData();
 
     toast({
@@ -663,13 +683,18 @@ export function ShoppingListPage() {
                         </Badge>
                       </CardTitle>
                     </button>
-                    <div className="flex gap-1">
-                      {getPurchasedInCategory(category.id).length > 0 && (
+                    <div className="flex gap-1 items-center">
+                      {getSelectedInCategory(category.id).length > 0 && (
                         <>
-                          <Badge variant="secondary" className="gap-1 text-xs">
-                            <CheckSquare className="w-3 h-3" />
-                            {getPurchasedInCategory(category.id).length} dibeli
-                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleMarkSelectedAsPurchased(category.id)}
+                            title="Tandai sudah dibeli"
+                          >
+                            <CheckSquare className="w-4 h-4 text-green-600" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -678,7 +703,7 @@ export function ShoppingListPage() {
                               setMoveCategorySourceId(category.id);
                               openBulkMoveDialog();
                             }}
-                            title={`Pindah ${getPurchasedInCategory(category.id).length} item`}
+                            title={`Pindah ${getSelectedInCategory(category.id).length} item`}
                           >
                             <ArrowRightLeft className="w-4 h-4 text-primary" />
                           </Button>
@@ -727,7 +752,7 @@ export function ShoppingListPage() {
                                 <Checkbox
                                   checked={
                                     categoryItems.length > 0 &&
-                                    categoryItems.every((i) => i.isPurchased)
+                                    categoryItems.every((i) => selectedItems.has(i.id))
                                   }
                                   onCheckedChange={() =>
                                     handleToggleAllInCategory(category.id)
@@ -758,9 +783,9 @@ export function ShoppingListPage() {
                               >
                                 <td className="py-1.5 px-2 text-center">
                                   <Checkbox
-                                    checked={item.isPurchased}
+                                    checked={selectedItems.has(item.id)}
                                     onCheckedChange={() =>
-                                      handleTogglePurchased(item.id)
+                                      toggleSelectItem(item.id)
                                     }
                                   />
                                 </td>
@@ -1128,7 +1153,7 @@ export function ShoppingListPage() {
             </DialogTitle>
           </DialogHeader>
           {(() => {
-            const selected = items.filter((i) => i.isPurchased && i.categoryId === moveCategorySourceId);
+            const selected = items.filter((i) => selectedItems.has(i.id) && i.categoryId === moveCategorySourceId);
             return (
               <div className="space-y-4">
                 <div className="p-3 rounded-lg bg-muted text-sm">
