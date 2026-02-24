@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "prompt",
-      includeAssets: ["favicon.ico", "robots.txt"],
+      includeAssets: ["favicon.ico", "favicon.webp", "robots.txt"],
       manifest: {
         name: "WarungPOS - Aplikasi Kasir",
         short_name: "WarungPOS",
@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff2}"],
         skipWaiting: false,
         clientsClaim: true,
         navigateFallback: "/index.html",

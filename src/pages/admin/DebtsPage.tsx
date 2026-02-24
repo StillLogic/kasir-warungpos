@@ -49,7 +49,7 @@ import { useSearchInput } from "@/hooks/use-search-input";
 import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { useIsMobile } from "@/hooks/use-mobile";
-import html2canvas from "html2canvas";
+
 import {
   Popover,
   PopoverContent,
@@ -243,6 +243,7 @@ export function DebtsPage() {
     if (!printRef.current || !selectedCustomer) return;
 
     try {
+      const { default: html2canvas } = await import("html2canvas");
       const canvas = await html2canvas(printRef.current, {
         backgroundColor: "#ffffff",
         scale: 2,

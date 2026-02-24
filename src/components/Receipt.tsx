@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import html2canvas from "html2canvas";
+
 import { Transaction } from "@/types/pos";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -155,6 +155,7 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
     if (!receiptRef.current) return;
 
     try {
+      const { default: html2canvas } = await import("html2canvas");
       const canvas = await html2canvas(receiptRef.current, {
         backgroundColor: "#ffffff",
         scale: 2,
