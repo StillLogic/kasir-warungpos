@@ -9,7 +9,7 @@ interface LayoutProps {
 }
 
 const navItems = [
-  { path: "/", label: "Kasir", icon: ShoppingCart },
+  { path: "/cashier", label: "Kasir", icon: ShoppingCart },
   { path: "/admin", label: "Admin", icon: Settings },
 ];
 
