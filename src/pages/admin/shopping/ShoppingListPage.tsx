@@ -98,9 +98,7 @@ export function ShoppingListPage() {
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
-  const [itemsToMove, setItemsToMove] = useState<ShoppingItem[]>([]);
-  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
-  const [selectionMode, setSelectionMode] = useState(false);
+  const [itemToMove, setItemToMove] = useState<ShoppingItem | null>(null);
   const [moveCategoryId, setMoveCategoryId] = useState("");
   const [moveNewCategoryName, setMoveNewCategoryName] = useState("");
 
