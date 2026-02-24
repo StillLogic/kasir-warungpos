@@ -100,7 +100,7 @@ export default function LandingPage() {
               Kelola produk, stok, transaksi, dan hutang dengan mudah.
               Tanpa biaya, tanpa ribet, langsung pakai.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-row gap-3 justify-center">
               <Button size="lg" asChild className="text-base h-12 px-8">
                 <Link to="/cashier">
                   Mulai Sekarang
