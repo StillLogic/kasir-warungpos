@@ -52,8 +52,7 @@ import {
   ChevronDown,
   FileDown,
   Pencil,
-  
-  XCircle,
+  CheckSquare,
   ShoppingCart,
   Archive,
   ArrowRightLeft,
@@ -667,31 +666,22 @@ export function ShoppingListPage() {
                     <div className="flex gap-1">
                       {getPurchasedInCategory(category.id).length > 0 && (
                         <>
+                          <Badge variant="secondary" className="gap-1 text-xs">
+                            <CheckSquare className="w-3 h-3" />
+                            {getPurchasedInCategory(category.id).length} dibeli
+                          </Badge>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
                             onClick={() => {
-                              toggleAllItemsInCategory(category.id, false);
-                              refreshData();
-                              toast({ title: "Semua item dibatalkan" });
+                              setMoveCategorySourceId(category.id);
+                              openBulkMoveDialog();
                             }}
-                            title="Batalkan semua centang"
+                            title={`Pindah ${getPurchasedInCategory(category.id).length} item`}
                           >
-                            <XCircle className="w-4 h-4 text-orange-500" />
+                            <ArrowRightLeft className="w-4 h-4 text-primary" />
                           </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => {
-                            setMoveCategorySourceId(category.id);
-                            openBulkMoveDialog();
-                          }}
-                          title={`Pindah ${getPurchasedInCategory(category.id).length} item`}
-                        >
-                          <ArrowRightLeft className="w-4 h-4 text-primary" />
-                        </Button>
                         </>
                       )}
                       <Button
