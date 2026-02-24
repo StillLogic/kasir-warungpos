@@ -102,7 +102,6 @@ export function ShoppingListPage() {
   const [moveCategoryId, setMoveCategoryId] = useState("");
   const [moveNewCategoryName, setMoveNewCategoryName] = useState("");
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
-  const [selectionMode, setSelectionMode] = useState(false);
 
   const { searchQuery, setSearchQuery, isSearchDisabled } = useSearchInput([
     formOpen,
@@ -542,7 +541,7 @@ export function ShoppingListPage() {
     setMoveDialogOpen(false);
     setItemsToMove([]);
     setSelectedItemIds(new Set());
-    setSelectionMode(false);
+    
     refreshData();
 
     toast({
@@ -576,65 +575,47 @@ export function ShoppingListPage() {
           />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {selectionMode ? (
+          {selectedItemIds.size > 0 && (
+            <Button
+              onClick={() => {
+                openMoveDialog(items.filter((i) => selectedItemIds.has(i.id)));
+              }}
+              className="gap-2"
+            >
+              <ArrowRightLeft className="w-4 h-4" />
+              Pindahkan ({selectedItemIds.size})
+            </Button>
+          )}
+          {purchasedItems > 0 && (
             <>
-              <Badge variant="secondary" className="h-9 px-3 text-sm">
-                {selectedItemIds.size} item dipilih
-              </Badge>
               <Button
-                disabled={selectedItemIds.size === 0}
-                onClick={() => {
-                  openMoveDialog(items.filter((i) => selectedItemIds.has(i.id)));
-                }}
-                className="gap-2"
+                variant="outline"
+                onClick={() => setArchiveConfirmOpen(true)}
+                className="gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
               >
-                <ArrowRightLeft className="w-4 h-4" />
-                Pindahkan
+                <Archive className="w-4 h-4" />
+                Arsipkan ({purchasedItems})
               </Button>
               <Button
                 variant="outline"
-                onClick={() => {
-                  setSelectionMode(false);
-                  setSelectedItemIds(new Set());
-                }}
+                onClick={() => setClearConfirmOpen(true)}
+                className="gap-2 text-destructive hover:text-destructive"
               >
-                Batal
-              </Button>
-            </>
-          ) : (
-            <>
-              {purchasedItems > 0 && (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={() => setArchiveConfirmOpen(true)}
-                    className="gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                  >
-                    <Archive className="w-4 h-4" />
-                    Arsipkan ({purchasedItems})
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setClearConfirmOpen(true)}
-                    className="gap-2 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Hapus Dibeli ({purchasedItems})
-                  </Button>
-                </>
-              )}
-              {categories.length > 0 && (
-                <Button variant="outline" onClick={handleExportPDF}>
-                  <FileDown className="h-4 w-4 mr-2" />
-                  Export PDF
-                </Button>
-              )}
-              <Button variant="outline" onClick={() => setCategoryFormOpen(true)}>
-                <FolderPlus className="h-4 w-4 mr-2" />
-                Kategori
+                <Trash2 className="w-4 h-4" />
+                Hapus Dibeli ({purchasedItems})
               </Button>
             </>
           )}
+          {categories.length > 0 && (
+            <Button variant="outline" onClick={handleExportPDF}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Export PDF
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => setCategoryFormOpen(true)}>
+            <FolderPlus className="h-4 w-4 mr-2" />
+            Kategori
+          </Button>
         </div>
       </div>
 
@@ -695,65 +676,22 @@ export function ShoppingListPage() {
                       </CardTitle>
                     </button>
                     <div className="flex gap-1">
-                      {selectionMode ? (
-                        categoryItems.length > 0 && (() => {
-                          const allSelected = categoryItems.every((i) => selectedItemIds.has(i.id));
-                          return (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => {
-                                const next = new Set(selectedItemIds);
-                                if (allSelected) {
-                                  categoryItems.forEach((i) => next.delete(i.id));
-                                } else {
-                                  categoryItems.forEach((i) => next.add(i.id));
-                                }
-                                setSelectedItemIds(next);
-                              }}
-                              title={allSelected ? "Batal pilih semua" : "Pilih semua"}
-                            >
-                              {allSelected ? (
-                                <XCircle className="w-4 h-4" />
-                              ) : (
-                                <CheckSquare className="w-4 h-4" />
-                              )}
-                            </Button>
-                          );
-                        })()
-                      ) : (
-                        categoryItems.length > 0 && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleToggleAllInCategory(category.id)}
-                              title={
-                                allPurchased ? "Batalkan semua" : "Centang semua"
-                              }
-                            >
-                              {allPurchased ? (
-                                <XCircle className="w-4 h-4 text-orange-500" />
-                              ) : (
-                                <CheckSquare className="w-4 h-4 text-green-600" />
-                              )}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => {
-                                setSelectionMode(true);
-                                setSelectedItemIds(new Set());
-                              }}
-                              title="Pilih untuk pindah"
-                            >
-                              <ArrowRightLeft className="w-4 h-4" />
-                            </Button>
-                          </>
-                        )
+                      {categoryItems.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleToggleAllInCategory(category.id)}
+                          title={
+                            allPurchased ? "Batalkan semua" : "Centang semua"
+                          }
+                        >
+                          {allPurchased ? (
+                            <XCircle className="w-4 h-4 text-orange-500" />
+                          ) : (
+                            <CheckSquare className="w-4 h-4 text-green-600" />
+                          )}
+                        </Button>
                       )}
                       <Button
                         variant="ghost"
@@ -816,44 +754,51 @@ export function ShoppingListPage() {
                                   item.isPurchased &&
                                     "bg-green-50 dark:bg-green-950/30",
                                 )}
-                              >
+                               >
                                 <td className="py-1.5 px-2 text-center">
-                                  {selectionMode ? (
-                                    <Checkbox
-                                      checked={selectedItemIds.has(item.id)}
-                                      onCheckedChange={() => {
-                                        const next = new Set(selectedItemIds);
-                                        if (next.has(item.id)) {
-                                          next.delete(item.id);
-                                        } else {
-                                          next.add(item.id);
-                                        }
-                                        setSelectedItemIds(next);
-                                      }}
-                                    />
-                                  ) : (
-                                    <Checkbox
-                                      checked={item.isPurchased}
-                                      onCheckedChange={() =>
-                                        handleTogglePurchased(item.id)
-                                      }
-                                    />
-                                  )}
+                                  <Checkbox
+                                    checked={item.isPurchased}
+                                    onCheckedChange={() =>
+                                      handleTogglePurchased(item.id)
+                                    }
+                                  />
                                 </td>
                                 <td
                                   className={cn(
-                                    "py-1.5 pr-1 pl-0 font-medium",
+                                    "py-1.5 pr-1 pl-0 font-medium cursor-pointer",
                                     item.isPurchased &&
                                       "line-through text-muted-foreground",
+                                    selectedItemIds.has(item.id) &&
+                                      "text-primary",
                                   )}
+                                  onClick={() => {
+                                    const next = new Set(selectedItemIds);
+                                    if (next.has(item.id)) {
+                                      next.delete(item.id);
+                                    } else {
+                                      next.add(item.id);
+                                    }
+                                    setSelectedItemIds(next);
+                                  }}
                                 >
                                   {item.productName}
                                 </td>
                                 <td
                                   className={cn(
-                                    "py-1.5 pr-1 pl-0 text-muted-foreground",
+                                    "py-1.5 pr-1 pl-0 text-muted-foreground cursor-pointer",
                                     item.isPurchased && "line-through",
+                                    selectedItemIds.has(item.id) &&
+                                      "text-primary",
                                   )}
+                                  onClick={() => {
+                                    const next = new Set(selectedItemIds);
+                                    if (next.has(item.id)) {
+                                      next.delete(item.id);
+                                    } else {
+                                      next.add(item.id);
+                                    }
+                                    setSelectedItemIds(next);
+                                  }}
                                 >
                                   {item.brand || "-"}
                                 </td>
@@ -866,29 +811,40 @@ export function ShoppingListPage() {
                                   {item.quantity} {item.unit}
                                 </td>
                                 <td className="py-1.5 px-1">
-                                  {!selectionMode && (
-                                    <div className="flex gap-1 justify-end">
+                                  <div className="flex gap-1 justify-end">
+                                    {selectedItemIds.has(item.id) && (
                                       <Button
                                         variant="ghost"
                                         size="icon"
                                         className="h-8 w-8"
-                                        onClick={() => openEditItemDialog(item)}
+                                        onClick={() => openMoveDialog(
+                                          items.filter((i) => selectedItemIds.has(i.id)),
+                                        )}
+                                        title="Pindah kategori"
                                       >
-                                        <Pencil className="w-4 h-4" />
+                                        <ArrowRightLeft className="w-4 h-4 text-primary" />
                                       </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-destructive hover:text-destructive"
-                                        onClick={() => {
-                                          setItemToDelete(item.id);
-                                          setDeleteConfirmOpen(true);
-                                        }}
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                      </Button>
-                                    </div>
-                                  )}
+                                    )}
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => openEditItemDialog(item)}
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-destructive hover:text-destructive"
+                                      onClick={() => {
+                                        setItemToDelete(item.id);
+                                        setDeleteConfirmOpen(true);
+                                      }}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
                                 </td>
                               </tr>
                             ))}
