@@ -314,7 +314,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       <div className="p-3 border-t border-border">
         <Link
-          to="/"
+          to="/cashier"
           onClick={() => isMobile && setSidebarOpen(false)}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
         >

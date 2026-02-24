@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => ({
         display: "standalone",
         orientation: "portrait",
         scope: "/",
-        start_url: "/",
+        start_url: "/cashier",
         icons: [
           {
             src: "/pwa-192x192.png",
