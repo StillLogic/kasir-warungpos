@@ -1466,15 +1466,15 @@ export function ShoppingListPage() {
       </Dialog>
 
       <Dialog open={!!viewPhoto} onOpenChange={() => setViewPhoto(null)}>
-        <DialogContent className="sm:max-w-md p-2">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-md p-0 border-none bg-transparent shadow-none [&>button]:hidden">
+          <DialogHeader className="sr-only">
             <DialogTitle>Foto Produk</DialogTitle>
           </DialogHeader>
           {viewPhoto && (
             <img
               src={viewPhoto}
               alt="Foto produk"
-              className="w-full rounded-lg object-contain max-h-[70vh]"
+              className="w-full rounded-lg object-contain max-h-[80vh]"
             />
           )}
         </DialogContent>
