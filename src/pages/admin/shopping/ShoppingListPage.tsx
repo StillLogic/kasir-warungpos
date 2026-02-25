@@ -802,7 +802,7 @@ export function ShoppingListPage() {
                         >
                           <thead>
                             <tr className="border-b">
-                              <th className="w-10 py-1.5 px-2 text-center">
+                              <th className="w-7 py-1.5 px-1 text-center">
                                 <Checkbox
                                   checked={
                                     categoryItems.length > 0 &&
@@ -836,7 +836,7 @@ export function ShoppingListPage() {
                                     "bg-green-50 dark:bg-green-950/30",
                                 )}
                               >
-                                <td className="py-1.5 px-2 text-center">
+                                <td className="py-1.5 px-1 text-center">
                                   <Checkbox
                                     checked={selectedItems.has(item.id)}
                                     onCheckedChange={() =>
