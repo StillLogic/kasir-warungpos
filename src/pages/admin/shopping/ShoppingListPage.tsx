@@ -813,7 +813,7 @@ export function ShoppingListPage() {
                                   }
                                 />
                               </th>
-                              <th className="w-8 py-1.5 px-0"></th>
+                              <th className="w-6 py-1.5 px-0"></th>
                               <th className="w-[30%] text-left py-1.5 pr-1 pl-0 font-medium text-muted-foreground">
                                 Nama Produk
                               </th>
