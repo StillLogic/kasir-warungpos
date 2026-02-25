@@ -813,6 +813,7 @@ export function ShoppingListPage() {
                                   }
                                 />
                               </th>
+                              <th className="w-8 py-1.5 px-0"></th>
                               <th className="w-[30%] text-left py-1.5 pr-1 pl-0 font-medium text-muted-foreground">
                                 Nama Produk
                               </th>
@@ -843,6 +844,16 @@ export function ShoppingListPage() {
                                     }
                                   />
                                 </td>
+                                <td className="py-1.5 px-0 text-center">
+                                  {item.photo ? (
+                                    <img
+                                      src={item.photo}
+                                      alt=""
+                                      className="w-6 h-6 rounded object-cover cursor-pointer mx-auto"
+                                      onClick={() => setViewPhoto(item.photo!)}
+                                    />
+                                  ) : null}
+                                </td>
                                 <td
                                   className={cn(
                                     "py-1.5 pr-1 pl-0 font-medium",
@@ -850,17 +861,7 @@ export function ShoppingListPage() {
                                       "line-through text-muted-foreground",
                                   )}
                                 >
-                                  <div className="flex items-center gap-1.5">
-                                    {item.photo && (
-                                      <img
-                                        src={item.photo}
-                                        alt=""
-                                        className="w-6 h-6 rounded object-cover shrink-0 cursor-pointer"
-                                        onClick={() => setViewPhoto(item.photo!)}
-                                      />
-                                    )}
-                                    {item.productName}
-                                  </div>
+                                  {item.productName}
                                 </td>
                                 <td
                                   className={cn(
