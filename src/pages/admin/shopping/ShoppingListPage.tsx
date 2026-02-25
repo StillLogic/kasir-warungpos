@@ -81,6 +81,7 @@ interface BulkItemInput {
   brand: string;
   quantity: string;
   unit: string;
+  photo?: string;
 }
 
 export function ShoppingListPage() {
@@ -141,7 +142,7 @@ export function ShoppingListPage() {
   });
   const [formPhoto, setFormPhoto] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
+  
 
   const [bulkCategoryId, setBulkCategoryId] = useState("");
   const [bulkItems, setBulkItems] = useState<BulkItemInput[]>([]);
@@ -432,6 +433,7 @@ export function ShoppingListPage() {
         brand: item.brand.trim(),
         quantity: parseInt(item.quantity) || 1,
         unit: item.unit,
+        photo: item.photo || undefined,
       });
     });
 
@@ -1080,7 +1082,24 @@ export function ShoppingListPage() {
                     variant="outline"
                     size="sm"
                     className="gap-2"
-                    onClick={() => cameraInputRef.current?.click()}
+                    onClick={() => {
+                      const input = document.createElement("input");
+                      input.type = "file";
+                      input.accept = "image/*";
+                      input.setAttribute("capture", "environment");
+                      input.onchange = async (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) {
+                          try {
+                            const webp = await convertToWebP(file);
+                            setFormPhoto(webp);
+                          } catch {
+                            toast({ title: "Error", description: "Gagal memproses gambar", variant: "destructive" });
+                          }
+                        }
+                      };
+                      input.click();
+                    }}
                   >
                     <Camera className="w-4 h-4" />
                     Kamera
@@ -1091,25 +1110,6 @@ export function ShoppingListPage() {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    try {
-                      const webp = await convertToWebP(file);
-                      setFormPhoto(webp);
-                    } catch {
-                      toast({ title: "Error", description: "Gagal memproses gambar", variant: "destructive" });
-                    }
-                  }
-                  e.target.value = "";
-                }}
-              />
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
                 className="hidden"
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
@@ -1218,6 +1218,63 @@ export function ShoppingListPage() {
                       onUnitsChanged={refreshData}
                     />
                   </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Foto (Opsional)</Label>
+                  {item.photo ? (
+                    <div className="relative inline-block">
+                      <img src={item.photo} alt="" className="w-16 h-16 object-cover rounded border" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full"
+                        onClick={() => updateBulkItem(item.id, "photo", "")}
+                      >
+                        <X className="w-2.5 h-2.5" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-1.5">
+                      <Button type="button" variant="outline" size="sm" className="gap-1 text-xs h-7" onClick={() => {
+                        const input = document.createElement("input");
+                        input.type = "file";
+                        input.accept = "image/*";
+                        input.onchange = async (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) {
+                            try {
+                              const webp = await convertToWebP(file);
+                              updateBulkItem(item.id, "photo", webp);
+                            } catch { /* ignore */ }
+                          }
+                        };
+                        input.click();
+                      }}>
+                        <ImageIcon className="w-3 h-3" />
+                        Galeri
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" className="gap-1 text-xs h-7" onClick={() => {
+                        const input = document.createElement("input");
+                        input.type = "file";
+                        input.accept = "image/*";
+                        input.setAttribute("capture", "environment");
+                        input.onchange = async (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) {
+                            try {
+                              const webp = await convertToWebP(file);
+                              updateBulkItem(item.id, "photo", webp);
+                            } catch { /* ignore */ }
+                          }
+                        };
+                        input.click();
+                      }}>
+                        <Camera className="w-3 h-3" />
+                        Kamera
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
