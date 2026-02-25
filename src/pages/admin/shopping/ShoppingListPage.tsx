@@ -1047,10 +1047,11 @@ export function ShoppingListPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Foto Produk (Opsional)</Label>
+             <div className="space-y-2">
               {formPhoto ? (
-                <div className="relative inline-block">
+                <div>
+                  <Label className="mb-2 block">Foto Produk (Opsional)</Label>
+                  <div className="relative inline-block">
                   <img
                     src={formPhoto}
                     alt="Preview"
@@ -1064,47 +1065,51 @@ export function ShoppingListPage() {
                     onClick={() => setFormPhoto(null)}
                   >
                     <X className="w-3 h-3" />
-                  </Button>
+                 </Button>
+                  </div>
                 </div>
               ) : (
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                    Galeri
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => {
-                      const input = document.createElement("input");
-                      input.type = "file";
-                      input.accept = "image/*";
-                      input.setAttribute("capture", "environment");
-                      input.onchange = async (e) => {
-                        const file = (e.target as HTMLInputElement).files?.[0];
-                        if (file) {
-                          try {
-                            const webp = await convertToWebP(file);
-                            setFormPhoto(webp);
-                          } catch {
-                            toast({ title: "Error", description: "Gagal memproses gambar", variant: "destructive" });
+                <div>
+                  <Label className="mb-2 block">Foto Produk (Opsional)</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                      Galeri
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => {
+                        const input = document.createElement("input");
+                        input.type = "file";
+                        input.accept = "image/*";
+                        input.setAttribute("capture", "environment");
+                        input.onchange = async (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) {
+                            try {
+                              const webp = await convertToWebP(file);
+                              setFormPhoto(webp);
+                            } catch {
+                              toast({ title: "Error", description: "Gagal memproses gambar", variant: "destructive" });
+                            }
                           }
-                        }
-                      };
-                      input.click();
-                    }}
-                  >
-                    <Camera className="w-4 h-4" />
-                    Kamera
-                  </Button>
+                        };
+                        input.click();
+                      }}
+                    >
+                      <Camera className="w-4 h-4" />
+                      Kamera
+                    </Button>
+                  </div>
                 </div>
               )}
               <input
