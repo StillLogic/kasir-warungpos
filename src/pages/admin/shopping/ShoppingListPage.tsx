@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { ShoppingCategory, ShoppingItem } from "@/types/shopping-list";
 import {
   getShoppingCategories,
@@ -64,7 +64,11 @@ import {
   Archive,
   ArrowRightLeft,
   MoreVertical,
+  Camera,
+  ImageIcon,
+  X,
 } from "lucide-react";
+import { convertToWebP } from "@/lib/image-utils";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchInput } from "@/hooks/use-search-input";
 import { handleTitleCaseChange } from "@/lib/text";
@@ -122,6 +126,7 @@ export function ShoppingListPage() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+  const [viewPhoto, setViewPhoto] = useState<string | null>(null);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
     new Set(getShoppingCategories().map((c) => c.id)),
   );
@@ -134,6 +139,9 @@ export function ShoppingListPage() {
     quantity: "",
     unit: units[0] || "Pcs",
   });
+  const [formPhoto, setFormPhoto] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const [bulkCategoryId, setBulkCategoryId] = useState("");
   const [bulkItems, setBulkItems] = useState<BulkItemInput[]>([]);
@@ -332,6 +340,7 @@ export function ShoppingListPage() {
       quantity: item.quantity.toString(),
       unit: item.unit,
     });
+    setFormPhoto(item.photo || null);
     setFormOpen(true);
   };
 
@@ -379,6 +388,7 @@ export function ShoppingListPage() {
         brand: formData.brand.trim(),
         quantity,
         unit: formData.unit,
+        photo: formPhoto || undefined,
       });
       toast({ title: "Berhasil", description: "Item diperbarui" });
     } else {
@@ -389,12 +399,14 @@ export function ShoppingListPage() {
         brand: formData.brand.trim(),
         quantity,
         unit: formData.unit,
+        photo: formPhoto || undefined,
       });
       toast({ title: "Berhasil", description: "Item ditambahkan" });
     }
 
     setFormOpen(false);
     setEditingItem(null);
+    setFormPhoto(null);
     refreshData();
   };
 
@@ -836,7 +848,17 @@ export function ShoppingListPage() {
                                       "line-through text-muted-foreground",
                                   )}
                                 >
-                                  {item.productName}
+                                  <div className="flex items-center gap-1.5">
+                                    {item.photo && (
+                                      <img
+                                        src={item.photo}
+                                        alt=""
+                                        className="w-6 h-6 rounded object-cover shrink-0 cursor-pointer"
+                                        onClick={() => setViewPhoto(item.photo!)}
+                                      />
+                                    )}
+                                    {item.productName}
+                                  </div>
                                 </td>
                                 <td
                                   className={cn(
@@ -959,7 +981,7 @@ export function ShoppingListPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+      <Dialog open={formOpen} onOpenChange={(open) => { if (!open) { setFormPhoto(null); setEditingItem(null); } setFormOpen(open); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Item</DialogTitle>
@@ -1020,6 +1042,88 @@ export function ShoppingListPage() {
                   onUnitsChanged={refreshData}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Foto Produk (Opsional)</Label>
+              {formPhoto ? (
+                <div className="relative inline-block">
+                  <img
+                    src={formPhoto}
+                    alt="Preview"
+                    className="w-24 h-24 object-cover rounded-lg border"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                    onClick={() => setFormPhoto(null)}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    Galeri
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => cameraInputRef.current?.click()}
+                  >
+                    <Camera className="w-4 h-4" />
+                    Kamera
+                  </Button>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    try {
+                      const webp = await convertToWebP(file);
+                      setFormPhoto(webp);
+                    } catch {
+                      toast({ title: "Error", description: "Gagal memproses gambar", variant: "destructive" });
+                    }
+                  }
+                  e.target.value = "";
+                }}
+              />
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    try {
+                      const webp = await convertToWebP(file);
+                      setFormPhoto(webp);
+                    } catch {
+                      toast({ title: "Error", description: "Gagal memproses gambar", variant: "destructive" });
+                    }
+                  }
+                  e.target.value = "";
+                }}
+              />
             </div>
           </div>
           <div className="flex gap-3 pt-4">
@@ -1301,6 +1405,21 @@ export function ShoppingListPage() {
               Pindahkan
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewPhoto} onOpenChange={() => setViewPhoto(null)}>
+        <DialogContent className="sm:max-w-md p-2">
+          <DialogHeader>
+            <DialogTitle>Foto Produk</DialogTitle>
+          </DialogHeader>
+          {viewPhoto && (
+            <img
+              src={viewPhoto}
+              alt="Foto produk"
+              className="w-full rounded-lg object-contain max-h-[70vh]"
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

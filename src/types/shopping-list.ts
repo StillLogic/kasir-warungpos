@@ -13,6 +13,7 @@ export interface ShoppingItem {
   quantity: number;
   unit: string;
   isPurchased: boolean;
+  photo?: string;
   createdAt: string;
 }
 
