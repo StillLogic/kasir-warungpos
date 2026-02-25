@@ -1,14 +1,13 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Product, ProductFormData } from "@/types/pos";
 import { generateSKU, generateSKUWithExisting } from "@/lib/sku";
 import { getCategoryNames, getCategories } from "@/database/categories";
 import { getMarkupForPrice, calculateSellingPrices } from "@/database/markup";
 import { getUnitNames } from "@/database/units";
 import { toTitleCase } from "@/lib/text";
-import { compressToWebP } from "@/lib/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PriceInput } from "@/components/ui/price-input";
@@ -26,9 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calculator, Info, Plus, Trash2, Camera, X, Image as ImageIcon } from "lucide-react";
+import { Calculator, Info, Plus, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
-import { useToast } from "@/hooks/use-toast";
 
 interface BulkProductInput {
   id: string;
@@ -41,7 +39,6 @@ interface BulkProductInput {
   wholesaleMinQty: string;
   stock: string;
   unit: string;
-  image?: string;
 }
 
 const productSchema = z.object({
@@ -82,9 +79,6 @@ export function ProductForm({
   const [retailPriceStr, setRetailPriceStr] = useState("");
   const [wholesalePriceStr, setWholesalePriceStr] = useState("");
   const [bulkProducts, setBulkProducts] = useState<BulkProductInput[]>([]);
-  const [editImage, setEditImage] = useState<string | undefined>(undefined);
-  const editFileRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
 
   const categories = useMemo(() => getCategoryNames(), []);
   const units = useMemo(() => getUnitNames(), []);
@@ -152,12 +146,10 @@ export function ProductForm({
         setWholesalePriceStr(
           product.wholesalePrice > 0 ? String(product.wholesalePrice) : "",
         );
-        setEditImage(product.image);
       } else {
         setCostPriceStr("");
         setRetailPriceStr("");
         setWholesalePriceStr("");
-        setEditImage(undefined);
       }
     }
   }, [open, product]);
@@ -215,28 +207,12 @@ export function ProductForm({
     }
   }, [costPrice, category]);
 
-  const handleImagePick = async (file: File, target: "edit" | string) => {
-    try {
-      const webp = await compressToWebP(file);
-      if (target === "edit") {
-        setEditImage(webp);
-      } else {
-        setBulkProducts((prev) =>
-          prev.map((p) => (p.id === target ? { ...p, image: webp } : p)),
-        );
-      }
-    } catch {
-      toast({ title: "Gagal", description: "Gagal memproses gambar", variant: "destructive" });
-    }
-  };
-
   const handleFormSubmit = (data: ProductFormData) => {
-    onSubmit({ ...data, image: editImage });
+    onSubmit(data);
     reset();
     setCostPriceStr("");
     setRetailPriceStr("");
     setWholesalePriceStr("");
-    setEditImage(undefined);
     onClose();
   };
 
@@ -246,7 +222,6 @@ export function ProductForm({
     setCostPriceStr("");
     setRetailPriceStr("");
     setWholesalePriceStr("");
-    setEditImage(undefined);
     onClose();
   };
 
@@ -549,51 +524,6 @@ export function ProductForm({
                 <p className="text-sm text-destructive">
                   {errors.stock.message}
                 </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Camera className="h-4 w-4" />
-                Foto Produk
-                <span className="text-xs text-muted-foreground font-normal">(opsional)</span>
-              </Label>
-              {editImage ? (
-                <div className="relative w-24 h-24">
-                  <img src={editImage} alt="Preview" className="w-24 h-24 rounded-lg object-cover border border-border" />
-                  <button
-                    type="button"
-                    onClick={() => setEditImage(undefined)}
-                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => editFileRef.current?.click()}
-                    className="gap-1"
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                    Pilih Foto
-                  </Button>
-                  <input
-                    ref={editFileRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) handleImagePick(f, "edit");
-                      e.target.value = "";
-                    }}
-                  />
-                </div>
               )}
             </div>
 

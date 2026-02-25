@@ -15,7 +15,6 @@ function toRecord(p: Product): ProductRecord {
     wq: p.wholesaleMinQty,
     st: p.stock,
     u: p.unit,
-    ...(p.image && { img: p.image }),
     ca:
       typeof p.createdAt === "string"
         ? toUnix(p.createdAt)
@@ -39,7 +38,6 @@ function fromRecord(r: ProductRecord): Product {
     wholesaleMinQty: r.wq,
     stock: r.st,
     unit: r.u,
-    ...(r.img && { image: r.img }),
     createdAt: fromUnix(r.ca),
     updatedAt: fromUnix(r.ua),
   };
@@ -67,7 +65,6 @@ export async function addProductAsync(
     wq: product.wholesaleMinQty,
     st: product.stock,
     u: product.unit,
-    ...(product.image && { img: product.image }),
     ca: now,
     ua: now,
   };
@@ -94,7 +91,6 @@ export async function updateProductAsync(
     ...(data.wholesaleMinQty !== undefined && { wq: data.wholesaleMinQty }),
     ...(data.stock !== undefined && { st: data.stock }),
     ...(data.unit !== undefined && { u: data.unit }),
-    ...(data.image !== undefined && { img: data.image || undefined }),
     ua: toUnix(new Date()),
   };
 
