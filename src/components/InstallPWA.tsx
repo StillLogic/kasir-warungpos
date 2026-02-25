@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Download, X } from "lucide-react";
 
@@ -55,9 +54,7 @@ export function InstallPWA() {
     sessionStorage.setItem("pwa-dismissed", "true");
   };
 
-  const location = useLocation();
-
-  if (isInstalled || !showInstall || sessionStorage.getItem("pwa-dismissed") || location.pathname === "/") {
+  if (isInstalled || !showInstall || sessionStorage.getItem("pwa-dismissed")) {
     return null;
   }
 

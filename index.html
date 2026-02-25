@@ -7,32 +7,14 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <meta name="format-detection" content="telephone=no" />
-
-    <title>WarungPOS - Aplikasi Kasir Gratis untuk Warung & Toko</title>
+    <title>WarungPOS - Aplikasi Kasir</title>
     <meta
       name="description"
-      content="Aplikasi kasir (POS) gratis dan offline untuk warung, toko kelontong, dan UMKM. Kelola produk, stok, transaksi, hutang, dan laporan penjualan dengan mudah."
-    />
-    <meta
-      name="keywords"
-      content="aplikasi kasir, POS, point of sale, kasir warung, kasir toko, aplikasi kasir gratis, kasir offline, UMKM, toko kelontong, manajemen stok"
+      content="Aplikasi Point of Sale untuk warung dan toko kecil. Kelola produk, stok, dan transaksi dengan mudah."
     />
     <meta name="author" content="WarungPOS" />
-    <meta
-      name="robots"
-      content="index, follow, max-snippet:-1, max-image-preview:large"
-    />
-    <link rel="canonical" href="https://warungpos.stilllogic.my.id/" />
 
-    <link rel="icon" href="/favicon.webp" type="image/webp" />
-    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" /></noscript>
-
+    <!-- PWA Meta Tags -->
     <meta
       name="theme-color"
       content="#f5f7fa"
@@ -47,65 +29,26 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="WarungPOS" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="WarungPOS" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://warungpos.stilllogic.my.id/" />
-    <meta
-      property="og:title"
-      content="WarungPOS - Aplikasi Kasir Gratis untuk Warung & Toko"
-    />
+    <!-- Open Graph -->
+    <meta property="og:title" content="WarungPOS - Aplikasi Kasir" />
     <meta
       property="og:description"
-      content="Aplikasi kasir (POS) gratis dan offline untuk warung, toko kelontong, dan UMKM. Kelola produk, stok, transaksi, dan laporan."
+      content="Aplikasi Point of Sale untuk warung dan toko kecil"
     />
-    <meta
-      property="og:image"
-      content="https://warungpos.stilllogic.my.id/pwa-512x512.png"
-    />
-    <meta property="og:locale" content="id_ID" />
-    <meta property="og:site_name" content="WarungPOS" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/pwa-512x512.png" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="WarungPOS - Aplikasi Kasir Gratis" />
-    <meta
-      name="twitter:description"
-      content="Aplikasi kasir offline gratis untuk warung dan toko kecil."
-    />
-    <meta
-      name="twitter:image"
-      content="https://warungpos.stilllogic.my.id/pwa-512x512.png"
-    />
-
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "WarungPOS",
-        "applicationCategory": "BusinessApplication",
-        "operatingSystem": "Web",
-        "description": "Aplikasi kasir (POS) gratis dan offline untuk warung, toko kelontong, dan UMKM Indonesia.",
-        "url": "https://warungpos.stilllogic.my.id",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "IDR"
-        },
-        "featureList": [
-          "Manajemen Produk & Stok",
-          "Transaksi Kasir Cepat",
-          "Laporan Penjualan",
-          "Pencatatan Hutang",
-          "Daftar Belanja",
-          "Mode Offline (PWA)",
-          "Import CSV"
-        ],
-        "inLanguage": "id"
-      }
-    </script>
+    <meta name="twitter:title" content="WarungPOS - Aplikasi Kasir" />
+    <meta name="twitter:image" content="/pwa-512x512.png" />
   </head>
 
   <body>
+    <link rel="icon" href="/favicon.png" type="image/png" />
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

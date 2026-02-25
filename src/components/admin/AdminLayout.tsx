@@ -167,12 +167,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img
-            src="/favicon.webp"
+            src="/favicon.png"
             alt="WarungPOS Logo"
             className="w-8 h-8 rounded-lg"
-            width={32}
-            height={32}
-            loading="eager"
           />
           <span className="font-semibold">Admin Panel</span>
         </div>
@@ -317,7 +314,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       <div className="p-3 border-t border-border">
         <Link
-          to="/cashier"
+          to="/"
           onClick={() => isMobile && setSidebarOpen(false)}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
         >
@@ -329,9 +326,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="h-dvh bg-background flex overflow-hidden">
+    <div className="h-dvh bg-background flex overflow-hidden animate-fade-in">
       {!isMobile && (
-        <aside className="w-64 bg-card border-r border-border shrink-0">
+        <aside className="w-64 bg-card border-r border-border shrink-0 animate-slide-in-left">
           <SidebarContent />
         </aside>
       )}
@@ -376,7 +373,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         <main
-          className="flex-1 overflow-auto p-4 lg:p-6"
+          className="flex-1 overflow-auto p-4 lg:p-6 animate-fade-in"
           data-scrollable
         >
           {children}
