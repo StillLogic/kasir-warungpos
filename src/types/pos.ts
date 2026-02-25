@@ -9,6 +9,7 @@ export interface Product {
   wholesaleMinQty: number;
   stock: number;
   unit: string;
+  image?: string;
   createdAt: string;
   updatedAt: string;
 }

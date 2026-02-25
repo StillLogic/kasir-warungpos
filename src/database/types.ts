@@ -9,6 +9,7 @@ export interface ProductRecord {
   wq: number;
   st: number;
   u: string;
+  img?: string;
   ca: number;
   ua: number;
 }
