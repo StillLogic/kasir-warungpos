@@ -1051,7 +1051,7 @@ export function ShoppingListPage() {
               {formPhoto ? (
                 <div>
                   <Label className="mb-2 block">Foto Produk (Opsional)</Label>
-                  <div className="relative inline-block">
+                  <div className="relative w-fit">
                   <img
                     src={formPhoto}
                     alt="Preview"
@@ -1228,7 +1228,7 @@ export function ShoppingListPage() {
                 <div className="space-y-1">
                   <Label className="text-xs">Foto (Opsional)</Label>
                   {item.photo ? (
-                    <div className="relative inline-block">
+                    <div className="relative w-fit">
                       <img src={item.photo} alt="" className="w-16 h-16 object-cover rounded border" />
                       <Button
                         type="button"
