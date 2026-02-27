@@ -77,7 +77,7 @@ export function CategorySelect({
     const result = addCategory(trimmedName, prefix);
     if (result) {
       onCategoriesChanged?.();
-      setTimeout(() => onValueChange(result.name), 0);
+      onValueChange(result.name);
       toast({
         title: "Berhasil",
         description: `Kategori "${result.name}" ditambahkan ke Master Data`,
