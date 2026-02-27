@@ -123,7 +123,7 @@ export function ProductForm({
   const category = watch("category");
   const costPrice = watch("costPrice");
 
-  // Initialize bulk products when dialog opens for adding
+  // Initialize bulk products when dialog opens for adding (only on open, not on units/categories refresh)
   useEffect(() => {
     if (open && !isEditing) {
       const defaultCategory = categories[0] || "Lainnya";
@@ -146,7 +146,8 @@ export function ProductForm({
         },
       ]);
     }
-  }, [open, isEditing, categories, units]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isEditing]);
 
   // Edit mode: detect if product has wholesale
   useEffect(() => {
