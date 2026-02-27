@@ -64,8 +64,8 @@ export function UnitSelect({
     // Add to master data
     const result = addUnit(trimmed);
     if (result) {
-      onValueChange(result.name);
       onUnitsChanged?.();
+      setTimeout(() => onValueChange(result.name), 0);
       toast({
         title: "Berhasil",
         description: `Satuan "${result.name}" ditambahkan ke Master Data`,
