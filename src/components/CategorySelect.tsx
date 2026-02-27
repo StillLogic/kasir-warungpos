@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { flushSync } from "react-dom";
 import {
   Select,
   SelectContent,
@@ -66,7 +67,9 @@ export function CategorySelect({
       (c) => c.toLowerCase() === trimmedName.toLowerCase(),
     );
     if (existing) {
-      onValueChange(existing);
+      flushSync(() => {
+        onValueChange(existing);
+      });
       setIsCustom(false);
       setCustomName("");
       setCustomPrefix("");
@@ -76,8 +79,10 @@ export function CategorySelect({
     const prefix = customPrefix.trim() || generatePrefix(trimmedName);
     const result = addCategory(trimmedName, prefix);
     if (result) {
-      onCategoriesChanged?.();
-      onValueChange(result.name);
+      flushSync(() => {
+        onCategoriesChanged?.();
+        onValueChange(result.name);
+      });
       toast({
         title: "Berhasil",
         description: `Kategori "${result.name}" ditambahkan ke Master Data`,
