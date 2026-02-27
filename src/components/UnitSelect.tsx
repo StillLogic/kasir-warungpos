@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { flushSync } from "react-dom";
 import {
   Select,
   SelectContent,
@@ -56,9 +55,7 @@ export function UnitSelect({
       (u) => u.toLowerCase() === trimmed.toLowerCase(),
     );
     if (existing) {
-      flushSync(() => {
-        onValueChange(existing);
-      });
+      onValueChange(existing);
       setIsCustom(false);
       setCustomUnit("");
       return;
@@ -67,18 +64,14 @@ export function UnitSelect({
     // Add to master data
     const result = addUnit(trimmed);
     if (result) {
-      flushSync(() => {
-        onUnitsChanged?.();
-        onValueChange(result.name);
-      });
+      onValueChange(result.name);
+      onUnitsChanged?.();
       toast({
         title: "Berhasil",
         description: `Satuan "${result.name}" ditambahkan ke Master Data`,
       });
     } else {
-      flushSync(() => {
-        onValueChange(trimmed);
-      });
+      onValueChange(trimmed);
     }
 
     setIsCustom(false);
