@@ -76,8 +76,8 @@ export function CategorySelect({
     const prefix = customPrefix.trim() || generatePrefix(trimmedName);
     const result = addCategory(trimmedName, prefix);
     if (result) {
-      onValueChange(result.name);
       onCategoriesChanged?.();
+      setTimeout(() => onValueChange(result.name), 0);
       toast({
         title: "Berhasil",
         description: `Kategori "${result.name}" ditambahkan ke Master Data`,
