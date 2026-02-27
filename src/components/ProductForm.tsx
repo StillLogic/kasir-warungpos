@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Product, ProductFormData } from "@/types/pos";
 import { generateSKU, generateSKUWithExisting } from "@/lib/sku";
 import { getCategoryNames, getCategories } from "@/database/categories";
@@ -12,6 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PriceInput } from "@/components/ui/price-input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CategorySelect } from "@/components/CategorySelect";
+import { UnitSelect } from "@/components/UnitSelect";
 import {
   Dialog,
   DialogContent,
@@ -32,13 +35,13 @@ interface BulkProductInput {
   id: string;
   name: string;
   sku: string;
-  category: string;
   costPrice: string;
   retailPrice: string;
   wholesalePrice: string;
   wholesaleMinQty: string;
   stock: string;
   unit: string;
+  hasWholesale: boolean;
 }
 
 const productSchema = z.object({
@@ -78,10 +81,22 @@ export function ProductForm({
   const [costPriceStr, setCostPriceStr] = useState("");
   const [retailPriceStr, setRetailPriceStr] = useState("");
   const [wholesalePriceStr, setWholesalePriceStr] = useState("");
+  const [editHasWholesale, setEditHasWholesale] = useState(false);
+  
+  // Bulk add state
   const [bulkProducts, setBulkProducts] = useState<BulkProductInput[]>([]);
+  const [bulkCategory, setBulkCategory] = useState("");
+  
+  const [categories, setCategories] = useState<string[]>(() => getCategoryNames());
+  const [units, setUnits] = useState<string[]>(() => getUnitNames());
 
-  const categories = useMemo(() => getCategoryNames(), []);
-  const units = useMemo(() => getUnitNames(), []);
+  const refreshCategories = useCallback(() => {
+    setCategories(getCategoryNames());
+  }, []);
+
+  const refreshUnits = useCallback(() => {
+    setUnits(getUnitNames());
+  }, []);
 
   const {
     register,
@@ -108,44 +123,44 @@ export function ProductForm({
   const category = watch("category");
   const costPrice = watch("costPrice");
 
+  // Initialize bulk products when dialog opens for adding
   useEffect(() => {
     if (open && !isEditing) {
       const defaultCategory = categories[0] || "Lainnya";
       const defaultUnit = units[0] || "Pcs";
-      const generatedSKUs: string[] = [];
-      const initialProducts = [];
+      setBulkCategory(defaultCategory);
 
-      for (let i = 0; i < 1; i++) {
-        const sku = generateSKUWithExisting(defaultCategory, generatedSKUs);
-        generatedSKUs.push(sku);
-        initialProducts.push({
+      const sku = generateSKUWithExisting(defaultCategory, []);
+      setBulkProducts([
+        {
           id: crypto.randomUUID(),
           name: "",
-          sku: sku,
-          category: defaultCategory,
+          sku,
           costPrice: "",
           retailPrice: "",
           wholesalePrice: "",
           wholesaleMinQty: "10",
           stock: "",
           unit: defaultUnit,
-        });
-      }
-
-      setBulkProducts(initialProducts);
+          hasWholesale: false,
+        },
+      ]);
     }
   }, [open, isEditing, categories, units]);
+
+  // Edit mode: detect if product has wholesale
+  useEffect(() => {
+    if (open && product) {
+      setEditHasWholesale(product.wholesalePrice > 0);
+    }
+  }, [open, product]);
 
   useEffect(() => {
     if (open) {
       if (product) {
         setCostPriceStr(product.costPrice > 0 ? String(product.costPrice) : "");
-        setRetailPriceStr(
-          product.retailPrice > 0 ? String(product.retailPrice) : "",
-        );
-        setWholesalePriceStr(
-          product.wholesalePrice > 0 ? String(product.wholesalePrice) : "",
-        );
+        setRetailPriceStr(product.retailPrice > 0 ? String(product.retailPrice) : "");
+        setWholesalePriceStr(product.wholesalePrice > 0 ? String(product.wholesalePrice) : "");
       } else {
         setCostPriceStr("");
         setRetailPriceStr("");
@@ -182,17 +197,9 @@ export function ProductForm({
       const markup = getMarkupForPrice(costPrice, categoryId);
       if (markup) {
         if (markup.type === "fixed") {
-          setMarkupInfo({
-            retail: markup.retailFixed,
-            wholesale: markup.wholesaleFixed,
-            type: "fixed",
-          });
+          setMarkupInfo({ retail: markup.retailFixed, wholesale: markup.wholesaleFixed, type: "fixed" });
         } else {
-          setMarkupInfo({
-            retail: markup.retailPercent,
-            wholesale: markup.wholesalePercent,
-            type: "percent",
-          });
+          setMarkupInfo({ retail: markup.retailPercent, wholesale: markup.wholesalePercent, type: "percent" });
         }
         const prices = calculateSellingPrices(costPrice, categoryId);
         if (prices) {
@@ -208,6 +215,10 @@ export function ProductForm({
   }, [costPrice, category]);
 
   const handleFormSubmit = (data: ProductFormData) => {
+    if (!editHasWholesale) {
+      data.wholesalePrice = 0;
+      data.wholesaleMinQty = 10;
+    }
     onSubmit(data);
     reset();
     setCostPriceStr("");
@@ -225,11 +236,25 @@ export function ProductForm({
     onClose();
   };
 
+  // Regenerate all SKUs when bulk category changes
+  const updateBulkCategorySKUs = (newCategory: string) => {
+    setBulkCategory(newCategory);
+    setBulkProducts((prev) => {
+      const newProducts: BulkProductInput[] = [];
+      const existingSKUs: string[] = [];
+      for (const p of prev) {
+        const sku = generateSKUWithExisting(newCategory, existingSKUs);
+        existingSKUs.push(sku);
+        newProducts.push({ ...p, sku });
+      }
+      return newProducts;
+    });
+  };
+
   const addBulkProductRow = () => {
-    const defaultCategory = categories[0] || "Lainnya";
     const defaultUnit = units[0] || "Pcs";
     const existingSKUs = bulkProducts.map((p) => p.sku);
-    const newSKU = generateSKUWithExisting(defaultCategory, existingSKUs);
+    const newSKU = generateSKUWithExisting(bulkCategory, existingSKUs);
 
     setBulkProducts([
       ...bulkProducts,
@@ -237,13 +262,13 @@ export function ProductForm({
         id: crypto.randomUUID(),
         name: "",
         sku: newSKU,
-        category: defaultCategory,
         costPrice: "",
         retailPrice: "",
         wholesalePrice: "",
         wholesaleMinQty: "10",
         stock: "",
         unit: defaultUnit,
+        hasWholesale: false,
       },
     ]);
   };
@@ -256,30 +281,19 @@ export function ProductForm({
   const updateBulkProduct = (
     id: string,
     field: keyof BulkProductInput,
-    value: string,
+    value: string | boolean,
   ) => {
     setBulkProducts(
       bulkProducts.map((p) => {
         if (p.id === id) {
           const updated = { ...p, [field]: value };
 
-          if (field === "category") {
-            const existingSKUs = bulkProducts
-              .filter((prod) => prod.id !== id)
-              .map((prod) => prod.sku);
-            updated.sku = generateSKUWithExisting(value, existingSKUs);
-          }
-
-          if (field === "costPrice" || field === "category") {
-            const cost =
-              parseInt(field === "costPrice" ? value : p.costPrice) || 0;
+          if (field === "costPrice") {
+            const cost = parseInt(value as string) || 0;
             if (cost > 0) {
               const allCategories = getCategories();
-              const catData = allCategories.find(
-                (c) => c.name === updated.category,
-              );
+              const catData = allCategories.find((c) => c.name === bulkCategory);
               const categoryId = catData?.id || null;
-
               const prices = calculateSellingPrices(cost, categoryId);
               if (prices) {
                 updated.retailPrice = String(prices.retailPrice);
@@ -297,48 +311,39 @@ export function ProductForm({
 
   const getBulkProductMarkupInfo = (product: BulkProductInput) => {
     const cost = parseInt(product.costPrice) || 0;
-    if (cost > 0 && product.category) {
+    if (cost > 0 && bulkCategory) {
       const allCategories = getCategories();
-      const catData = allCategories.find((c) => c.name === product.category);
+      const catData = allCategories.find((c) => c.name === bulkCategory);
       const categoryId = catData?.id || null;
-
       const markup = getMarkupForPrice(cost, categoryId);
       if (markup) {
         if (markup.type === "fixed") {
-          return {
-            retail: markup.retailFixed,
-            wholesale: markup.wholesaleFixed,
-            type: "fixed" as const,
-          };
+          return { retail: markup.retailFixed, wholesale: markup.wholesaleFixed, type: "fixed" as const };
         } else {
-          return {
-            retail: markup.retailPercent,
-            wholesale: markup.wholesalePercent,
-            type: "percent" as const,
-          };
+          return { retail: markup.retailPercent, wholesale: markup.wholesalePercent, type: "percent" as const };
         }
       }
     }
     return null;
   };
 
+  const validBulkCount = bulkProducts.filter((p) => p.name.trim() && (parseInt(p.retailPrice) > 0)).length;
+
   const handleBulkSubmit = () => {
     const validProducts = bulkProducts.filter(
-      (p) => p.name.trim() && parseInt(p.costPrice) > 0,
+      (p) => p.name.trim() && (parseInt(p.retailPrice) > 0),
     );
 
-    if (validProducts.length === 0) {
-      return;
-    }
+    if (validProducts.length === 0) return;
 
     const productsData: ProductFormData[] = validProducts.map((p) => ({
       name: p.name.trim(),
       sku: p.sku,
-      category: p.category,
+      category: bulkCategory,
       costPrice: parseInt(p.costPrice) || 0,
       retailPrice: parseInt(p.retailPrice) || 0,
-      wholesalePrice: parseInt(p.wholesalePrice) || 0,
-      wholesaleMinQty: parseInt(p.wholesaleMinQty) || 10,
+      wholesalePrice: p.hasWholesale ? (parseInt(p.wholesalePrice) || 0) : 0,
+      wholesaleMinQty: p.hasWholesale ? (parseInt(p.wholesaleMinQty) || 10) : 10,
       stock: parseInt(p.stock) || 0,
       unit: p.unit,
     }));
@@ -370,30 +375,19 @@ export function ProductForm({
                 maxLength={100}
               />
               {errors.name && (
-                <p className="text-sm text-destructive">
-                  {errors.name.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.name.message}</p>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Kategori</Label>
-                <Select
+                <CategorySelect
                   value={watch("category")}
+                  categories={categories}
                   onValueChange={(value) => setValue("category", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih kategori" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onCategoriesChanged={refreshCategories}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="sku">SKU / Kode</Label>
@@ -404,15 +398,8 @@ export function ProductForm({
                   readOnly={!isEditing}
                   className={!isEditing ? "bg-muted cursor-not-allowed" : ""}
                 />
-                {!isEditing && (
-                  <p className="text-xs text-muted-foreground">
-                    Otomatis berdasarkan kategori
-                  </p>
-                )}
                 {errors.sku && (
-                  <p className="text-sm text-destructive">
-                    {errors.sku.message}
-                  </p>
+                  <p className="text-sm text-destructive">{errors.sku.message}</p>
                 )}
               </div>
             </div>
@@ -420,7 +407,7 @@ export function ProductForm({
             <div className="space-y-2">
               <Label htmlFor="costPrice" className="flex items-center gap-2">
                 <Calculator className="h-4 w-4" />
-                Harga Modal
+                Harga Modal (Opsional)
               </Label>
               <PriceInput
                 id="costPrice"
@@ -438,106 +425,95 @@ export function ProductForm({
                   </span>
                 </div>
               )}
-              {errors.costPrice && (
-                <p className="text-sm text-destructive">
-                  {errors.costPrice.message}
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="retailPrice">Harga Satuan</Label>
-                <PriceInput
-                  id="retailPrice"
-                  value={retailPriceStr}
-                  onChange={setRetailPriceStr}
-                  placeholder="0"
-                />
-                {costPrice > 0 && watch("retailPrice") > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Margin: {formatCurrency(watch("retailPrice") - costPrice)}
-                  </p>
-                )}
-                {errors.retailPrice && (
-                  <p className="text-sm text-destructive">
-                    {errors.retailPrice.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="wholesalePrice">Harga Grosir</Label>
-                <PriceInput
-                  id="wholesalePrice"
-                  value={wholesalePriceStr}
-                  onChange={setWholesalePriceStr}
-                  placeholder="0"
-                />
-                {costPrice > 0 && watch("wholesalePrice") > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Margin:{" "}
-                    {formatCurrency(watch("wholesalePrice") - costPrice)}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="wholesaleMinQty">Min. Qty Grosir</Label>
-                <Input
-                  id="wholesaleMinQty"
-                  type="number"
-                  {...register("wholesaleMinQty", { valueAsNumber: true })}
-                  placeholder="10"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Satuan</Label>
-                <Select
-                  value={watch("unit")}
-                  onValueChange={(value) => setValue("unit", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih satuan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {units.map((unit) => (
-                      <SelectItem key={unit} value={unit}>
-                        {unit}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="stock">Stok Awal</Label>
-              <Input
-                id="stock"
-                type="number"
-                {...register("stock", { valueAsNumber: true })}
+              <Label htmlFor="retailPrice">Harga Satuan</Label>
+              <PriceInput
+                id="retailPrice"
+                value={retailPriceStr}
+                onChange={setRetailPriceStr}
                 placeholder="0"
               />
-              {errors.stock && (
-                <p className="text-sm text-destructive">
-                  {errors.stock.message}
+              {costPrice > 0 && watch("retailPrice") > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Margin: {formatCurrency(watch("retailPrice") - costPrice)}
                 </p>
+              )}
+              {errors.retailPrice && (
+                <p className="text-sm text-destructive">{errors.retailPrice.message}</p>
               )}
             </div>
 
+            <div className="flex items-center gap-2 pt-1">
+              <Checkbox
+                id="editHasWholesale"
+                checked={editHasWholesale}
+                onCheckedChange={(checked) => setEditHasWholesale(!!checked)}
+              />
+              <Label htmlFor="editHasWholesale" className="cursor-pointer text-sm">
+                Harga Grosir
+              </Label>
+            </div>
+
+            {editHasWholesale && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="wholesalePrice">Harga Grosir</Label>
+                  <PriceInput
+                    id="wholesalePrice"
+                    value={wholesalePriceStr}
+                    onChange={setWholesalePriceStr}
+                    placeholder="0"
+                  />
+                  {costPrice > 0 && watch("wholesalePrice") > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Margin: {formatCurrency(watch("wholesalePrice") - costPrice)}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="wholesaleMinQty">Min. Qty Grosir</Label>
+                  <Input
+                    id="wholesaleMinQty"
+                    type="number"
+                    {...register("wholesaleMinQty", { valueAsNumber: true })}
+                    placeholder="10"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Satuan</Label>
+                <UnitSelect
+                  value={watch("unit")}
+                  units={units}
+                  onValueChange={(value) => setValue("unit", value)}
+                  onUnitsChanged={refreshUnits}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="stock">Stok</Label>
+                <Input
+                  id="stock"
+                  type="number"
+                  {...register("stock", { valueAsNumber: true })}
+                  placeholder="0"
+                />
+                {errors.stock && (
+                  <p className="text-sm text-destructive">{errors.stock.message}</p>
+                )}
+              </div>
+            </div>
+
             <div className="flex gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={handleClose}
-              >
+              <Button type="button" variant="outline" className="flex-1" onClick={handleClose}>
                 Batal
               </Button>
               <Button type="submit" className="flex-1">
-                {product ? "Simpan Perubahan" : "Tambah Produk"}
+                Simpan Perubahan
               </Button>
             </div>
           </form>
@@ -545,6 +521,17 @@ export function ProductForm({
 
         {!isEditing && (
           <div className="space-y-4">
+            {/* Top-level category selection */}
+            <div className="space-y-2 p-3 rounded-lg bg-muted/50 border">
+              <Label className="text-sm font-medium">Kategori Produk</Label>
+              <CategorySelect
+                value={bulkCategory}
+                categories={categories}
+                onValueChange={updateBulkCategorySKUs}
+                onCategoriesChanged={refreshCategories}
+              />
+            </div>
+
             {bulkProducts.map((product, index) => {
               const markupInfo = getBulkProductMarkupInfo(product);
               const costPrice = parseInt(product.costPrice) || 0;
@@ -552,10 +539,7 @@ export function ProductForm({
               const wholesalePrice = parseInt(product.wholesalePrice) || 0;
 
               return (
-                <div
-                  key={product.id}
-                  className="p-3 rounded-lg border space-y-3"
-                >
+                <div key={product.id} className="p-3 rounded-lg border space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-muted-foreground">
                       Produk {index + 1}
@@ -579,35 +563,10 @@ export function ProductForm({
                         placeholder="Nama produk"
                         value={product.name}
                         onChange={(e) =>
-                          updateBulkProduct(
-                            product.id,
-                            "name",
-                            toTitleCase(e.target.value),
-                          )
+                          updateBulkProduct(product.id, "name", toTitleCase(e.target.value))
                         }
                         maxLength={100}
                       />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label className="text-xs">Kategori</Label>
-                      <Select
-                        value={product.category}
-                        onValueChange={(v) =>
-                          updateBulkProduct(product.id, "category", v)
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>
-                              {cat}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                     </div>
 
                     <div className="space-y-1">
@@ -620,27 +579,49 @@ export function ProductForm({
                       />
                     </div>
 
+                    <div className="space-y-1">
+                      <Label className="text-xs">Satuan</Label>
+                      <UnitSelect
+                        value={product.unit}
+                        units={units}
+                        onValueChange={(v) => updateBulkProduct(product.id, "unit", v)}
+                        onUnitsChanged={refreshUnits}
+                      />
+                    </div>
+
                     <div className="space-y-1 col-span-2">
                       <Label className="text-xs flex items-center gap-1">
                         <Calculator className="h-3 w-3" />
-                        Harga Modal *
+                        Harga Modal (Opsional)
                       </Label>
                       <PriceInput
                         placeholder="0"
                         value={product.costPrice}
-                        onChange={(v) =>
-                          updateBulkProduct(product.id, "costPrice", v)
-                        }
+                        onChange={(v) => updateBulkProduct(product.id, "costPrice", v)}
                       />
                       {markupInfo && (
                         <div className="flex items-start gap-1 text-[10px] text-muted-foreground">
                           <Info className="h-2.5 w-2.5 mt-0.5 text-primary flex-shrink-0" />
                           <span>
                             {markupInfo.type === "fixed"
-                              ? `Markup otomatis: Eceran +${formatCurrency(markupInfo.retail)}, Grosir +${formatCurrency(markupInfo.wholesale)}`
-                              : `Markup otomatis: Eceran +${markupInfo.retail}%, Grosir +${markupInfo.wholesale}%`}
+                              ? `Markup: Eceran +${formatCurrency(markupInfo.retail)}, Grosir +${formatCurrency(markupInfo.wholesale)}`
+                              : `Markup: Eceran +${markupInfo.retail}%, Grosir +${markupInfo.wholesale}%`}
                           </span>
                         </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs">Harga Satuan *</Label>
+                      <PriceInput
+                        placeholder="0"
+                        value={product.retailPrice}
+                        onChange={(v) => updateBulkProduct(product.id, "retailPrice", v)}
+                      />
+                      {costPrice > 0 && retailPrice > 0 && (
+                        <p className="text-[10px] text-muted-foreground">
+                          Margin: {formatCurrency(retailPrice - costPrice)}
+                        </p>
                       )}
                     </div>
 
@@ -651,80 +632,53 @@ export function ProductForm({
                         min={0}
                         placeholder="0"
                         value={product.stock}
-                        onChange={(e) =>
-                          updateBulkProduct(product.id, "stock", e.target.value)
-                        }
+                        onChange={(e) => updateBulkProduct(product.id, "stock", e.target.value)}
                       />
                     </div>
 
-                    <div className="space-y-1">
-                      <Label className="text-xs">Satuan</Label>
-                      <Select
-                        value={product.unit}
-                        onValueChange={(v) =>
-                          updateBulkProduct(product.id, "unit", v)
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {units.map((unit) => (
-                            <SelectItem key={unit} value={unit}>
-                              {unit}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id={`wholesale-${product.id}`}
+                          checked={product.hasWholesale}
+                          onCheckedChange={(checked) =>
+                            updateBulkProduct(product.id, "hasWholesale", !!checked)
+                          }
+                        />
+                        <Label htmlFor={`wholesale-${product.id}`} className="cursor-pointer text-xs">
+                          Harga Grosir
+                        </Label>
+                      </div>
 
-                    <div className="space-y-1">
-                      <Label className="text-xs">Harga Satuan</Label>
-                      <PriceInput
-                        placeholder="0"
-                        value={product.retailPrice}
-                        onChange={(v) =>
-                          updateBulkProduct(product.id, "retailPrice", v)
-                        }
-                      />
-                      {costPrice > 0 && retailPrice > 0 && (
-                        <p className="text-[10px] text-muted-foreground">
-                          Margin: {formatCurrency(retailPrice - costPrice)}
-                        </p>
+                      {product.hasWholesale && (
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Harga Grosir</Label>
+                            <PriceInput
+                              placeholder="0"
+                              value={product.wholesalePrice}
+                              onChange={(v) => updateBulkProduct(product.id, "wholesalePrice", v)}
+                            />
+                            {costPrice > 0 && wholesalePrice > 0 && (
+                              <p className="text-[10px] text-muted-foreground">
+                                Margin: {formatCurrency(wholesalePrice - costPrice)}
+                              </p>
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Min Qty Grosir</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              placeholder="10"
+                              value={product.wholesaleMinQty}
+                              onChange={(e) =>
+                                updateBulkProduct(product.id, "wholesaleMinQty", e.target.value)
+                              }
+                            />
+                          </div>
+                        </div>
                       )}
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label className="text-xs">Harga Grosir</Label>
-                      <PriceInput
-                        placeholder="0"
-                        value={product.wholesalePrice}
-                        onChange={(v) =>
-                          updateBulkProduct(product.id, "wholesalePrice", v)
-                        }
-                      />
-                      {costPrice > 0 && wholesalePrice > 0 && (
-                        <p className="text-[10px] text-muted-foreground">
-                          Margin: {formatCurrency(wholesalePrice - costPrice)}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label className="text-xs">Min Qty Grosir</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        placeholder="10"
-                        value={product.wholesaleMinQty}
-                        onChange={(e) =>
-                          updateBulkProduct(
-                            product.id,
-                            "wholesaleMinQty",
-                            e.target.value,
-                          )
-                        }
-                      />
                     </div>
                   </div>
                 </div>
@@ -742,21 +696,15 @@ export function ProductForm({
             </Button>
 
             <div className="flex gap-3 pt-4">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={handleClose}
-              >
+              <Button variant="outline" className="flex-1" onClick={handleClose}>
                 Batal
               </Button>
-              <Button className="flex-1" onClick={handleBulkSubmit}>
-                Simpan{" "}
-                {
-                  bulkProducts.filter(
-                    (p) => p.name.trim() && parseInt(p.costPrice) > 0,
-                  ).length
-                }{" "}
-                Produk
+              <Button
+                className="flex-1"
+                onClick={handleBulkSubmit}
+                disabled={validBulkCount === 0}
+              >
+                Simpan {validBulkCount} Produk
               </Button>
             </div>
           </div>
