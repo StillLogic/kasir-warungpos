@@ -17,6 +17,7 @@ import { toTitleCase, formatPhoneNumber } from "@/lib/text";
 import { Store, Receipt, Settings2, Save, Printer, Eye } from "lucide-react";
 import { ReceiptPreview } from "@/components/admin/ReceiptPreview";
 import { BackupRestore } from "@/components/BackupRestore";
+import { CloudBackup } from "@/components/CloudBackup";
 interface StoreSettings {
   storeName: string;
   storeAddress: string;
@@ -169,6 +170,7 @@ export function SettingsPage() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr),380px]">
       <div className="space-y-6">
+        <CloudBackup />
         <BackupRestore />
 
         <Card>

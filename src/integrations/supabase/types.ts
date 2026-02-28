@@ -14,7 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      backup_settings: {
+        Row: {
+          auto_backup_enabled: boolean
+          backup_interval: string
+          created_at: string
+          id: string
+          last_auto_backup_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_backup_enabled?: boolean
+          backup_interval?: string
+          created_at?: string
+          id?: string
+          last_auto_backup_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_backup_enabled?: boolean
+          backup_interval?: string
+          created_at?: string
+          id?: string
+          last_auto_backup_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      backups: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          is_auto: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number
+          id?: string
+          is_auto?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          is_auto?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
