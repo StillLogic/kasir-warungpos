@@ -13,7 +13,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Cloud, Upload, Download, Trash2, Clock, LogOut, RefreshCw, CheckCircle, AlertTriangle,
+  Cloud, Upload, Download, Clock, LogOut, CheckCircle, AlertTriangle, RefreshCw,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,26 +43,29 @@ const INTERVAL_LABELS: Record<string, string> = {
   weekly: "Setiap Minggu",
 };
 
+const FIXED_FILE_NAME = "backup-latest.wbak";
+
 export function CloudBackup() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [backups, setBackups] = useState<CloudBackupEntry[]>([]);
+  const [backup, setBackup] = useState<CloudBackupEntry | null>(null);
   const [settings, setSettings] = useState<BackupSettings>({
     auto_backup_enabled: false,
     backup_interval: "daily",
   });
   const [uploading, setUploading] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<CloudBackupEntry | null>(null);
-  const [restoreTarget, setRestoreTarget] = useState<CloudBackupEntry | null>(null);
+  const [showRestore, setShowRestore] = useState(false);
 
-  const loadBackups = useCallback(async () => {
+  const loadBackup = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
       .from("backups")
       .select("*")
-      .order("created_at", { ascending: false });
-    if (data) setBackups(data as CloudBackupEntry[]);
+      .order("created_at", { ascending: false })
+      .limit(1);
+    setBackup(data && data.length > 0 ? (data[0] as CloudBackupEntry) : null);
   }, [user]);
 
   const loadSettings = useCallback(async () => {
@@ -81,9 +84,9 @@ export function CloudBackup() {
 
   useEffect(() => {
     if (user) {
-      Promise.all([loadBackups(), loadSettings()]).finally(() => setLoading(false));
+      Promise.all([loadBackup(), loadSettings()]).finally(() => setLoading(false));
     }
-  }, [user, loadBackups, loadSettings]);
+  }, [user, loadBackup, loadSettings]);
 
   // Auto backup check on mount
   useEffect(() => {
@@ -129,35 +132,60 @@ export function CloudBackup() {
 
     try {
       const blob = await exportBackup();
-      const date = new Date().toISOString().replace(/[:.]/g, "-");
-      const fileName = `${isAuto ? "auto" : "manual"}-backup-${date}.wbak`;
-      const filePath = `${user.id}/${fileName}`;
+      const filePath = `${user.id}/${FIXED_FILE_NAME}`;
 
+      // Overwrite: upsert to the same file path
       const { error: uploadError } = await supabase.storage
         .from("backups")
-        .upload(filePath, blob, { contentType: "application/octet-stream" });
+        .upload(filePath, blob, {
+          contentType: "application/octet-stream",
+          upsert: true,
+        });
 
       if (uploadError) throw uploadError;
 
-      await supabase.from("backups").insert({
-        user_id: user.id,
-        file_name: fileName,
-        file_path: filePath,
-        file_size: blob.size,
-        is_auto: isAuto,
-      });
+      // Check if metadata row exists, update or insert
+      const { data: existing } = await supabase
+        .from("backups")
+        .select("id")
+        .eq("user_id", user.id)
+        .limit(1);
 
-      if (isAuto) {
+      if (existing && existing.length > 0) {
+        await supabase
+          .from("backups")
+          .update({
+            file_name: FIXED_FILE_NAME,
+            file_path: filePath,
+            file_size: blob.size,
+            is_auto: isAuto,
+            created_at: new Date().toISOString(),
+          })
+          .eq("id", existing[0].id);
+      } else {
+        await supabase.from("backups").insert({
+          user_id: user.id,
+          file_name: FIXED_FILE_NAME,
+          file_path: filePath,
+          file_size: blob.size,
+          is_auto: isAuto,
+        });
+      }
+
+      if (isAuto || settings.auto_backup_enabled) {
         await supabase
           .from("backup_settings")
-          .update({ last_auto_backup_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+          .update({
+            last_auto_backup_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
           .eq("user_id", user.id);
       }
 
-      await loadBackups();
+      await loadBackup();
 
       if (!isAuto) {
-        toast({ title: "Upload Berhasil", description: "Backup berhasil disimpan ke cloud" });
+        toast({ title: "Upload Berhasil", description: "Backup berhasil disimpan ke cloud (ditimpa)" });
       }
     } catch (error) {
       console.error("Upload error:", error);
@@ -167,7 +195,10 @@ export function CloudBackup() {
     }
   };
 
-  const handleRestore = async (backup: CloudBackupEntry) => {
+  const handleRestore = async () => {
+    if (!backup) return;
+    setRestoring(true);
+
     try {
       const { data, error } = await supabase.storage
         .from("backups")
@@ -190,20 +221,10 @@ export function CloudBackup() {
     } catch (error) {
       console.error("Restore error:", error);
       toast({ title: "Restore Gagal", description: "Gagal mengunduh backup dari cloud", variant: "destructive" });
+    } finally {
+      setRestoring(false);
+      setShowRestore(false);
     }
-    setRestoreTarget(null);
-  };
-
-  const handleDelete = async (backup: CloudBackupEntry) => {
-    try {
-      await supabase.storage.from("backups").remove([backup.file_path]);
-      await supabase.from("backups").delete().eq("id", backup.id);
-      await loadBackups();
-      toast({ title: "Dihapus", description: "Backup berhasil dihapus dari cloud" });
-    } catch {
-      toast({ title: "Gagal", description: "Gagal menghapus backup", variant: "destructive" });
-    }
-    setDeleteTarget(null);
   };
 
   const updateAutoBackup = async (enabled: boolean) => {
@@ -307,11 +328,48 @@ export function CloudBackup() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Upload button */}
-          <Button onClick={() => handleUpload(false)} disabled={uploading} className="w-full">
-            <Upload className="w-4 h-4 mr-2" />
-            {uploading ? "Mengupload..." : "Backup ke Cloud"}
-          </Button>
+          {/* Upload & Restore buttons */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button onClick={() => handleUpload(false)} disabled={uploading} className="w-full">
+              <Upload className="w-4 h-4 mr-2" />
+              {uploading ? "Mengupload..." : "Backup"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowRestore(true)}
+              disabled={!backup || restoring}
+              className="w-full"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {restoring ? "Memulihkan..." : "Restore"}
+            </Button>
+          </div>
+
+          {/* Latest backup info */}
+          {loading ? (
+            <p className="text-sm text-muted-foreground text-center py-2">Memuat...</p>
+          ) : backup ? (
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-primary" />
+                  Backup Terakhir
+                </Label>
+                <Button variant="ghost" size="sm" onClick={loadBackup} className="h-7 w-7 p-0">
+                  <RefreshCw className="w-3 h-3" />
+                </Button>
+              </div>
+              <p className="text-sm mt-1">{formatDate(backup.created_at)}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatSize(backup.file_size)}
+                {backup.is_auto && " • Auto backup"}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-2">
+              Belum ada backup di cloud
+            </p>
+          )}
 
           {/* Auto backup settings */}
           <div className="p-3 bg-muted/50 rounded-lg space-y-3">
@@ -347,93 +405,11 @@ export function CloudBackup() {
               </div>
             )}
           </div>
-
-          {/* Backup list */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Riwayat Backup</Label>
-              <Button variant="ghost" size="sm" onClick={loadBackups}>
-                <RefreshCw className="w-3 h-3" />
-              </Button>
-            </div>
-
-            {loading ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Memuat...</p>
-            ) : backups.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Belum ada backup di cloud</p>
-            ) : (
-              <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                {backups.map((backup) => (
-                  <div
-                    key={backup.id}
-                    className="flex items-center justify-between p-2.5 border rounded-lg text-sm"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        {backup.is_auto && (
-                          <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                            Auto
-                          </span>
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(backup.created_at)}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatSize(backup.file_size)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setRestoreTarget(backup)}
-                        title="Restore"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => setDeleteTarget(backup)}
-                        title="Hapus"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </CardContent>
       </Card>
 
-      {/* Delete confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Backup?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Backup "{deleteTarget?.file_name}" akan dihapus permanen dari cloud.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteTarget && handleDelete(deleteTarget)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Hapus
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       {/* Restore confirmation */}
-      <AlertDialog open={!!restoreTarget} onOpenChange={() => setRestoreTarget(null)}>
+      <AlertDialog open={showRestore} onOpenChange={setShowRestore}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -441,15 +417,17 @@ export function CloudBackup() {
               Restore dari Cloud?
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>Data saat ini akan diganti dengan backup dari:</p>
-              <p className="font-medium text-foreground">{restoreTarget && formatDate(restoreTarget.created_at)}</p>
-              <p className="text-amber-600 font-medium">⚠️ Pastikan Anda sudah backup data saat ini.</p>
+              <p>Seluruh data lokal akan <strong>ditimpa</strong> dengan backup dari:</p>
+              <p className="font-medium text-foreground">
+                {backup && formatDate(backup.created_at)} ({backup && formatSize(backup.file_size)})
+              </p>
+              <p className="text-amber-600 font-medium">⚠️ Data lokal yang belum di-backup akan hilang.</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => restoreTarget && handleRestore(restoreTarget)}
+              onClick={handleRestore}
               className="bg-amber-600 hover:bg-amber-700"
             >
               Ya, Restore
