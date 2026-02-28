@@ -26,9 +26,23 @@ export function AuthPage() {
       return;
     }
 
-    if (!isLogin && password.length < 6) {
-      toast({ title: "Error", description: "Password minimal 6 karakter", variant: "destructive" });
-      return;
+    if (!isLogin) {
+      if (password.length < 8) {
+        toast({ title: "Error", description: "Password minimal 8 karakter", variant: "destructive" });
+        return;
+      }
+      if (!/[A-Z]/.test(password)) {
+        toast({ title: "Error", description: "Password harus mengandung huruf besar", variant: "destructive" });
+        return;
+      }
+      if (!/[a-z]/.test(password)) {
+        toast({ title: "Error", description: "Password harus mengandung huruf kecil", variant: "destructive" });
+        return;
+      }
+      if (!/[0-9]/.test(password)) {
+        toast({ title: "Error", description: "Password harus mengandung angka", variant: "destructive" });
+        return;
+      }
     }
 
     setLoading(true);
@@ -102,12 +116,12 @@ export function AuthPage() {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Minimal 6 karakter"
+                    placeholder="Min 8 karakter, huruf besar, kecil, angka"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10"
                     required
-                    minLength={6}
+                    minLength={8}
                   />
                 </div>
               </div>
@@ -125,7 +139,7 @@ export function AuthPage() {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className="pl-10"
                       required
-                      minLength={6}
+                      minLength={8}
                     />
                   </div>
                 </div>
