@@ -149,12 +149,23 @@ export function ProductForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, isEditing]);
 
-  // Edit mode: detect if product has wholesale
+  // Edit mode: reset form with product data
   useEffect(() => {
     if (open && product) {
+      reset({
+        name: product.name,
+        sku: product.sku,
+        category: product.category,
+        costPrice: product.costPrice,
+        retailPrice: product.retailPrice,
+        wholesalePrice: product.wholesalePrice,
+        wholesaleMinQty: product.wholesaleMinQty,
+        stock: product.stock,
+        unit: product.unit,
+      });
       setEditHasWholesale(product.wholesalePrice > 0);
     }
-  }, [open, product]);
+  }, [open, product, reset]);
 
   useEffect(() => {
     if (open) {
