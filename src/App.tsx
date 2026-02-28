@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { useEffect } from "react";
+import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import { ProductsPage } from "./pages/ProductsPage";
 import { HistoryPage } from "./pages/HistoryPage";
@@ -26,6 +27,7 @@ import {
 import { AdminLayout } from "./components/admin";
 import { InstallPWA } from "./components/InstallPWA";
 import { PWAUpdateNotification } from "./components/PWAUpdateNotification";
+import { AuthPage } from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 import { migrateFromLocalStorage } from "./database";
 
@@ -39,138 +41,36 @@ const App = () => {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route
-                path="/admin"
-                element={
-                  <AdminLayout>
-                    <DashboardPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/products"
-                element={
-                  <AdminLayout>
-                    <ProductsPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/pricing"
-                element={
-                  <AdminLayout>
-                    <PricingPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/calculator"
-                element={
-                  <AdminLayout>
-                    <CalculatorPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/debts"
-                element={
-                  <AdminLayout>
-                    <DebtsPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/history"
-                element={
-                  <AdminLayout>
-                    <HistoryPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/reports"
-                element={
-                  <AdminLayout>
-                    <ReportsPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/settings"
-                element={
-                  <AdminLayout>
-                    <SettingsPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/employees"
-                element={
-                  <AdminLayout>
-                    <EmployeesPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/employees/earnings"
-                element={
-                  <AdminLayout>
-                    <EmployeeEarningsPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/employees/debts"
-                element={
-                  <AdminLayout>
-                    <EmployeeDebtsPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/employees/records"
-                element={
-                  <AdminLayout>
-                    <EmployeeRecordsPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/shopping-list"
-                element={
-                  <AdminLayout>
-                    <ShoppingListPage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/shopping-archive"
-                element={
-                  <AdminLayout>
-                    <ShoppingArchivePage />
-                  </AdminLayout>
-                }
-              />
-              <Route
-                path="/admin/master-data"
-                element={
-                  <AdminLayout>
-                    <MasterDataPage />
-                  </AdminLayout>
-                }
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-          <InstallPWA />
-          <PWAUpdateNotification />
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/admin" element={<AdminLayout><DashboardPage /></AdminLayout>} />
+                <Route path="/admin/products" element={<AdminLayout><ProductsPage /></AdminLayout>} />
+                <Route path="/admin/pricing" element={<AdminLayout><PricingPage /></AdminLayout>} />
+                <Route path="/admin/calculator" element={<AdminLayout><CalculatorPage /></AdminLayout>} />
+                <Route path="/admin/debts" element={<AdminLayout><DebtsPage /></AdminLayout>} />
+                <Route path="/admin/history" element={<AdminLayout><HistoryPage /></AdminLayout>} />
+                <Route path="/admin/reports" element={<AdminLayout><ReportsPage /></AdminLayout>} />
+                <Route path="/admin/settings" element={<AdminLayout><SettingsPage /></AdminLayout>} />
+                <Route path="/admin/employees" element={<AdminLayout><EmployeesPage /></AdminLayout>} />
+                <Route path="/admin/employees/earnings" element={<AdminLayout><EmployeeEarningsPage /></AdminLayout>} />
+                <Route path="/admin/employees/debts" element={<AdminLayout><EmployeeDebtsPage /></AdminLayout>} />
+                <Route path="/admin/employees/records" element={<AdminLayout><EmployeeRecordsPage /></AdminLayout>} />
+                <Route path="/admin/shopping-list" element={<AdminLayout><ShoppingListPage /></AdminLayout>} />
+                <Route path="/admin/shopping-archive" element={<AdminLayout><ShoppingArchivePage /></AdminLayout>} />
+                <Route path="/admin/master-data" element={<AdminLayout><MasterDataPage /></AdminLayout>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+            <InstallPWA />
+            <PWAUpdateNotification />
+          </TooltipProvider>
+        </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );
