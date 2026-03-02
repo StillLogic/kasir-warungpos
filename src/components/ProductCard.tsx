@@ -30,7 +30,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
           <h3 className="font-medium text-sm truncate">{product.name}</h3>
           <div className="flex items-center justify-between mt-1 gap-2">
             <p className="font-semibold text-sm text-primary">
-              {formatCurrency(product.retailPrice)}
+              {formatCurrency(product.retailPrice)}/{product.unit}
             </p>
             <div
               className={cn(
@@ -66,7 +66,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
 
         <div className="flex items-center justify-between pt-2 border-t border-border/50">
           <p className="font-semibold text-lg text-primary">
-            {formatCurrency(product.retailPrice)}
+            {formatCurrency(product.retailPrice)}/{product.unit}
           </p>
           <div
             className={cn(
