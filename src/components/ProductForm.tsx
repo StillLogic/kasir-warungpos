@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Product, ProductFormData } from "@/types/pos";
 import { generateSKU, generateSKUWithExisting } from "@/lib/sku";
 import { getCategoryNames, getCategories } from "@/database/categories";
@@ -21,13 +21,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Calculator, Info, Plus, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 
@@ -83,7 +76,7 @@ export function ProductForm({
   const [wholesalePriceStr, setWholesalePriceStr] = useState("");
   const [editHasWholesale, setEditHasWholesale] = useState(false);
   
-  // Bulk add state
+  
   const [bulkProducts, setBulkProducts] = useState<BulkProductInput[]>([]);
   const [bulkCategory, setBulkCategory] = useState("");
   
@@ -123,7 +116,6 @@ export function ProductForm({
   const category = watch("category");
   const costPrice = watch("costPrice");
 
-  // Initialize bulk products when dialog opens for adding (only on open, not on units/categories refresh)
   useEffect(() => {
     if (open && !isEditing) {
       const defaultCategory = categories[0] || "Lainnya";
@@ -146,10 +138,9 @@ export function ProductForm({
         },
       ]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, isEditing]);
 
-  // Edit mode: reset form with product data
+  
   useEffect(() => {
     if (open && product) {
       reset({
@@ -248,7 +239,7 @@ export function ProductForm({
     onClose();
   };
 
-  // Regenerate all SKUs when bulk category changes
+  
   const updateBulkCategorySKUs = (newCategory: string) => {
     setBulkCategory(newCategory);
     setBulkProducts((prev) => {
@@ -533,7 +524,6 @@ export function ProductForm({
 
         {!isEditing && (
           <div className="space-y-4">
-            {/* Top-level category selection */}
             <div className="space-y-2 p-3 rounded-lg bg-muted/50 border">
               <Label className="text-sm font-medium">Kategori Produk</Label>
               <CategorySelect

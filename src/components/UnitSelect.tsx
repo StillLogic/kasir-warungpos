@@ -50,7 +50,7 @@ export function UnitSelect({
       return;
     }
 
-    // Check if already exists (case-insensitive)
+    
     const existing = units.find(
       (u) => u.toLowerCase() === trimmed.toLowerCase(),
     );
@@ -61,7 +61,7 @@ export function UnitSelect({
       return;
     }
 
-    // Add to master data
+    
     const result = addUnit(trimmed);
     if (result) {
       onValueChange(result.name);
