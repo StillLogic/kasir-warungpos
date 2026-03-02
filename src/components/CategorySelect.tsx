@@ -44,7 +44,7 @@ export function CategorySelect({
   const generatePrefix = (name: string): string => {
     const clean = name.trim().toUpperCase();
     if (clean.length <= 3) return clean;
-    // Take first 3 consonants or first 3 chars
+    
     const consonants = clean.replace(/[AIUEO\s]/g, "");
     if (consonants.length >= 3) return consonants.substring(0, 3);
     return clean.substring(0, 3);
@@ -61,7 +61,7 @@ export function CategorySelect({
       return;
     }
 
-    // Check if already exists
+    
     const existing = categories.find(
       (c) => c.toLowerCase() === trimmedName.toLowerCase(),
     );

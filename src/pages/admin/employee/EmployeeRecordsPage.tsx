@@ -120,7 +120,7 @@ export function EmployeeRecordsPage() {
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [refreshKey]);
 
   const filteredRecords = useMemo(() => {
