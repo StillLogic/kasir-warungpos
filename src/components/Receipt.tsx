@@ -2,6 +2,7 @@ import { useRef } from "react";
 import html2canvas from "html2canvas";
 import { Transaction } from "@/types/pos";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { escapeHtml } from "@/lib/html";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -66,9 +67,9 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
     const printContent = `
       <div style="font-family: 'Courier New', monospace; width: ${paperWidth}; margin: 0; padding: 3mm;">
         <div style="text-align: center; border-bottom: 1px dashed #333; padding-bottom: 8px; margin-bottom: 8px;">
-          <h2 style="margin: 0; font-size: ${fontSize.title}px; font-weight: bold;">${settings.storeName}</h2>
-          ${settings.storeAddress ? `<p style="margin: 3px 0 0; font-size: ${fontSize.small}px;">${settings.storeAddress}</p>` : ""}
-          ${settings.storePhone ? `<p style="margin: 2px 0 0; font-size: ${fontSize.small}px;">Telp: ${settings.storePhone}</p>` : ""}
+          <h2 style="margin: 0; font-size: ${fontSize.title}px; font-weight: bold;">${escapeHtml(settings.storeName)}</h2>
+          ${settings.storeAddress ? `<p style="margin: 3px 0 0; font-size: ${fontSize.small}px;">${escapeHtml(settings.storeAddress)}</p>` : ""}
+          ${settings.storePhone ? `<p style="margin: 2px 0 0; font-size: ${fontSize.small}px;">Telp: ${escapeHtml(settings.storePhone)}</p>` : ""}
           <p style="margin: 5px 0 0; font-size: ${fontSize.small}px;">${formatDate(transaction.createdAt)}</p>
           <p style="margin: 2px 0 0; font-size: ${fontSize.small}px;">No: ${transaction.id.slice(0, 8).toUpperCase()}</p>
         </div>
@@ -78,7 +79,7 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
             .map(
               (item) => `
             <div style="margin-bottom: 5px;">
-              <p style="margin: 0; font-size: ${fontSize.base}px; font-weight: bold;">${item.product.name}</p>
+              <p style="margin: 0; font-size: ${fontSize.base}px; font-weight: bold;">${escapeHtml(item.product.name)}</p>
               <div style="display: flex; justify-content: space-between; font-size: ${fontSize.small}px;">
                 <span>${item.quantity} x ${formatCurrency(item.priceType === "wholesale" ? item.product.wholesalePrice : item.product.retailPrice)}</span>
                 <span style="font-weight: bold;">${formatCurrency(item.subtotal)}</span>
@@ -105,7 +106,7 @@ export function Receipt({ transaction, open, onClose }: ReceiptProps) {
         </div>
         
         <div style="text-align: center; border-top: 1px dashed #333; padding-top: 8px;">
-          <p style="margin: 0; font-size: ${fontSize.small}px;">${settings.receiptFooter}</p>
+          <p style="margin: 0; font-size: ${fontSize.small}px;">${escapeHtml(settings.receiptFooter)}</p>
         </div>
       </div>
     `;

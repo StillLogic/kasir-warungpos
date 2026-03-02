@@ -74,6 +74,7 @@ import { useSearchInput } from "@/hooks/use-search-input";
 import { handleTitleCaseChange } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import { sortAlpha, sortShoppingItems } from "@/lib/sorting";
+import { escapeHtml } from "@/lib/html";
 
 interface BulkItemInput {
   id: string;
@@ -179,9 +180,9 @@ export function ShoppingListPage() {
                 (item, i) => `
               <tr>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${i + 1}</td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${item.productName}</td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${item.brand || "-"}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.quantity} ${item.unit}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${escapeHtml(item.productName)}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${escapeHtml(item.brand || "-")}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${String(item.quantity)} ${escapeHtml(item.unit)}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.isPurchased ? "✓" : ""}</td>
               </tr>
             `,
@@ -192,7 +193,7 @@ export function ShoppingListPage() {
       pagesHtml += `
         <div class="page" style="${idx > 0 ? "page-break-before: always;" : ""}">
           <h2 style="margin: 0 0 16px 0; font-size: 18px; border-bottom: 2px solid #333; padding-bottom: 8px;">
-            ${category.name}
+            ${escapeHtml(category.name)}
           </h2>
           <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
             <thead>

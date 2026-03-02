@@ -57,7 +57,7 @@ function base64ToUint8Array(base64: string): Uint8Array {
   return arr;
 }
 
-export async function exportBackup(): Promise<Blob> {
+export async function exportBackup(password: string): Promise<Blob> {
   const db = await getDB();
 
   const products = await db.getAll("products");
@@ -142,13 +142,13 @@ export async function exportBackup(): Promise<Blob> {
   });
 
   const base64Compressed = uint8ArrayToBase64(compressed);
-  const encrypted = encrypt(base64Compressed);
+  const encrypted = encrypt(base64Compressed, password);
 
   return new Blob([encrypted], { type: "application/octet-stream" });
 }
 
-export async function downloadBackup(): Promise<void> {
-  const blob = await exportBackup();
+export async function downloadBackup(password: string): Promise<void> {
+  const blob = await exportBackup(password);
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
 
@@ -179,7 +179,7 @@ export function validateBackup(data: unknown): data is BackupData {
   return true;
 }
 
-export async function importBackup(file: File): Promise<{
+export async function importBackup(file: File, password?: string): Promise<{
   success: boolean;
   message: string;
   itemCounts?: Record<string, number>;
@@ -189,7 +189,7 @@ export async function importBackup(file: File): Promise<{
 
     if (file.name.endsWith(".wbak")) {
       const encryptedText = await file.text();
-      const decryptedBase64 = decrypt(encryptedText);
+      const decryptedBase64 = decrypt(encryptedText, password || "");
       const compressed = base64ToUint8Array(decryptedBase64);
 
       const decompressed = await new Promise<Uint8Array>((resolve, reject) => {

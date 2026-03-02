@@ -7,6 +7,8 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +19,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Database,
   Download,
@@ -29,6 +38,7 @@ import {
   CreditCard,
   Scale,
   ClipboardList,
+  Lock,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { downloadBackup, importBackup, getStorageStats } from "@/lib/backup";
@@ -38,6 +48,8 @@ export function BackupRestore() {
   const [isImporting, setIsImporting] = useState(false);
   const [confirmImport, setConfirmImport] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showPasswordDialog, setShowPasswordDialog] = useState<"export" | "import" | null>(null);
+  const [password, setPassword] = useState("");
   const [stats, setStats] = useState<{
     products: number;
     transactions: number;
@@ -59,15 +71,29 @@ export function BackupRestore() {
     setStats(data);
   };
 
-  const handleExport = async () => {
+  const handleExportClick = () => {
+    setPassword("");
+    setShowPasswordDialog("export");
+  };
+
+  const handleExportConfirm = async () => {
+    if (!password.trim()) {
+      toast({
+        title: "Password Diperlukan",
+        description: "Masukkan password untuk mengenkripsi backup",
+        variant: "destructive",
+      });
+      return;
+    }
+    setShowPasswordDialog(null);
     setIsExporting(true);
     try {
-      await downloadBackup();
+      await downloadBackup(password.trim());
       toast({
         title: "Backup Berhasil",
         description: "File backup telah diunduh. Simpan di tempat yang aman.",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Backup Gagal",
         description: "Terjadi kesalahan saat membuat backup",
@@ -75,6 +101,7 @@ export function BackupRestore() {
       });
     } finally {
       setIsExporting(false);
+      setPassword("");
     }
   };
 
@@ -90,9 +117,19 @@ export function BackupRestore() {
         return;
       }
       setSelectedFile(file);
-      setConfirmImport(true);
+      if (file.name.endsWith(".wbak")) {
+        setPassword("");
+        setShowPasswordDialog("import");
+      } else {
+        setConfirmImport(true);
+      }
     }
     e.target.value = "";
+  };
+
+  const handleImportWithPassword = () => {
+    setShowPasswordDialog(null);
+    setConfirmImport(true);
   };
 
   const handleImport = async () => {
@@ -102,7 +139,10 @@ export function BackupRestore() {
     setConfirmImport(false);
 
     try {
-      const result = await importBackup(selectedFile);
+      const result = await importBackup(
+        selectedFile,
+        selectedFile.name.endsWith(".wbak") ? password.trim() || undefined : undefined,
+      );
 
       if (result.success) {
         toast({
@@ -119,7 +159,7 @@ export function BackupRestore() {
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Pemulihan Gagal",
         description: "Terjadi kesalahan saat memulihkan data",
@@ -128,6 +168,7 @@ export function BackupRestore() {
     } finally {
       setIsImporting(false);
       setSelectedFile(null);
+      setPassword("");
     }
   };
 
@@ -141,7 +182,7 @@ export function BackupRestore() {
           </CardTitle>
           <CardDescription>
             Backup data secara rutin untuk mencegah kehilangan data. File backup
-            terenkripsi dan terkompresi untuk keamanan dan efisiensi penyimpanan.
+            dilindungi password dan terkompresi untuk keamanan dan efisiensi penyimpanan.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -192,7 +233,7 @@ export function BackupRestore() {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
-              onClick={handleExport}
+              onClick={handleExportClick}
               disabled={isExporting}
               className="flex-1"
             >
@@ -232,13 +273,83 @@ export function BackupRestore() {
                   </li>
                   <li>Jangan hapus cache browser jika belum backup data</li>
                   <li>Simpan file backup di beberapa tempat berbeda</li>
-                  <li>File .wbak terenkripsi, hanya bisa dibuka dengan aplikasi ini</li>
+                  <li>Ingat password backup Anda, data tidak bisa dipulihkan tanpa password</li>
                 </ul>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={showPasswordDialog !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowPasswordDialog(null);
+            setPassword("");
+            if (showPasswordDialog === "import") setSelectedFile(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="w-5 h-5" />
+              {showPasswordDialog === "export"
+                ? "Password Backup"
+                : "Password Restore"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {showPasswordDialog === "export"
+                ? "Masukkan password untuk melindungi file backup Anda."
+                : "Masukkan password yang digunakan saat membuat backup. Kosongkan jika backup versi lama."}
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="backup-password">Password</Label>
+              <Input
+                id="backup-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={
+                  showPasswordDialog === "export"
+                    ? "Masukkan password"
+                    : "Masukkan password (opsional)"
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    if (showPasswordDialog === "export") handleExportConfirm();
+                    else handleImportWithPassword();
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowPasswordDialog(null);
+                setPassword("");
+                if (showPasswordDialog === "import") setSelectedFile(null);
+              }}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={
+                showPasswordDialog === "export"
+                  ? handleExportConfirm
+                  : handleImportWithPassword
+              }
+            >
+              {showPasswordDialog === "export" ? "Backup" : "Lanjutkan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={confirmImport} onOpenChange={setConfirmImport}>
         <AlertDialogContent>
